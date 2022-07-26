@@ -78,12 +78,12 @@ fn main() -> ! {
     let mut delay = Delay::new(&clocks);
 
     display.init(&mut delay).unwrap();
-    display.set_orientation(st7789::Orientation::Landscape).unwrap();
-    display.clear(RgbColor::WHITE).unwrap();
+    display.set_orientation(st7789::Orientation::Portrait).unwrap();
+    // display.clear(RgbColor::WHITE).unwrap();
     println!("Initialized");
 
     Text::new(
-        "Hello from",
+        "Initializing...",
         Point::new(80, 110),
         MonoTextStyle::new(&FONT_8X13, RgbColor::BLACK),
     )
@@ -91,6 +91,48 @@ fn main() -> ! {
     .unwrap();
 
     println!("Loading image");
+
+    let ground_data = include_bytes!("../assets/img/ground.bmp");
+    let ground_bmp = Bmp::<Rgb565>::from_slice(ground_data).unwrap();
+
+    let wall_data = include_bytes!("../assets/img/wall.bmp");
+    let wall_bmp = Bmp::<Rgb565>::from_slice(wall_data).unwrap();
+
+    println!("Rendering maze");
+
+    let maze: [u8; 16*16] = [
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,
+        1,1,1,0,1,1,1,1,1,0,1,0,1,1,0,1,
+        1,0,0,0,1,0,0,0,1,0,1,0,1,0,0,1,
+        1,1,1,1,1,0,1,1,1,0,1,0,1,1,1,1,
+        1,0,1,0,0,0,0,0,0,0,1,0,0,0,0,1,
+        1,0,1,0,1,1,1,1,1,1,1,1,1,1,0,1,
+        1,0,1,0,1,0,0,0,0,0,1,0,0,0,0,1,
+        1,0,1,0,1,1,1,0,1,0,1,0,0,1,0,1,
+        1,0,1,0,0,0,0,0,1,0,0,0,0,1,0,1,
+        1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,1,
+        1,0,0,0,1,0,0,0,0,0,0,0,0,1,0,1,
+        1,0,1,0,1,0,1,1,1,1,1,1,0,1,0,1,
+        1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,1,
+        1,0,1,0,0,0,0,0,0,0,0,1,0,0,0,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    ];
+
+    for x in 0..15 {
+        for y in 0..15 {
+            let position = Point::new((x*16).try_into().unwrap(), (y*16).try_into().unwrap());
+            if maze[x+y*16] == 1 {
+                let tile = Image::new(&wall_bmp, position);
+                tile.draw(&mut display).unwrap();
+            } else {
+                let tile = Image::new(&ground_bmp, position);
+                tile.draw(&mut display).unwrap();
+
+            }
+        }
+    }
+
     let bmp_data = include_bytes!("../assets/img/ghost1.bmp");
     println!("Transforming image");
     let bmp = Bmp::<Rgb565>::from_slice(bmp_data).unwrap();
@@ -105,7 +147,7 @@ fn main() -> ! {
     let ghost2 = Image::new(&bmp, Point::new(10, 20));
 
     Text::new(
-        "ESP-RS",
+        "Ready",
         Point::new(90, 140),
         MonoTextStyle::new(&FONT_9X18_BOLD, RgbColor::RED),
     )
