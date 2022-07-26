@@ -27,6 +27,9 @@ use esp32s2_hal::{
 use panic_halt as _;
 use xtensa_lx_rt::entry;
 
+use embedded_graphics::{image::Image, pixelcolor::Rgb565};
+use tinybmp::Bmp;
+
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take().unwrap();
@@ -87,6 +90,20 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
+    println!("Loading image");
+    let bmp_data = include_bytes!("../assets/img/ghost1.bmp");
+    println!("Transforming image");
+    let bmp = Bmp::<Rgb565>::from_slice(bmp_data).unwrap();
+    println!("Drawing image");
+    let ghost1 = Image::new(&bmp, Point::new(10, 20));
+    ghost1.draw(&mut display).unwrap();
+    println!("Image visible");
+
+    println!("Loading 2nd image");
+    let bmp_data = include_bytes!("../assets/img/ghost2.bmp");
+    let bmp = Bmp::<Rgb565>::from_slice(bmp_data).unwrap();
+    let ghost2 = Image::new(&bmp, Point::new(10, 20));
+
     Text::new(
         "ESP-RS",
         Point::new(90, 140),
@@ -94,6 +111,11 @@ fn main() -> ! {
     )
     .draw(&mut display)
     .unwrap();
-
-    loop {}
+    let mut delay = Delay::new(&clocks);
+    loop {
+        ghost2.draw(&mut display).unwrap();
+        delay.delay_ms(500u32);
+        ghost1.draw(&mut display).unwrap();
+        delay.delay_ms(500u32);
+    }
 }
