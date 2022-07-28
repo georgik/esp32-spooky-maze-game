@@ -3,7 +3,6 @@
 
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
-    draw_target::DrawTarget,
     prelude::RgbColor,
     mono_font::{
         ascii::{FONT_8X13, FONT_9X18_BOLD},
@@ -22,13 +21,15 @@ use esp32s2_hal::{
     timer::TimerGroup,
     RtcCntl,
     IO,
-    Delay
+    Delay,
+    systimer::{SystemTimer},
 };
 use panic_halt as _;
 use xtensa_lx_rt::entry;
 
 use embedded_graphics::{image::Image, pixelcolor::Rgb565};
 use tinybmp::Bmp;
+// use esp32s2_hal::Rng;
 
 #[entry]
 fn main() -> ! {
@@ -66,7 +67,7 @@ fn main() -> ! {
         mosi,
         Some(miso),
         Some(cs),
-        80u32.kHz(),
+        100000u32.kHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
         &mut clocks,
@@ -99,6 +100,9 @@ fn main() -> ! {
     let wall_bmp = Bmp::<Rgb565>::from_slice(wall_data).unwrap();
 
     println!("Rendering maze");
+    // let mut rng = Rng::new(peripherals.RNG);
+    // let mut buffer = [0u8;8];
+    // rng.read(&mut buffer).unwrap();
 
     let maze: [u8; 16*16] = [
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -119,6 +123,8 @@ fn main() -> ! {
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
     ];
 
+    let start_timestamp = SystemTimer::now();
+
     for x in 0..15 {
         for y in 0..15 {
             let position = Point::new((x*16).try_into().unwrap(), (y*16).try_into().unwrap());
@@ -132,6 +138,8 @@ fn main() -> ! {
             }
         }
     }
+    let end_timestamp = SystemTimer::now();
+    println!("Rendering took: {}ms", (end_timestamp - start_timestamp) / 100000);
 
     let bmp_data = include_bytes!("../assets/img/ghost1.bmp");
     println!("Transforming image");
