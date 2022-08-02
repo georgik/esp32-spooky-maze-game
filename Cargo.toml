@@ -26,8 +26,12 @@ panic-halt = "0.2"
 tinybmp = "0.3.3"
 
 [features]
-default = ["rt", "esp32s2_usb_otg"]
+# default = ["rt", "esp32s2_usb_otg"]
+default = ["rt", "esp32s2_ili9341"]
 rt = ["xtensa-lx-rt"]
 
-# Enable this feature in case you have an ESP32S2-USB-OTG preview board
+# Enable this feature in case you have an ESP32S2-USB-OTG board
 esp32s2_usb_otg = []
+
+# Enable this feature in case you have an ESP32S2 with ILI9341
+esp32s2_ili9341 = []

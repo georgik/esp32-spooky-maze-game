@@ -31,6 +31,9 @@ use embedded_graphics::{image::Image, pixelcolor::Rgb565};
 use tinybmp::Bmp;
 // use esp32s2_hal::Rng;
 
+#[cfg(feature = "esp32s2_ili9341")]
+use ili9341::{DisplaySize240x320, Ili9341, Orientation};
+
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take().unwrap();
@@ -48,7 +51,7 @@ fn main() -> ! {
     wdt0.disable();
     wdt1.disable();
 
-    println!("About to initialize the SPI LED driver ST7789VW");
+    println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
     let backlight = io.pins.gpio9;
     let mut backlight = backlight.into_push_pull_output();
@@ -75,11 +78,19 @@ fn main() -> ! {
 
     let di = SPIInterfaceNoCS::new(spi, dc.into_push_pull_output());
     let reset = rst.into_push_pull_output();
-    let mut display = st7789::ST7789::new(di, reset, 240, 240);
     let mut delay = Delay::new(&clocks);
 
+    #[cfg(feature="esp32s2_usb_otg")]
+    let mut display = st7789::ST7789::new(di, reset, 240, 240);
+    #[cfg(feature="esp32s2_ili9341")]
+    let mut display = Ili9341::new(di, reset, &mut delay, Orientation::Portrait, DisplaySize240x320).unwrap();
+
+
+    #[cfg(feature="esp32s2_usb_otg")]
     display.init(&mut delay).unwrap();
+    #[cfg(feature="esp32s2_usb_otg")]
     display.set_orientation(st7789::Orientation::Portrait).unwrap();
+
     // display.clear(RgbColor::WHITE).unwrap();
     println!("Initialized");
 
