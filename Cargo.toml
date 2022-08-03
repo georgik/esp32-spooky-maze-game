@@ -63,19 +63,23 @@ tinybmp = "0.3.3"
 
 [features]
 # default = [ "rt" ]
-# default = [ "rt", "esp32_wrover_kit" ]
-default = ["rt", "esp32s2_usb_otg"]
+default = [ "rt", "esp32_wrover_kit", "eh1"  ]
+# default = ["rt", "esp32s2_usb_otg"]
 # default = ["rt", "esp32s3_usb_otg"]
 # default = ["rt", "esp32s2_ili9341"]
 # default = [ "rt", "esp32c3_ili9341"]
 rt = ["xtensa-lx-rt"]
 # rt = ["riscv-rt"]
-eh1 = ["esp32s2-hal/eh1"]
+eh1 = ["esp32-hal/eh1"]
+# eh1 = ["esp32s2-hal/eh1"]
+# eh1 = ["esp32s3-hal/eh1"]
+
+system_timer = []
 
 esp32 = []
-esp32s2 = []
-esp32s3 = []
-esp32c3 = []
+esp32s2 = [ "system_timer" ]
+esp32s3 = [ "system_timer" ]
+esp32c3 = [ "system_timer" ]
 
 # Enable this feature in case you have an ESP32 Wrover Kit with ILI9341
 esp32_wrover_kit = [ "esp32", "eh1" ]

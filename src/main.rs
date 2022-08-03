@@ -84,6 +84,9 @@ use ili9341::{DisplaySize240x320, Ili9341, Orientation};
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take().unwrap();
+    #[cfg(any(feature = "esp32"))]
+    let mut system = peripherals.DPORT.split();
+    #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
     let mut system = peripherals.SYSTEM.split();
     let mut clocks = ClockControl::boot_defaults(system.clock_control).freeze();
 
@@ -100,20 +103,36 @@ fn main() -> ! {
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-    let backlight = io.pins.gpio9;
+    let backlight = io.pins.gpio5;
     let mut backlight = backlight.into_push_pull_output();
-    backlight.set_high().unwrap();
+    // backlight.set_high().unwrap();
 
     let mosi = io.pins.gpio7;
-    let cs = io.pins.gpio5;
+    // let cs = io.pins.gpio5;
     let rst = io.pins.gpio8;
     let dc = io.pins.gpio4;
     let sck = io.pins.gpio6;
     let miso = io.pins.gpio12;
 
-    #[cfg(any(feature = "esp32", feature = "esp32s2", feature = "esp32s3"))]
+    #[cfg(feature = "esp32")]
+    let rst = io.pins.gpio18;
+    #[cfg(feature = "esp32")]
+    let sck = io.pins.gpio19;
+    #[cfg(feature = "esp32")]
+    let dc = io.pins.gpio21;
+    #[cfg(feature = "esp32")]
+    let cs = io.pins.gpio22;
+    #[cfg(feature = "esp32")]
+    let mosi = io.pins.gpio23;
+    #[cfg(feature = "esp32")]
+    let miso = io.pins.gpio25;
+
+
+
+
+    #[cfg(any(feature = "esp32s2", feature = "esp32s3"))]
     let spi_peripheral = peripherals.SPI3;
-    #[cfg(feature = "esp32c3")]
+    #[cfg(any(feature = "esp32", feature = "esp32c3"))]
     let spi_peripheral = peripherals.SPI2;
 
     let spi = spi::Spi::new(
@@ -186,6 +205,7 @@ fn main() -> ! {
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
     ];
 
+    #[cfg(feature = "system_timer")]
     let start_timestamp = SystemTimer::now();
 
     for x in 0..15 {
@@ -201,7 +221,10 @@ fn main() -> ! {
             }
         }
     }
+
+    #[cfg(feature = "system_timer")]
     let end_timestamp = SystemTimer::now();
+    #[cfg(feature = "system_timer")]
     println!("Rendering took: {}ms", (end_timestamp - start_timestamp) / 100000);
 
     let bmp_data = include_bytes!("../assets/img/ghost1.bmp");
