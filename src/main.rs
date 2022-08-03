@@ -12,7 +12,23 @@ use embedded_graphics::{
     text::Text,
     Drawable,
 };
+
 use esp_println::println;
+
+#[cfg(feature="esp32")]
+use esp32_hal::{
+    clock::ClockControl,
+    pac::Peripherals,
+    prelude::*,
+    spi,
+    timer::TimerGroup,
+    RtcCntl,
+    IO,
+    Delay,
+    // systimer was introduced in ESP32-S2, it's not available for ESP32
+    //systimer::{SystemTimer},
+};
+
 #[cfg(feature="esp32s2")]
 use esp32s2_hal::{
     clock::ClockControl,
@@ -37,14 +53,32 @@ use esp32s3_hal::{
     Delay,
     systimer::{SystemTimer},
 };
+#[cfg(feature="esp32c3")]
+use esp32c3_hal::{
+    clock::ClockControl,
+    pac::Peripherals,
+    prelude::*,
+    spi,
+    timer::TimerGroup,
+    RtcCntl,
+    IO,
+    Delay,
+    systimer::{SystemTimer},
+};
+
+
 use panic_halt as _;
+
+#[cfg(feature="xtensa-lx-rt")]
 use xtensa_lx_rt::entry;
+#[cfg(feature="riscv-rt")]
+use riscv_rt::entry;
 
 use embedded_graphics::{image::Image, pixelcolor::Rgb565};
 use tinybmp::Bmp;
 // use esp32s2_hal::Rng;
 
-#[cfg(feature = "esp32s2_ili9341")]
+#[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
 use ili9341::{DisplaySize240x320, Ili9341, Orientation};
 
 #[entry]
@@ -77,8 +111,13 @@ fn main() -> ! {
     let sck = io.pins.gpio6;
     let miso = io.pins.gpio12;
 
+    #[cfg(any(feature = "esp32", feature = "esp32s2", feature = "esp32s3"))]
+    let spi_peripheral = peripherals.SPI3;
+    #[cfg(feature = "esp32c3")]
+    let spi_peripheral = peripherals.SPI2;
+
     let spi = spi::Spi::new(
-        peripherals.SPI3,
+        spi_peripheral,
         sck,
         mosi,
         miso,
@@ -95,7 +134,7 @@ fn main() -> ! {
 
     #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
     let mut display = st7789::ST7789::new(di, reset, 240, 240);
-    #[cfg(feature="esp32s2_ili9341")]
+    #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
     let mut display = Ili9341::new(di, reset, &mut delay, Orientation::Portrait, DisplaySize240x320).unwrap();
 
 

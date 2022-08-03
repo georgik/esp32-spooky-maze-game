@@ -5,7 +5,19 @@ authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
 
+[target.xtensa-esp32-none-elf.dependencies]
+xtensa-atomic-emulation-trap = "0.1.0"
+esp32-hal = { package = "esp32-hal", git = "https://github.com/esp-rs/esp-hal.git" }
+esp-backtrace = { git = "https://github.com/esp-rs/esp-backtrace", features = [
+    "esp32",
+    "panic-handler",
+    "print-uart",
+] }
+xtensa-lx-rt = { version = "0.12.0", features = ["esp32"], optional = true }
+esp-println = { version = "0.2.1", features = [ "esp32" ] }
+
 [target.xtensa-esp32s2-none-elf.dependencies]
+xtensa-atomic-emulation-trap = "0.1.0"
 esp32s2-hal = { package = "esp32s2-hal", git = "https://github.com/esp-rs/esp-hal.git" }
 esp-backtrace = { git = "https://github.com/esp-rs/esp-backtrace", features = [
     "esp32s2",
@@ -16,6 +28,7 @@ xtensa-lx-rt = { version = "0.12.0", features = ["esp32s2"], optional = true }
 esp-println = { version = "0.2.1", features = [ "esp32s2" ] }
 
 [target.xtensa-esp32s3-none-elf.dependencies]
+xtensa-atomic-emulation-trap = "0.1.0"
 esp32s3-hal = { package = "esp32s3-hal", git = "https://github.com/esp-rs/esp-hal.git" }
 esp-backtrace = { git = "https://github.com/esp-rs/esp-backtrace", features = [
     "esp32s3",
@@ -25,9 +38,19 @@ esp-backtrace = { git = "https://github.com/esp-rs/esp-backtrace", features = [
 xtensa-lx-rt = { version = "0.12.0", features = ["esp32s3"], optional = true }
 esp-println = { version = "0.2.1", features = [ "esp32s3" ] }
 
+[target.riscv32imc-unknown-none-elf.dependencies]
+esp32c3-hal = { package = "esp32c3-hal", git = "https://github.com/esp-rs/esp-hal.git" }
+esp-backtrace = { git = "https://github.com/esp-rs/esp-backtrace", features = [
+    "esp32c3",
+    "panic-handler",
+    "print-uart",
+] }
+riscv-rt = { version = "0.8", optional = true }
+esp-println = { version = "0.2.1", features = [ "esp32c3" ] }
+
+
 
 [dependencies]
-xtensa-atomic-emulation-trap = "0.1.0"
 embedded-graphics = "0.7"
 embedded-hal = "0.2"
 display-interface = "0.4"
@@ -37,11 +60,16 @@ st7789 = "0.6"
 panic-halt = "0.2"
 tinybmp = "0.3.3"
 
+
 [features]
-# default = ["rt", "esp32s2_usb_otg"]
-default = ["rt", "esp32s3_usb_otg"]
+# default = [ "rt" ]
+# default = [ "rt", "esp32_wrover_kit" ]
+default = ["rt", "esp32s2_usb_otg"]
+# default = ["rt", "esp32s3_usb_otg"]
 # default = ["rt", "esp32s2_ili9341"]
+# default = [ "rt", "esp32c3_ili9341"]
 rt = ["xtensa-lx-rt"]
+# rt = ["riscv-rt"]
 eh1 = ["esp32s2-hal/eh1"]
 
 esp32 = []
@@ -49,11 +77,17 @@ esp32s2 = []
 esp32s3 = []
 esp32c3 = []
 
-# Enable this feature in case you have an ESP32-S3-USB-OTG board
+# Enable this feature in case you have an ESP32 Wrover Kit with ILI9341
+esp32_wrover_kit = [ "esp32", "eh1" ]
+
+# Enable this feature in case you have an ESP32-S3-USB-OTG board with ST7789
 esp32s2_usb_otg = [ "esp32s2" ]
 
-# Enable this feature in case you have an ESP32-S3-USB-OTG board
+# Enable this feature in case you have an ESP32-S3-USB-OTG board with ST7789
 esp32s3_usb_otg = [ "esp32s3" ]
 
 # Enable this feature in case you have an ESP32S2 with ILI9341
 esp32s2_ili9341 = [ "esp32s2", "eh1" ]
+
+# Enable this feature in case you have an ESP32-C3 Rust board with ILI9341
+esp32c3_ili9341 = [ "esp32c3" ]
