@@ -29,9 +29,10 @@ tinybmp = "0.3.3"
 # default = ["rt", "esp32s2_usb_otg"]
 default = ["rt", "esp32s2_ili9341"]
 rt = ["xtensa-lx-rt"]
+eh1 = ["esp32s2-hal/eh1"]
 
 # Enable this feature in case you have an ESP32S2-USB-OTG board
 esp32s2_usb_otg = []
 
 # Enable this feature in case you have an ESP32S2 with ILI9341
-esp32s2_ili9341 = []
+esp32s2_ili9341 = [ "eh1" ]
