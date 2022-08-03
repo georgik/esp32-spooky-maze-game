@@ -13,7 +13,20 @@ use embedded_graphics::{
     Drawable,
 };
 use esp_println::println;
+#[cfg(feature="esp32s2")]
 use esp32s2_hal::{
+    clock::ClockControl,
+    pac::Peripherals,
+    prelude::*,
+    spi,
+    timer::TimerGroup,
+    RtcCntl,
+    IO,
+    Delay,
+    systimer::{SystemTimer},
+};
+#[cfg(feature="esp32s3")]
+use esp32s3_hal::{
     clock::ClockControl,
     pac::Peripherals,
     prelude::*,
@@ -80,15 +93,15 @@ fn main() -> ! {
     let reset = rst.into_push_pull_output();
     let mut delay = Delay::new(&clocks);
 
-    #[cfg(feature="esp32s2_usb_otg")]
+    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
     let mut display = st7789::ST7789::new(di, reset, 240, 240);
     #[cfg(feature="esp32s2_ili9341")]
     let mut display = Ili9341::new(di, reset, &mut delay, Orientation::Portrait, DisplaySize240x320).unwrap();
 
 
-    #[cfg(feature="esp32s2_usb_otg")]
+    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
     display.init(&mut delay).unwrap();
-    #[cfg(feature="esp32s2_usb_otg")]
+    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
     display.set_orientation(st7789::Orientation::Portrait).unwrap();
 
     // display.clear(RgbColor::WHITE).unwrap();

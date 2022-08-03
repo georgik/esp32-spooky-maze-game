@@ -20,6 +20,13 @@ cargo espflash --release --features esp32s2_ili9341
 cargo espflash --release --features esp32s2_usb_otg
 ```
 
+### Build for ESP32-S3-USB-ORG with ST7789
+
+```
+cargo espflash --release --features esp32s3_usb_otg
+```
+
+
 ## Plans
 
 - [ ] add support for ESP32-S3-USB-OTG
