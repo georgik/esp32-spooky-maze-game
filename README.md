@@ -31,13 +31,13 @@ cargo espflash --release --target xtensa-esp32-none-elf --features esp32_wrover_
 cargo espflash --release --target xtensa-esp32s2-none-elf --features esp32s2_ili9341
 ```
 
-### Build for ESP32-S2-USB-ORG with ST7789
+### Build for ESP32-S2-USB-OTG with ST7789
 
 ```
 cargo espflash --release --target xtensa-esp32s2-none-elf --features esp32s2_usb_otg
 ```
 
-### Build for ESP32-S3-USB-ORG with ST7789
+### Build for ESP32-S3-USB-OTG with ST7789
 
 ```
 cargo espflash --release --target xtensa-esp32s3-none-elf --features esp32s3_usb_otg
