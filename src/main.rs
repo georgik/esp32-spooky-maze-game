@@ -16,45 +16,15 @@ use embedded_graphics::{
 use esp_println::println;
 
 #[cfg(feature="esp32")]
-use esp32_hal::{
-    clock::ClockControl,
-    pac::Peripherals,
-    prelude::*,
-    spi,
-    timer::TimerGroup,
-    RtcCntl,
-    IO,
-    Delay,
-    // systimer was introduced in ESP32-S2, it's not available for ESP32
-    //systimer::{SystemTimer},
-};
-
+use esp32_hal as hal;
 #[cfg(feature="esp32s2")]
-use esp32s2_hal::{
-    clock::ClockControl,
-    pac::Peripherals,
-    prelude::*,
-    spi,
-    timer::TimerGroup,
-    RtcCntl,
-    IO,
-    Delay,
-    systimer::{SystemTimer},
-};
+use esp32s2_hal as hal;
 #[cfg(feature="esp32s3")]
-use esp32s3_hal::{
-    clock::ClockControl,
-    pac::Peripherals,
-    prelude::*,
-    spi,
-    timer::TimerGroup,
-    RtcCntl,
-    IO,
-    Delay,
-    systimer::{SystemTimer},
-};
+use esp32s3_hal as hal;
 #[cfg(feature="esp32c3")]
-use esp32c3_hal::{
+use esp32c3_hal as hal;
+
+use hal::{
     clock::ClockControl,
     pac::Peripherals,
     prelude::*,
@@ -63,9 +33,11 @@ use esp32c3_hal::{
     RtcCntl,
     IO,
     Delay,
-    systimer::{SystemTimer},
 };
 
+// systimer was introduced in ESP32-S2, it's not available for ESP32
+#[cfg(feature="system_timer")]
+use hal::systimer::{SystemTimer};
 
 use panic_halt as _;
 
@@ -113,6 +85,10 @@ fn main() -> ! {
     let dc = io.pins.gpio4;
     let sck = io.pins.gpio6;
     let miso = io.pins.gpio12;
+
+    // let (miso, mosi, rst, dc, sck) = if cfg!(feature = "esp32") {
+    //     (io.pins.gpio25, io.pins.gpio23, io.pins.gpio18, io.pins.gpio21, io.pins.gpio19 )
+    // };
 
     #[cfg(feature = "esp32")]
     let rst = io.pins.gpio18;
