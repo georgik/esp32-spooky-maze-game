@@ -12,21 +12,19 @@ use embedded_graphics::{
     text::Text,
     Drawable,
 };
+
 use esp_println::println;
+
+#[cfg(feature="esp32")]
+use esp32_hal as hal;
 #[cfg(feature="esp32s2")]
-use esp32s2_hal::{
-    clock::ClockControl,
-    pac::Peripherals,
-    prelude::*,
-    spi,
-    timer::TimerGroup,
-    RtcCntl,
-    IO,
-    Delay,
-    systimer::{SystemTimer},
-};
+use esp32s2_hal as hal;
 #[cfg(feature="esp32s3")]
-use esp32s3_hal::{
+use esp32s3_hal as hal;
+#[cfg(feature="esp32c3")]
+use esp32c3_hal as hal;
+
+use hal::{
     clock::ClockControl,
     pac::Peripherals,
     prelude::*,
@@ -35,21 +33,32 @@ use esp32s3_hal::{
     RtcCntl,
     IO,
     Delay,
-    systimer::{SystemTimer},
 };
+
+// systimer was introduced in ESP32-S2, it's not available for ESP32
+#[cfg(feature="system_timer")]
+use hal::systimer::{SystemTimer};
+
 use panic_halt as _;
+
+#[cfg(feature="xtensa-lx-rt")]
 use xtensa_lx_rt::entry;
+#[cfg(feature="riscv-rt")]
+use riscv_rt::entry;
 
 use embedded_graphics::{image::Image, pixelcolor::Rgb565};
 use tinybmp::Bmp;
 // use esp32s2_hal::Rng;
 
-#[cfg(feature = "esp32s2_ili9341")]
+#[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
 use ili9341::{DisplaySize240x320, Ili9341, Orientation};
 
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take().unwrap();
+    #[cfg(any(feature = "esp32"))]
+    let mut system = peripherals.DPORT.split();
+    #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
     let mut system = peripherals.SYSTEM.split();
     let mut clocks = ClockControl::boot_defaults(system.clock_control).freeze();
 
@@ -66,36 +75,63 @@ fn main() -> ! {
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-    let backlight = io.pins.gpio9;
-    let mut backlight = backlight.into_push_pull_output();
+    #[cfg(feature = "esp32")]
+    let mut backlight = io.pins.gpio5.into_push_pull_output();
+    #[cfg(any(feature = "esp32s2", feature = "esp32s3"))]
+    let mut backlight = io.pins.gpio9.into_push_pull_output();
+
+    #[cfg(feature = "esp32")]
+    backlight.set_low().unwrap();
+    #[cfg(any(feature = "esp32s2", feature = "esp32s3"))]
     backlight.set_high().unwrap();
 
-    let mosi = io.pins.gpio7;
-    let cs = io.pins.gpio5;
-    let rst = io.pins.gpio8;
-    let dc = io.pins.gpio4;
-    let sck = io.pins.gpio6;
-    let miso = io.pins.gpio12;
-
+    #[cfg(feature = "esp32")]
     let spi = spi::Spi::new(
-        peripherals.SPI3,
-        sck,
-        mosi,
-        miso,
-        cs,
-        100000u32.kHz(),
+        peripherals.SPI2,
+        io.pins.gpio19,
+        io.pins.gpio23,
+        io.pins.gpio25,
+        io.pins.gpio22,
+        100u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
-        &mut clocks,
-    );
+        &mut clocks);
 
-    let di = SPIInterfaceNoCS::new(spi, dc.into_push_pull_output());
-    let reset = rst.into_push_pull_output();
+    #[cfg(any(feature = "esp32s2", feature = "esp32s3"))]
+    let spi = spi::Spi::new(
+        peripherals.SPI3,
+        io.pins.gpio6,
+        io.pins.gpio7,
+        io.pins.gpio12,
+        io.pins.gpio5,
+        100u32.MHz(),
+        spi::SpiMode::Mode0,
+        &mut system.peripheral_clock_control,
+        &mut clocks);
+
+    #[cfg(feature = "esp32c3")]
+    let spi = spi::Spi::new(
+        peripherals.SPI2,
+        io.pins.gpio19,
+        io.pins.gpio23,
+        io.pins.gpio25,
+        io.pins.gpio22,
+        100u32.MHz(),
+        spi::SpiMode::Mode0,
+        &mut system.peripheral_clock_control,
+        &mut clocks);
+
+    #[cfg(feature = "esp32")]
+    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio21.into_push_pull_output());
+    #[cfg(any(feature = "esp32s2", feature = "esp32s3"))]
+    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio4.into_push_pull_output());
+
+    let reset = io.pins.gpio18.into_push_pull_output();
     let mut delay = Delay::new(&clocks);
 
     #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
     let mut display = st7789::ST7789::new(di, reset, 240, 240);
-    #[cfg(feature="esp32s2_ili9341")]
+    #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
     let mut display = Ili9341::new(di, reset, &mut delay, Orientation::Portrait, DisplaySize240x320).unwrap();
 
 
@@ -147,6 +183,7 @@ fn main() -> ! {
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
     ];
 
+    #[cfg(feature = "system_timer")]
     let start_timestamp = SystemTimer::now();
 
     for x in 0..15 {
@@ -162,7 +199,10 @@ fn main() -> ! {
             }
         }
     }
+
+    #[cfg(feature = "system_timer")]
     let end_timestamp = SystemTimer::now();
+    #[cfg(feature = "system_timer")]
     println!("Rendering took: {}ms", (end_timestamp - start_timestamp) / 100000);
 
     let bmp_data = include_bytes!("../assets/img/ghost1.bmp");
