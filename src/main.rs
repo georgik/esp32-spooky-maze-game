@@ -75,56 +75,55 @@ fn main() -> ! {
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-    let backlight = io.pins.gpio5;
-    let mut backlight = backlight.into_push_pull_output();
-    // backlight.set_high().unwrap();
-
-    let mosi = io.pins.gpio7;
-    // let cs = io.pins.gpio5;
-    let rst = io.pins.gpio8;
-    let dc = io.pins.gpio4;
-    let sck = io.pins.gpio6;
-    let miso = io.pins.gpio12;
-
-    // let (miso, mosi, rst, dc, sck) = if cfg!(feature = "esp32") {
-    //     (io.pins.gpio25, io.pins.gpio23, io.pins.gpio18, io.pins.gpio21, io.pins.gpio19 )
-    // };
+    let mut backlight = io.pins.gpio5.into_push_pull_output();
 
     #[cfg(feature = "esp32")]
-    let rst = io.pins.gpio18;
-    #[cfg(feature = "esp32")]
-    let sck = io.pins.gpio19;
-    #[cfg(feature = "esp32")]
-    let dc = io.pins.gpio21;
-    #[cfg(feature = "esp32")]
-    let cs = io.pins.gpio22;
-    #[cfg(feature = "esp32")]
-    let mosi = io.pins.gpio23;
-    #[cfg(feature = "esp32")]
-    let miso = io.pins.gpio25;
-
-
-
-
+    backlight.set_low().unwrap();
     #[cfg(any(feature = "esp32s2", feature = "esp32s3"))]
-    let spi_peripheral = peripherals.SPI3;
-    #[cfg(any(feature = "esp32", feature = "esp32c3"))]
-    let spi_peripheral = peripherals.SPI2;
+    backlight.set_high().unwrap();
 
+    #[cfg(feature = "esp32")]
     let spi = spi::Spi::new(
-        spi_peripheral,
-        sck,
-        mosi,
-        miso,
-        cs,
-        100000u32.kHz(),
+        peripherals.SPI2,
+        io.pins.gpio19,
+        io.pins.gpio23,
+        io.pins.gpio25,
+        io.pins.gpio22,
+        100u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
-        &mut clocks,
-    );
+        &mut clocks);
 
-    let di = SPIInterfaceNoCS::new(spi, dc.into_push_pull_output());
-    let reset = rst.into_push_pull_output();
+    #[cfg(any(feature = "esp32s2", feature = "esp32s3"))]
+    let spi = spi::Spi::new(
+        peripherals.SPI3,
+        io.pins.gpio6,
+        io.pins.gpio7,
+        io.pins.gpio12,
+        io.pins.gpio5,
+        100u32.MHz(),
+        spi::SpiMode::Mode0,
+        &mut system.peripheral_clock_control,
+        &mut clocks);
+
+    #[cfg(feature = "esp32c3")]
+    let spi = spi::Spi::new(
+        peripherals.SPI2,
+        io.pins.gpio19,
+        io.pins.gpio23,
+        io.pins.gpio25,
+        io.pins.gpio22,
+        100u32.MHz(),
+        spi::SpiMode::Mode0,
+        &mut system.peripheral_clock_control,
+        &mut clocks);
+
+    #[cfg(feature = "esp32")]
+    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio21.into_push_pull_output());
+    #[cfg(any(feature = "esp32s2", feature = "esp32s3"))]
+    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio4.into_push_pull_output());
+
+    let reset = io.pins.gpio18.into_push_pull_output();
     let mut delay = Delay::new(&clocks);
 
     #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
