@@ -62,8 +62,8 @@ tinybmp = "0.3.3"
 
 
 [features]
-# default = [ "rt" ]
-default = [ "rt", "esp32_wrover_kit", "eh1"  ]
+default = [ "rt" ]
+# default = [ "rt", "esp32_wrover_kit"  ]
 # default = ["rt", "esp32s2_usb_otg"]
 # default = ["rt", "esp32s3_usb_otg"]
 # default = ["rt", "esp32s2_ili9341"]

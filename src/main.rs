@@ -75,7 +75,10 @@ fn main() -> ! {
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
+    #[cfg(feature = "esp32")]
     let mut backlight = io.pins.gpio5.into_push_pull_output();
+    #[cfg(any(feature = "esp32s2", feature = "esp32s3"))]
+    let mut backlight = io.pins.gpio9.into_push_pull_output();
 
     #[cfg(feature = "esp32")]
     backlight.set_low().unwrap();
