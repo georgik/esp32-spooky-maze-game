@@ -22,25 +22,25 @@ If no value is selected, make sure to specify features on command line.
 ### Build for ESP32 Wrover Kit
 
 ```
-cargo espflash --release --target xtensa-esp32-none-elf --features esp32_wrover_kit
+cargo espflash --release --target xtensa-esp32-none-elf --features esp32_wrover_kit --monitor
 ```
 
 ### Build for ESP32-S2 with ILI9341
 
 ```
-cargo espflash --release --target xtensa-esp32s2-none-elf --features esp32s2_ili9341
+cargo espflash --release --target xtensa-esp32s2-none-elf --features esp32s2_ili9341 --monitor
 ```
 
 ### Build for ESP32-S2-USB-OTG with ST7789
 
 ```
-cargo espflash --release --target xtensa-esp32s2-none-elf --features esp32s2_usb_otg
+cargo espflash --release --target xtensa-esp32s2-none-elf --features esp32s2_usb_otg --monitor
 ```
 
 ### Build for ESP32-S3-USB-OTG with ST7789
 
 ```
-cargo espflash --release --target xtensa-esp32s3-none-elf --features esp32s3_usb_otg
+cargo espflash --release --target xtensa-esp32s3-none-elf --features esp32s3_usb_otg --monitor
 ```
 
 ### Build for ESP32-C3 with ILI9341
@@ -48,7 +48,7 @@ cargo espflash --release --target xtensa-esp32s3-none-elf --features esp32s3_usb
 It's necessary to override default toolchain specified in `rust-toolchain.toml`. One option is to pass `+nightly` to command line.
 
 ```
-cargo +nightly espflash --release --target riscv32imac-unknown-none-elf --features esp32c3_ili9341
+cargo +nightly espflash --release --target riscv32imac-unknown-none-elf --features esp32c3_ili9341 --monitor
 ```
 
 
