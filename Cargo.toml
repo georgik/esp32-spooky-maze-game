@@ -38,7 +38,7 @@ esp-backtrace = { git = "https://github.com/esp-rs/esp-backtrace", features = [
 xtensa-lx-rt = { version = "0.12.0", features = ["esp32s3"], optional = true }
 esp-println = { version = "0.2.1", features = [ "esp32s3" ] }
 
-[target.riscv32imc-unknown-none-elf.dependencies]
+[target.riscv32imac-unknown-none-elf.dependencies]
 esp32c3-hal = { package = "esp32c3-hal", git = "https://github.com/esp-rs/esp-hal.git" }
 esp-backtrace = { git = "https://github.com/esp-rs/esp-backtrace", features = [
     "esp32c3",
