@@ -4,21 +4,6 @@ Rust reimplementation of simple game for ESP32. Work in progress.
 
 ## Build and flash
 
-Check `target` configurad in the file `.cargo/config.toml`.
-It should be one of following values:
-```
-target = "xtensa-esp32-none-elf"
-target = "xtensa-esp32s2-none-elf"
-target = "xtensa-esp32s3-none-elf"
-target = "riscv32imac-unknown-none-elf"
-```
-
-If no value is selected, make sure to specify target on command line.
-
-Check default `features` in `Cargo.toml`. Make sure that default set contains your board and display combinations.
-
-If no value is selected, make sure to specify features on command line.
-
 ### Build for ESP32 Wrover Kit
 
 ```
@@ -51,6 +36,24 @@ It's necessary to override default toolchain specified in `rust-toolchain.toml`.
 cargo +nightly espflash --release --target riscv32imac-unknown-none-elf --features esp32c3_ili9341 --monitor
 ```
 
+## Development
+
+Following steps are useful for IDE integration, so that IDE can recognize which is your current target and fature set.
+
+Check `target` configurad in the file `.cargo/config.toml`.
+It should be one of following values:
+```
+target = "xtensa-esp32-none-elf"
+target = "xtensa-esp32s2-none-elf"
+target = "xtensa-esp32s3-none-elf"
+target = "riscv32imac-unknown-none-elf"
+```
+
+If no value is selected, make sure to specify target on command line.
+
+Check default `features` in `Cargo.toml`. Make sure that default set contains your board and display combinations.
+
+If no value is selected, make sure to specify features on command line.
 
 ## Plans
 
