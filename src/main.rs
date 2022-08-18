@@ -30,6 +30,7 @@ use hal::{
     prelude::*,
     spi,
     timer::TimerGroup,
+    Rng,
     Rtc,
     IO,
     Delay,
@@ -170,11 +171,8 @@ fn main() -> ! {
     let wall_bmp = Bmp::<Rgb565>::from_slice(wall_data).unwrap();
 
     println!("Rendering maze");
-    // let mut rng = Rng::new(peripherals.RNG);
-    // let mut buffer = [0u8;8];
-    // rng.read(&mut buffer).unwrap();
 
-    let maze: [u8; 16*16] = [
+    let mut maze: [u8; 16*16] = [
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
         1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,
         1,1,1,0,1,1,1,1,1,0,1,0,1,1,0,1,
@@ -192,6 +190,19 @@ fn main() -> ! {
         1,0,1,0,0,0,0,0,0,0,0,1,0,0,0,1,
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
     ];
+
+    let mut rng = Rng::new(peripherals.RNG);
+    for x in 0..15 {
+        let mut buffer = [0u8;16];
+        rng.read(&mut buffer).unwrap();
+        for y in 0..15 {
+            if buffer[y] > 128 {
+                maze[x+y*16] = 1;
+            } else {
+                maze[x+y*16] = 0;
+            }
+        }
+    }
 
     #[cfg(feature = "system_timer")]
     let start_timestamp = SystemTimer::now();
