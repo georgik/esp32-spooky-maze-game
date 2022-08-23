@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(default_alloc_error_handler)]
+#![feature(default_alloc_error_handler)] 
 
 #[global_allocator]
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
@@ -44,7 +44,8 @@ use hal::{
 #[cfg(feature="system_timer")]
 use hal::systimer::{SystemTimer};
 
-use panic_halt as _;
+// use panic_halt as _;
+use esp_backtrace as _;
 
 #[cfg(feature="xtensa-lx-rt")]
 use xtensa_lx_rt::entry;
@@ -62,7 +63,6 @@ mod recursive_backtracking;
 
 use crate::recursive_backtracking::{Generator, RbGenerator};
 
-use core::num::NonZeroU32;
 use getrandom::Error;
 use getrandom::register_custom_getrandom;
 // Some application-specific error code

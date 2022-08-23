@@ -11,6 +11,7 @@ rustflags = [
   # Enable the atomic codegen option for Xtensa
   "-C", "target-feature=+s32c1i",
   "-C", "link-arg=-Wl,-Tlinkall.x",
+  "-C", "force-frame-pointers"
 ]
 
 [target.riscv32imac-unknown-none-elf]
@@ -25,4 +26,4 @@ rustflags = [
 # target = "riscv32imac-unknown-none-elf"
 
 [unstable]
-build-std = ["core"]
+build-std = [ "core", "alloc" ]
