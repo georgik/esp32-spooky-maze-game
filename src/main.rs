@@ -61,7 +61,7 @@ use ili9341::{DisplaySize240x320, Ili9341, Orientation};
 
 mod recursive_backtracking;
 
-use crate::recursive_backtracking::{Generator, RbGenerator};
+use crate::recursive_backtracking::{Generator, RbGenerator, Direction};
 
 use getrandom::Error;
 use getrandom::register_custom_getrandom;
@@ -207,30 +207,32 @@ fn main() -> ! {
 
     println!("Rendering maze");
 
-    let mut maze: [u8; 16*16] = [
-        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-        1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,
-        1,1,1,0,1,1,1,1,1,0,1,0,1,1,0,1,
-        1,0,0,0,1,0,0,0,1,0,1,0,1,0,0,1,
-        1,1,1,1,1,0,1,1,1,0,1,0,1,1,1,1,
-        1,0,1,0,0,0,0,0,0,0,1,0,0,0,0,1,
-        1,0,1,0,1,1,1,1,1,1,1,1,1,1,0,1,
-        1,0,1,0,1,0,0,0,0,0,1,0,0,0,0,1,
-        1,0,1,0,1,1,1,0,1,0,1,0,0,1,0,1,
-        1,0,1,0,0,0,0,0,1,0,0,0,0,1,0,1,
-        1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,1,
-        1,0,0,0,1,0,0,0,0,0,0,0,0,1,0,1,
-        1,0,1,0,1,0,1,1,1,1,1,1,0,1,0,1,
-        1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,1,
-        1,0,1,0,0,0,0,0,0,0,0,1,0,0,0,1,
-        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
-    ];
+    // let mut maze: [u8; 16*16] = [
+    //     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+    //     1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,
+    //     1,1,1,0,1,1,1,1,1,0,1,0,1,1,0,1,
+    //     1,0,0,0,1,0,0,0,1,0,1,0,1,0,0,1,
+    //     1,1,1,1,1,0,1,1,1,0,1,0,1,1,1,1,
+    //     1,0,1,0,0,0,0,0,0,0,1,0,0,0,0,1,
+    //     1,0,1,0,1,1,1,1,1,1,1,1,1,1,0,1,
+    //     1,0,1,0,1,0,0,0,0,0,1,0,0,0,0,1,
+    //     1,0,1,0,1,1,1,0,1,0,1,0,0,1,0,1,
+    //     1,0,1,0,0,0,0,0,1,0,0,0,0,1,0,1,
+    //     1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,1,
+    //     1,0,0,0,1,0,0,0,0,0,0,0,0,1,0,1,
+    //     1,0,1,0,1,0,1,1,1,1,1,1,0,1,0,1,
+    //     1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,1,
+    //     1,0,1,0,0,0,0,0,0,0,0,1,0,0,0,1,
+    //     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    // ];
+    // println!("{:?}", maze);
     let rngseed = Some([42; 32]);
 
     let mut generator = RbGenerator::new(rngseed);
     println!("Generating maze");
-    generator.generate(16, 16);
-    println!("{:?}", maze);
+    let maze = generator.generate(16, 16).unwrap();
+    println!("Serialized maze:");
+    
 
     // for x in 0..15 {
     //     let mut buffer = [0u8;16];
@@ -249,17 +251,20 @@ fn main() -> ! {
 
     for x in 0..15 {
         for y in 0..15 {
+            let field = maze.get_field(&(x,y).into()).unwrap();
             let position = Point::new((x*16).try_into().unwrap(), (y*16).try_into().unwrap());
-            if maze[x+y*16] == 1 {
-                let tile = Image::new(&wall_bmp, position);
+            // if maze[x+y*16] == 1 {
+            if field.has_passage(&Direction::North) {
+                let tile = Image::new(&ground_bmp, position);
                 tile.draw(&mut display).unwrap();
             } else {
-                let tile = Image::new(&ground_bmp, position);
+                let tile = Image::new(&wall_bmp, position);
                 tile.draw(&mut display).unwrap();
 
             }
         }
     }
+
 
     #[cfg(feature = "system_timer")]
     let end_timestamp = SystemTimer::now();
