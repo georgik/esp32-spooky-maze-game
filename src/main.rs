@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(default_alloc_error_handler)] 
+#![feature(default_alloc_error_handler)]
 
 #[global_allocator]
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
@@ -87,6 +87,9 @@ register_custom_getrandom!(always_fail);
 
 #[entry]
 fn main() -> ! {
+    const HEAP_SIZE: usize = 65535;
+    static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
+    unsafe { ALLOCATOR.init(HEAP.as_mut_ptr(), HEAP_SIZE) }
     let peripherals = Peripherals::take().unwrap();
     let mut rng = Rng::new(peripherals.RNG);
     #[cfg(any(feature = "esp32"))]
@@ -225,8 +228,9 @@ fn main() -> ! {
     let rngseed = Some([42; 32]);
 
     let mut generator = RbGenerator::new(rngseed);
-            generator.generate(16, 16);
-            println!("{:?}", maze);
+    println!("Generating maze");
+    generator.generate(16, 16);
+    println!("{:?}", maze);
 
     // for x in 0..15 {
     //     let mut buffer = [0u8;16];
