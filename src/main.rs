@@ -1,5 +1,9 @@
 #![no_std]
 #![no_main]
+#![feature(default_alloc_error_handler)]
+
+#[global_allocator]
+static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
@@ -56,16 +60,26 @@ use ili9341::{DisplaySize240x320, Ili9341, Orientation};
 
 mod recursive_backtracking;
 
-use crate::recursive_backtracking::RbGenerator;
+use crate::recursive_backtracking::{Generator, RbGenerator};
 
 use core::num::NonZeroU32;
 use getrandom::Error;
 use getrandom::register_custom_getrandom;
 // Some application-specific error code
+
+
 const MY_CUSTOM_ERROR_CODE: u32 = Error::CUSTOM_START + 42;
-pub fn always_fail(buf: &mut [u8]) -> Result<(), Error> {
-    let code = NonZeroU32::new(MY_CUSTOM_ERROR_CODE).unwrap();
-    Err(Error::from(code))
+pub fn always_fail(buf: &mut [u8]) -> Result<(), getrandom::Error> {
+    // let code = NonZeroU32::new(MY_CUSTOM_ERROR_CODE).unwrap();
+    // Err(Error::from(code))
+unsafe {
+    let peripherals = Peripherals::steal();
+    let mut rng = Rng::new(peripherals.RNG);
+    // let mut buffer = [0u8;16];
+    rng.read(buf).unwrap();
+}
+
+    Ok(())
 }
 
 register_custom_getrandom!(always_fail);
@@ -74,7 +88,7 @@ register_custom_getrandom!(always_fail);
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take().unwrap();
-   
+    let mut rng = Rng::new(peripherals.RNG);
     #[cfg(any(feature = "esp32"))]
     let mut system = peripherals.DPORT.split();
     #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
@@ -208,23 +222,23 @@ fn main() -> ! {
         1,0,1,0,0,0,0,0,0,0,0,1,0,0,0,1,
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
     ];
-
+    let rngseed = Some([42; 32]);
 
     let mut generator = RbGenerator::new(rngseed);
             generator.generate(16, 16);
             println!("{:?}", maze);
-    let mut rng = Rng::new(peripherals.RNG);
-    for x in 0..15 {
-        let mut buffer = [0u8;16];
-        rng.read(&mut buffer).unwrap();
-        for y in 0..15 {
-            if buffer[y] > 128 {
-                maze[x+y*16] = 1;
-            } else {
-                maze[x+y*16] = 0;
-            }
-        }
-    }
+
+    // for x in 0..15 {
+    //     let mut buffer = [0u8;16];
+    //     rng.read(&mut buffer).unwrap();
+    //     for y in 0..15 {
+    //         if buffer[y] > 128 {
+    //             maze[x+y*16] = 1;
+    //         } else {
+    //             maze[x+y*16] = 0;
+    //         }
+    //     }
+    // }
 
     #[cfg(feature = "system_timer")]
     let start_timestamp = SystemTimer::now();

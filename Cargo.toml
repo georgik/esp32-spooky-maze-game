@@ -65,6 +65,11 @@ tinybmp = "0.3.3"
 rand = { version = "0.8.5", default-features = false }
 rand_chacha = { version = "0.3.1", default-features = false }
 # petgraph = "0.6.2"
+petgraph = { git = "https://github.com/zendurix/petgraph.git", branch = "better_no_std", default-features = false, features = ["graphmap"] }
+esp-alloc = "0.1.0"
+fixedbitset = { version = "0.4.2", default-features = false }
+hashbrown = { version = "0.12.3", default-features = false }
+anyhow = { version = "1.0.56",  default-features = false }
 
 
 [features]
