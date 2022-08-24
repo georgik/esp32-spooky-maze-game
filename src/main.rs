@@ -63,24 +63,6 @@ mod recursive_backtracking;
 
 use crate::recursive_backtracking::{Generator, RbGenerator, Direction};
 
-use getrandom::Error;
-use getrandom::register_custom_getrandom;
-
-// pub fn esp_getrandom(buf: &mut [u8]) -> Result<(), getrandom::Error> {
-//     println!("esp_getrandom - start");
-//     unsafe {
-//         let peripherals = Peripherals::steal();
-//         let mut rng = Rng::new(peripherals.RNG);
-//         // let mut buffer = [0u8;16];
-//         rng.read(buf).unwrap();
-//     }
-//     println!("esp_getrandom - end");
-
-//     Ok(())
-// }
-
-// register_custom_getrandom!(esp_getrandom);
-
 
 #[entry]
 fn main() -> ! {
