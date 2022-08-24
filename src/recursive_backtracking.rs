@@ -226,7 +226,7 @@ pub struct RbGenerator {
     rng: ChaChaRng,
 }
 
-use esp_println::println;
+use esp_println::{println, print};
 /// Generic generator Api implemented by all algorithms to generate a maze
 pub trait Generator {
     /// Key function to generate a maze
@@ -262,15 +262,14 @@ impl RbGenerator {
         current_coordinates: Coordinates,
     ) -> Coordinates {
         let mut goal_coords = maze.start;
-        println!("Entering loop direction");
+        print!("+");
         for i_dir in Direction::gen_random_order(&mut self.rng).iter() {
-            println!("Processing direction");
+            print!(".");
             let next_coords = current_coordinates.next(i_dir);
 
             if maze.are_coordinates_inside(&next_coords)
                 && maze.graph.neighbors(next_coords).count() == 0
             {
-                println!("Coordinates inside");
                 maze.graph.add_edge(current_coordinates, next_coords, ());
                 if goal_coords == maze.start {
                     goal_coords = self.carve_passages_from(maze, next_coords);
@@ -279,6 +278,7 @@ impl RbGenerator {
                 }
             }
         }
+        print!("-");
 
         if goal_coords == maze.start {
             current_coordinates
@@ -296,6 +296,7 @@ impl Generator for RbGenerator {
 
         let goal = self.carve_passages_from(&mut maze, start);
         maze.goal = goal;
+        println!(" Ok");
 
         Ok(maze)
     }

@@ -65,25 +65,21 @@ use crate::recursive_backtracking::{Generator, RbGenerator, Direction};
 
 use getrandom::Error;
 use getrandom::register_custom_getrandom;
-// Some application-specific error code
 
+// pub fn esp_getrandom(buf: &mut [u8]) -> Result<(), getrandom::Error> {
+//     println!("esp_getrandom - start");
+//     unsafe {
+//         let peripherals = Peripherals::steal();
+//         let mut rng = Rng::new(peripherals.RNG);
+//         // let mut buffer = [0u8;16];
+//         rng.read(buf).unwrap();
+//     }
+//     println!("esp_getrandom - end");
 
-const MY_CUSTOM_ERROR_CODE: u32 = Error::CUSTOM_START + 42;
-pub fn esp_getrandom(buf: &mut [u8]) -> Result<(), getrandom::Error> {
-    // let code = NonZeroU32::new(MY_CUSTOM_ERROR_CODE).unwrap();
-    // Err(Error::from(code))
-unsafe {
-    let peripherals = Peripherals::steal();
-    let mut rng = Rng::new(peripherals.RNG);
-    // let mut buffer = [0u8;16];
-    rng.read(buf).unwrap();
-}
-    println!("esp_getrandom");
+//     Ok(())
+// }
 
-    Ok(())
-}
-
-register_custom_getrandom!(esp_getrandom);
+// register_custom_getrandom!(esp_getrandom);
 
 
 #[entry]
@@ -92,7 +88,7 @@ fn main() -> ! {
     static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
     unsafe { ALLOCATOR.init(HEAP.as_mut_ptr(), HEAP_SIZE) }
     let peripherals = Peripherals::take().unwrap();
-    let mut rng = Rng::new(peripherals.RNG);
+
     #[cfg(any(feature = "esp32"))]
     let mut system = peripherals.DPORT.split();
     #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
@@ -226,10 +222,16 @@ fn main() -> ! {
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
     ];
-    // println!("{:?}", maze);
-    let rngseed = Some([42; 32]);
 
-    let mut generator = RbGenerator::new(rngseed);
+    // let rngseed = Some([42; 32]);
+
+    println!("Initializing Random Number Generator Seed");
+    let mut rng = Rng::new(peripherals.RNG);
+    let mut seed_buffer = [0u8;32];
+    rng.read(&mut seed_buffer).unwrap();
+
+    println!("Acquiring maze generator");
+    let mut generator = RbGenerator::new(Some(seed_buffer));
     println!("Generating maze");
     let maze_graph = generator.generate(8, 8).unwrap();
 
