@@ -69,7 +69,7 @@ use getrandom::register_custom_getrandom;
 
 
 const MY_CUSTOM_ERROR_CODE: u32 = Error::CUSTOM_START + 42;
-pub fn always_fail(buf: &mut [u8]) -> Result<(), getrandom::Error> {
+pub fn esp_getrandom(buf: &mut [u8]) -> Result<(), getrandom::Error> {
     // let code = NonZeroU32::new(MY_CUSTOM_ERROR_CODE).unwrap();
     // Err(Error::from(code))
 unsafe {
@@ -78,11 +78,12 @@ unsafe {
     // let mut buffer = [0u8;16];
     rng.read(buf).unwrap();
 }
+    println!("esp_getrandom");
 
     Ok(())
 }
 
-register_custom_getrandom!(always_fail);
+register_custom_getrandom!(esp_getrandom);
 
 
 #[entry]
@@ -207,54 +208,57 @@ fn main() -> ! {
 
     println!("Rendering maze");
 
-    // let mut maze: [u8; 16*16] = [
-    //     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-    //     1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,
-    //     1,1,1,0,1,1,1,1,1,0,1,0,1,1,0,1,
-    //     1,0,0,0,1,0,0,0,1,0,1,0,1,0,0,1,
-    //     1,1,1,1,1,0,1,1,1,0,1,0,1,1,1,1,
-    //     1,0,1,0,0,0,0,0,0,0,1,0,0,0,0,1,
-    //     1,0,1,0,1,1,1,1,1,1,1,1,1,1,0,1,
-    //     1,0,1,0,1,0,0,0,0,0,1,0,0,0,0,1,
-    //     1,0,1,0,1,1,1,0,1,0,1,0,0,1,0,1,
-    //     1,0,1,0,0,0,0,0,1,0,0,0,0,1,0,1,
-    //     1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,1,
-    //     1,0,0,0,1,0,0,0,0,0,0,0,0,1,0,1,
-    //     1,0,1,0,1,0,1,1,1,1,1,1,0,1,0,1,
-    //     1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,1,
-    //     1,0,1,0,0,0,0,0,0,0,0,1,0,0,0,1,
-    //     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
-    // ];
+    let mut maze: [u8; 16*16] = [
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    ];
     // println!("{:?}", maze);
     let rngseed = Some([42; 32]);
 
     let mut generator = RbGenerator::new(rngseed);
     println!("Generating maze");
-    let maze = generator.generate(16, 16).unwrap();
-    println!("Serialized maze:");
-    
+    let maze_graph = generator.generate(8, 8).unwrap();
 
-    // for x in 0..15 {
-    //     let mut buffer = [0u8;16];
-    //     rng.read(&mut buffer).unwrap();
-    //     for y in 0..15 {
-    //         if buffer[y] > 128 {
-    //             maze[x+y*16] = 1;
-    //         } else {
-    //             maze[x+y*16] = 0;
-    //         }
-    //     }
-    // }
+    println!("Converting to tile maze");
+    for y in 1usize..8 {
+        for x in 1usize..8 {
+            let field = maze_graph.get_field(&(x.try_into().unwrap(),y.try_into().unwrap()).into()).unwrap();
+            let tile_index = (x-1)*2+(y-1)*2*16+1+16;
 
+            maze[tile_index] = 0;
+
+            if field.has_passage(&Direction::West) {
+                maze[tile_index + 1] = 0;
+            }
+
+            if field.has_passage(&Direction::South) {
+                maze[tile_index + 16] = 0;
+            }
+        }
+    }
+
+    println!("Rendering the maze to display");
     #[cfg(feature = "system_timer")]
     let start_timestamp = SystemTimer::now();
 
     for x in 0..15 {
         for y in 0..15 {
-            let field = maze.get_field(&(x,y).into()).unwrap();
             let position = Point::new((x*16).try_into().unwrap(), (y*16).try_into().unwrap());
-            // if maze[x+y*16] == 1 {
-            if field.has_passage(&Direction::North) {
+            if maze[x+y*16] == 0 {
                 let tile = Image::new(&ground_bmp, position);
                 tile.draw(&mut display).unwrap();
             } else {
