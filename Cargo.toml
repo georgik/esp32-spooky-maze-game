@@ -73,7 +73,7 @@ maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "
 
 
 [features]
-default = [ "esp32s3_usb_otg" ]
+# default = [ "esp32s3_usb_otg" ]
 # default = [ "rt" ]
 # default = [ "rt", "esp32_wrover_kit"  ]
 # default = ["rt", "esp32s2_usb_otg"]
