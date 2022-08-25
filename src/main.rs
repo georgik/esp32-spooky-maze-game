@@ -1,5 +1,9 @@
 #![no_std]
 #![no_main]
+#![feature(default_alloc_error_handler)]
+
+#[global_allocator]
+static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
@@ -30,6 +34,7 @@ use hal::{
     prelude::*,
     spi,
     timer::TimerGroup,
+    Rng,
     Rtc,
     IO,
     Delay,
@@ -39,7 +44,8 @@ use hal::{
 #[cfg(feature="system_timer")]
 use hal::systimer::{SystemTimer};
 
-use panic_halt as _;
+// use panic_halt as _;
+use esp_backtrace as _;
 
 #[cfg(feature="xtensa-lx-rt")]
 use xtensa_lx_rt::entry;
@@ -53,9 +59,16 @@ use tinybmp::Bmp;
 #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
 use ili9341::{DisplaySize240x320, Ili9341, Orientation};
 
+use maze_generator::prelude::*;
+use maze_generator::recursive_backtracking::{RbGenerator};
+
 #[entry]
 fn main() -> ! {
+    const HEAP_SIZE: usize = 65535;
+    static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
+    unsafe { ALLOCATOR.init(HEAP.as_mut_ptr(), HEAP_SIZE) }
     let peripherals = Peripherals::take().unwrap();
+
     #[cfg(any(feature = "esp32"))]
     let mut system = peripherals.DPORT.split();
     #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
@@ -170,45 +183,74 @@ fn main() -> ! {
     let wall_bmp = Bmp::<Rgb565>::from_slice(wall_data).unwrap();
 
     println!("Rendering maze");
-    // let mut rng = Rng::new(peripherals.RNG);
-    // let mut buffer = [0u8;8];
-    // rng.read(&mut buffer).unwrap();
 
-    let maze: [u8; 16*16] = [
+    let mut maze: [u8; 16*16] = [
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-        1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,
-        1,1,1,0,1,1,1,1,1,0,1,0,1,1,0,1,
-        1,0,0,0,1,0,0,0,1,0,1,0,1,0,0,1,
-        1,1,1,1,1,0,1,1,1,0,1,0,1,1,1,1,
-        1,0,1,0,0,0,0,0,0,0,1,0,0,0,0,1,
-        1,0,1,0,1,1,1,1,1,1,1,1,1,1,0,1,
-        1,0,1,0,1,0,0,0,0,0,1,0,0,0,0,1,
-        1,0,1,0,1,1,1,0,1,0,1,0,0,1,0,1,
-        1,0,1,0,0,0,0,0,1,0,0,0,0,1,0,1,
-        1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,1,
-        1,0,0,0,1,0,0,0,0,0,0,0,0,1,0,1,
-        1,0,1,0,1,0,1,1,1,1,1,1,0,1,0,1,
-        1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,1,
-        1,0,1,0,0,0,0,0,0,0,0,1,0,0,0,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
     ];
 
+    // let rngseed = Some([42; 32]);
+
+    println!("Initializing Random Number Generator Seed");
+    let mut rng = Rng::new(peripherals.RNG);
+    let mut seed_buffer = [0u8;32];
+    rng.read(&mut seed_buffer).unwrap();
+
+    println!("Acquiring maze generator");
+    let mut generator = RbGenerator::new(Some(seed_buffer));
+    println!("Generating maze");
+    let maze_graph = generator.generate(8, 8).unwrap();
+
+    println!("Converting to tile maze");
+    for y in 1usize..8 {
+        for x in 1usize..8 {
+            let field = maze_graph.get_field(&(x.try_into().unwrap(),y.try_into().unwrap()).into()).unwrap();
+            let tile_index = (x-1)*2+(y-1)*2*16+1+16;
+
+            maze[tile_index] = 0;
+
+            if field.has_passage(&Direction::West) {
+                maze[tile_index + 1] = 0;
+            }
+
+            if field.has_passage(&Direction::South) {
+                maze[tile_index + 16] = 0;
+            }
+        }
+    }
+
+    println!("Rendering the maze to display");
     #[cfg(feature = "system_timer")]
     let start_timestamp = SystemTimer::now();
 
     for x in 0..15 {
         for y in 0..15 {
             let position = Point::new((x*16).try_into().unwrap(), (y*16).try_into().unwrap());
-            if maze[x+y*16] == 1 {
-                let tile = Image::new(&wall_bmp, position);
+            if maze[x+y*16] == 0 {
+                let tile = Image::new(&ground_bmp, position);
                 tile.draw(&mut display).unwrap();
             } else {
-                let tile = Image::new(&ground_bmp, position);
+                let tile = Image::new(&wall_bmp, position);
                 tile.draw(&mut display).unwrap();
 
             }
         }
     }
+
 
     #[cfg(feature = "system_timer")]
     let end_timestamp = SystemTimer::now();

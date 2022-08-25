@@ -2,6 +2,8 @@
 
 Rust reimplementation of simple game for ESP32. Work in progress.
 
+![Spooky on ESP32-S3-USB-OTG](assets/screenshot/esp32-spooky-s3-usb-otg.jpg)
+
 ## Build and flash
 
 ### Build for ESP32 Wrover Kit
@@ -57,6 +59,7 @@ If no value is selected, make sure to specify features on command line.
 
 ## Plans
 
+- [X] randomly generated maze
 - [ ] add Wokwi simulation
 - [ ] add GitPod, CodeSpaces and VS Code Dev Container integration
 - [ ] add support for sprite
