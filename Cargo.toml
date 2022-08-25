@@ -69,6 +69,7 @@ esp-alloc = "0.1.0"
 # fixedbitset = { version = "0.4.2", default-features = false }
 # hashbrown = { version = "0.12.3", default-features = false }
 anyhow = { version = "1.0.56",  default-features = false }
+maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "feature/no_std", default-features = false, features = [ "recursive_backtracking"] }
 
 
 [features]

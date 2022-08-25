@@ -59,10 +59,8 @@ use tinybmp::Bmp;
 #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
 use ili9341::{DisplaySize240x320, Ili9341, Orientation};
 
-mod recursive_backtracking;
-
-use crate::recursive_backtracking::{Generator, RbGenerator, Direction};
-
+use maze_generator::prelude::*;
+use maze_generator::recursive_backtracking::{RbGenerator};
 
 #[entry]
 fn main() -> ! {
