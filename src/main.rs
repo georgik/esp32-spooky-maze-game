@@ -292,29 +292,37 @@ fn main() -> ! {
 
         if button_down_pin.is_low().unwrap() {
             if ghost_x > 0 {
-                ghost_x -= step_size;
+                if maze[(ghost_x/16)-1+ghost_y] == 0 {
+                    ghost_x -= step_size;
+                }
             }
         }
 
         if button_up_pin.is_low().unwrap() {
             if ghost_x < 16*16 {
-                ghost_x += step_size;
+                if maze[(ghost_x/16)+1+ghost_y] == 0 {
+                    ghost_x += step_size;
+                }
             }
         }
 
         if button_menu_pin.is_low().unwrap() {
             if ghost_y > 0 {
-                ghost_y -= step_size;
+                if maze[(ghost_x/16)+ghost_y-step_size] == 0 {
+                    ghost_y -= step_size;
+                }
             }
         }
 
         if button_ok_pin.is_low().unwrap() {
             if ghost_y < 16*16 {
-                ghost_y += step_size;
+                if maze[(ghost_x/16)+ghost_y+step_size] == 0 {
+                    ghost_y += step_size;
+                }
             }
         }
 
-        let ghost2 = Image::new(&bmp, Point::new(ghost_x, ghost_y));
+        let ghost2 = Image::new(&bmp, Point::new(ghost_x.try_into().unwrap(), ghost_y.try_into().unwrap()));
 
         ghost2.draw(&mut display).unwrap();
         delay.delay_ms(300u32);
