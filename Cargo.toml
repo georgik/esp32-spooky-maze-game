@@ -6,46 +6,46 @@ edition = "2021"
 license = "MIT"
 
 [target.xtensa-esp32-none-elf.dependencies]
-xtensa-atomic-emulation-trap = "0.1.0"
-esp32-hal = { package = "esp32-hal", git = "https://github.com/esp-rs/esp-hal.git" }
-esp-backtrace = { git = "https://github.com/esp-rs/esp-backtrace", features = [
+xtensa-atomic-emulation-trap = "0.2.0"
+esp32-hal = "0.4.0"
+esp-backtrace = { version = "0.2" , features = [
     "esp32",
     "panic-handler",
     "print-uart",
 ] }
-xtensa-lx-rt = { version = "0.12.0", features = ["esp32"], optional = true }
+xtensa-lx-rt = { version = "0.13.0", features = ["esp32"], optional = true }
 esp-println = { version = "0.2.1", features = [ "esp32" ] }
 
 [target.xtensa-esp32s2-none-elf.dependencies]
-xtensa-atomic-emulation-trap = "0.1.0"
-esp32s2-hal = { package = "esp32s2-hal", git = "https://github.com/esp-rs/esp-hal.git" }
-esp-backtrace = { git = "https://github.com/esp-rs/esp-backtrace", features = [
+xtensa-atomic-emulation-trap = "0.2.0"
+esp32s2-hal = "0.1.0"
+esp-backtrace = { version = "0.2" , features = [
     "esp32s2",
     "panic-handler",
     "print-uart",
 ] }
-xtensa-lx-rt = { version = "0.12.0", features = ["esp32s2"], optional = true }
+xtensa-lx-rt = { version = "0.13.0", features = ["esp32s2"], optional = true }
 esp-println = { version = "0.2.1", features = [ "esp32s2" ] }
 
 [target.xtensa-esp32s3-none-elf.dependencies]
-xtensa-atomic-emulation-trap = "0.1.0"
-esp32s3-hal = { package = "esp32s3-hal", git = "https://github.com/esp-rs/esp-hal.git" }
-esp-backtrace = { git = "https://github.com/esp-rs/esp-backtrace", features = [
+xtensa-atomic-emulation-trap = "0.2.0"
+esp32s3-hal = "0.1.0"
+esp-backtrace = { version = "0.2" , features = [
     "esp32s3",
     "panic-handler",
     "print-uart",
 ] }
-xtensa-lx-rt = { version = "0.12.0", features = ["esp32s3"], optional = true }
+xtensa-lx-rt = { version = "0.13.0", features = ["esp32s3"], optional = true }
 esp-println = { version = "0.2.1", features = [ "esp32s3" ] }
 
 [target.riscv32imac-unknown-none-elf.dependencies]
-esp32c3-hal = { package = "esp32c3-hal", git = "https://github.com/esp-rs/esp-hal.git" }
-esp-backtrace = { git = "https://github.com/esp-rs/esp-backtrace", features = [
+esp32c3-hal = "0.1.0"
+esp-backtrace = { version = "0.2" , features = [
     "esp32c3",
     "panic-handler",
     "print-uart",
 ] }
-riscv-rt = { version = "0.8", optional = true }
+riscv-rt = { version = "0.9", optional = true }
 esp-println = { version = "0.2.1", features = [ "esp32c3" ] }
 
 
@@ -58,7 +58,7 @@ display-interface = "0.4"
 display-interface-spi = "0.4"
 # getrandom = { version = "0.2", features = ["custom"], default-features = false }
 ili9341 = { version = "0.5", git = "https://github.com/yuri91/ili9341-rs" }
-st7789 = "0.6"
+mipidsi = "0.2.1"
 panic-halt = "0.2"
 tinybmp = "0.3.3"
 rand = { version = "0.8.5", default-features = false }
