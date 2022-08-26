@@ -39,7 +39,7 @@ xtensa-lx-rt = { version = "0.13.0", features = ["esp32s3"], optional = true }
 esp-println = { version = "0.2.1", features = [ "esp32s3" ] }
 
 [target.riscv32imac-unknown-none-elf.dependencies]
-esp32c3-hal = { package = "esp32c3-hal", git = "https://github.com/esp-rs/esp-hal.git" }
+esp32c3-hal = "0.1.0"
 esp-backtrace = { version = "0.2" , features = [
     "esp32c3",
     "panic-handler",
