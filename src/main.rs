@@ -287,8 +287,13 @@ fn main() -> ! {
     let step_size = 16;
     let mut ghost_x = step_size;
     let mut ghost_y = step_size;
+    let mut old_x = step_size;
+    let mut old_y = step_size;
 
     loop {
+
+        old_x = ghost_x;
+        old_y = ghost_y;
 
         if button_down_pin.is_low().unwrap() {
             if ghost_x > 0 {
@@ -322,9 +327,17 @@ fn main() -> ! {
             }
         }
 
-        let ghost2 = Image::new(&bmp, Point::new(ghost_x.try_into().unwrap(), ghost_y.try_into().unwrap()));
+        if old_x != ghost_x || old_y != ghost_y {
+            let ground = Image::new(&ground_bmp, Point::new(old_x.try_into().unwrap(), old_y.try_into().unwrap()));
 
-        ghost2.draw(&mut display).unwrap();
+            ground.draw(&mut display).unwrap();
+
+            let ghost2 = Image::new(&bmp, Point::new(ghost_x.try_into().unwrap(), ghost_y.try_into().unwrap()));
+
+            ghost2.draw(&mut display).unwrap();
+            old_x = ghost_x;
+            old_y = ghost_y;
+        }
         delay.delay_ms(300u32);
         // ghost1.draw(&mut display).unwrap();
         // delay.delay_ms(500u32);
