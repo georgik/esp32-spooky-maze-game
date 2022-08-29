@@ -58,7 +58,8 @@ display-interface = "0.4"
 display-interface-spi = "0.4"
 # getrandom = { version = "0.2", features = ["custom"], default-features = false }
 ili9341 = { version = "0.5", git = "https://github.com/yuri91/ili9341-rs" }
-mipidsi = "0.2.1"
+# mipidsi = "0.2.1"
+mipidsi = { git = "https://github.com/jessebraham/mipidsi.git", branch = "feature/ili9342c" }
 panic-halt = "0.2"
 tinybmp = "0.3.3"
 rand = { version = "0.8.5", default-features = false }
@@ -73,7 +74,7 @@ maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "
 
 
 [features]
-# default = [ "esp32s3_usb_otg" ]
+# default = [ "esp32s3_box" ]
 # default = [ "rt" ]
 # default = [ "rt", "esp32_wrover_kit"  ]
 # default = ["rt", "esp32s2_usb_otg"]
@@ -102,6 +103,9 @@ esp32s2_usb_otg = [ "xtensa-lx-rt", "esp32s2" ]
 
 # Enable this feature in case you have an ESP32-S3-USB-OTG board with ST7789
 esp32s3_usb_otg = [ "xtensa-lx-rt", "esp32s3", "esp32s3-hal/eh1" ]
+
+# Enable this feature in case you have an ESP32-S3-BOX board with ILI9342C
+esp32s3_box = [ "xtensa-lx-rt", "esp32s3", "esp32s3-hal/eh1" ]
 
 # Enable this feature in case you have an ESP32S2 with ILI9341
 esp32s2_ili9341 = [ "xtensa-lx-rt", "esp32s2", "esp32s2-hal/eh1" ]

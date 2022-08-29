@@ -30,6 +30,12 @@ cargo espflash --release --target xtensa-esp32s2-none-elf --features esp32s2_usb
 cargo espflash --release --target xtensa-esp32s3-none-elf --features esp32s3_usb_otg --monitor
 ```
 
+### Build for ESP32-S3-BOX with ILI9486
+
+```
+cargo espflash --release --target xtensa-esp32s3-none-elf --features esp32s3_box --monitor
+```
+
 ### Build for ESP32-C3 with ILI9341
 
 It's necessary to override default toolchain specified in `rust-toolchain.toml`. One option is to pass `+nightly` to command line.
