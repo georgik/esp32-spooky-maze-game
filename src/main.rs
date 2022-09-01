@@ -64,6 +64,8 @@ use ili9341::{DisplaySize240x320, Ili9341, Orientation};
 use maze_generator::prelude::*;
 use maze_generator::recursive_backtracking::{RbGenerator};
 
+// mod button;
+
 #[entry]
 fn main() -> ! {
     const HEAP_SIZE: usize = 65535;
@@ -97,6 +99,19 @@ fn main() -> ! {
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
+
+    // https://espressif-docs.readthedocs-hosted.com/projects/espressif-esp-dev-kits/en/latest/esp32s3/esp32-s3-usb-otg/user_guide.html
+    // let button_up = button::Button::new();
+
+    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
+    let button_ok_pin = io.pins.gpio0.into_pull_up_input();
+    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
+    let button_menu_pin = io.pins.gpio14.into_pull_up_input();
+    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
+    let button_up_pin = io.pins.gpio10.into_pull_up_input();
+    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
+    let button_down_pin = io.pins.gpio11.into_pull_up_input();
+
     #[cfg(feature = "esp32")]
     let mut backlight = io.pins.gpio5.into_push_pull_output();
     #[cfg(any(feature = "esp32s2", feature = "esp32s3_usb_otg"))]
@@ -321,14 +336,13 @@ fn main() -> ! {
     println!("Transforming image");
     let bmp = Bmp::<Rgb565>::from_slice(bmp_data).unwrap();
     println!("Drawing image");
-    let ghost1 = Image::new(&bmp, Point::new(10, 20));
+    let ghost1 = Image::new(&bmp, Point::new(16, 16));
     ghost1.draw(&mut display).unwrap();
     println!("Image visible");
 
     println!("Loading 2nd image");
     let bmp_data = include_bytes!("../assets/img/ghost2.bmp");
     let bmp = Bmp::<Rgb565>::from_slice(bmp_data).unwrap();
-    let ghost2 = Image::new(&bmp, Point::new(10, 20));
 
     Text::new(
         "Ready",
@@ -338,10 +352,68 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
+    let mut delay = Delay::new(&clocks);
+
+    let step_size = 16;
+    let mut ghost_x = step_size;
+    let mut ghost_y = step_size;
+    let mut old_x = step_size;
+    let mut old_y = step_size;
+
     loop {
-        ghost2.draw(&mut display).unwrap();
-        delay.delay_ms(500u32);
-        ghost1.draw(&mut display).unwrap();
-        delay.delay_ms(500u32);
+
+        old_x = ghost_x;
+        old_y = ghost_y;
+
+        #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
+        if button_down_pin.is_low().unwrap() {
+            if ghost_x > 0 {
+                if maze[(ghost_x/16)-1+ghost_y] == 0 {
+                    ghost_x -= step_size;
+                }
+            }
+        }
+
+        #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
+        if button_up_pin.is_low().unwrap() {
+            if ghost_x < 16*16 {
+                if maze[(ghost_x/16)+1+ghost_y] == 0 {
+                    ghost_x += step_size;
+                }
+            }
+        }
+
+        #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
+        if button_menu_pin.is_low().unwrap() {
+            if ghost_y > 0 {
+                if maze[(ghost_x/16)+ghost_y-step_size] == 0 {
+                    ghost_y -= step_size;
+                }
+            }
+        }
+
+        #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
+        if button_ok_pin.is_low().unwrap() {
+            if ghost_y < 16*16 {
+                if maze[(ghost_x/16)+ghost_y+step_size] == 0 {
+                    ghost_y += step_size;
+                }
+            }
+        }
+
+        if old_x != ghost_x || old_y != ghost_y {
+            let ground = Image::new(&ground_bmp, Point::new(old_x.try_into().unwrap(), old_y.try_into().unwrap()));
+
+            ground.draw(&mut display).unwrap();
+
+            let ghost2 = Image::new(&bmp, Point::new(ghost_x.try_into().unwrap(), ghost_y.try_into().unwrap()));
+
+            ghost2.draw(&mut display).unwrap();
+            old_x = ghost_x;
+            old_y = ghost_y;
+        }
+        delay.delay_ms(300u32);
+        // ghost1.draw(&mut display).unwrap();
+        // delay.delay_ms(500u32);
     }
 }
