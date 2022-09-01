@@ -53,10 +53,11 @@ use xtensa_lx_rt::entry;
 use riscv_rt::entry;
 
 use embedded_graphics::{image::Image, pixelcolor::Rgb565};
-use mipidsi::{Display, DisplayOptions, Orientation};
 use tinybmp::Bmp;
 // use esp32s2_hal::Rng;
 
+#[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg", feature = "esp32s3_box"))]
+use mipidsi::{Display, DisplayOptions, Orientation};
 #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
 use ili9341::{DisplaySize240x320, Ili9341, Orientation};
 
@@ -201,6 +202,7 @@ fn main() -> ! {
     #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
     let mut display = Ili9341::new(di, reset, &mut delay, Orientation::Portrait, DisplaySize240x320).unwrap();
 
+    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg", feature = "esp32s3_box"))]
     display
     .init(
         &mut delay,
