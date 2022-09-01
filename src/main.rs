@@ -98,9 +98,13 @@ fn main() -> ! {
     // https://espressif-docs.readthedocs-hosted.com/projects/espressif-esp-dev-kits/en/latest/esp32s3/esp32-s3-usb-otg/user_guide.html
     // let button_up = button::Button::new();
 
+    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
     let button_ok_pin = io.pins.gpio0.into_pull_up_input();
+    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
     let button_menu_pin = io.pins.gpio14.into_pull_up_input();
+    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
     let button_up_pin = io.pins.gpio10.into_pull_up_input();
+    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
     let button_down_pin = io.pins.gpio11.into_pull_up_input();
 
     #[cfg(feature = "esp32")]
@@ -295,6 +299,7 @@ fn main() -> ! {
         old_x = ghost_x;
         old_y = ghost_y;
 
+        #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
         if button_down_pin.is_low().unwrap() {
             if ghost_x > 0 {
                 if maze[(ghost_x/16)-1+ghost_y] == 0 {
@@ -303,6 +308,7 @@ fn main() -> ! {
             }
         }
 
+        #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
         if button_up_pin.is_low().unwrap() {
             if ghost_x < 16*16 {
                 if maze[(ghost_x/16)+1+ghost_y] == 0 {
@@ -311,6 +317,7 @@ fn main() -> ! {
             }
         }
 
+        #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
         if button_menu_pin.is_low().unwrap() {
             if ghost_y > 0 {
                 if maze[(ghost_x/16)+ghost_y-step_size] == 0 {
@@ -319,6 +326,7 @@ fn main() -> ! {
             }
         }
 
+        #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
         if button_ok_pin.is_low().unwrap() {
             if ghost_y < 16*16 {
                 if maze[(ghost_x/16)+ghost_y+step_size] == 0 {
