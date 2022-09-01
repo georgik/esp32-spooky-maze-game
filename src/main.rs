@@ -53,6 +53,7 @@ use xtensa_lx_rt::entry;
 use riscv_rt::entry;
 
 use embedded_graphics::{image::Image, pixelcolor::Rgb565};
+use mipidsi::{Display, DisplayOptions, Orientation};
 use tinybmp::Bmp;
 // use esp32s2_hal::Rng;
 
@@ -67,6 +68,7 @@ fn main() -> ! {
     const HEAP_SIZE: usize = 65535;
     static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
     unsafe { ALLOCATOR.init(HEAP.as_mut_ptr(), HEAP_SIZE) }
+
     let peripherals = Peripherals::take().unwrap();
 
     #[cfg(any(feature = "esp32"))]
@@ -90,21 +92,17 @@ fn main() -> ! {
     wdt0.disable();
     wdt1.disable();
 
+    let mut delay = Delay::new(&clocks);
+
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
     #[cfg(feature = "esp32")]
     let mut backlight = io.pins.gpio5.into_push_pull_output();
     #[cfg(any(feature = "esp32s2", feature = "esp32s3_usb_otg"))]
     let mut backlight = io.pins.gpio9.into_push_pull_output();
-    #[cfg(any(feature = "esp32s3_box"))]
-    let mut backlight = io.pins.gpio45.into_push_pull_output();
     #[cfg(feature = "esp32c3")]
     let mut backlight = io.pins.gpio0.into_push_pull_output();
 
-    #[cfg(feature = "esp32")]
-    backlight.set_low().unwrap();
-    #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
-    backlight.set_high().unwrap();
 
     #[cfg(feature = "esp32")]
     let spi = spi::Spi::new(
@@ -143,16 +141,29 @@ fn main() -> ! {
         // );
 
     #[cfg(any(feature = "esp32s3_box"))]
-    let spi = spi::Spi::new(
-        peripherals.SPI3,
-        io.pins.gpio7,
-        io.pins.gpio6,
-        io.pins.gpio12,
-        io.pins.gpio5,
-        100u32.MHz(),
+    let sclk = io.pins.gpio7;
+    #[cfg(any(feature = "esp32s3_box"))]
+    let mosi = io.pins.gpio6;
+
+    #[cfg(any(feature = "esp32s3_box"))]
+    let spi = spi::Spi::new_no_cs_no_miso(
+        peripherals.SPI2,
+        sclk,
+        mosi,
+        4u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
-        &mut clocks);
+        &clocks,
+    );
+
+    #[cfg(any(feature = "esp32s3_box"))]
+    let mut backlight = io.pins.gpio45.into_push_pull_output();
+
+    #[cfg(feature = "esp32")]
+    backlight.set_low().unwrap();
+    #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
+    backlight.set_high().unwrap();
+
 
     #[cfg(feature = "esp32c3")]
     let spi = spi::Spi::new(
@@ -166,17 +177,17 @@ fn main() -> ! {
         &mut system.peripheral_clock_control,
         &mut clocks);
 
-    #[cfg(any(feature = "esp32", feature = "esp32c3"))]
-    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio21.into_push_pull_output());
-    #[cfg(any(feature = "esp32s2", feature = "esp32s3"))]
-    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio4.into_push_pull_output());
-
     #[cfg(any(feature = "esp32", feature = "esp32s2", feature = "esp32s3_usb_otg"))]
     let reset = io.pins.gpio18.into_push_pull_output();
     #[cfg(any(feature = "esp32s3_box"))]
     let reset = io.pins.gpio48.into_push_pull_output();
     #[cfg(any(feature = "esp32c3"))]
     let reset = io.pins.gpio9.into_push_pull_output();
+
+    #[cfg(any(feature = "esp32", feature = "esp32c3"))]
+    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio21.into_push_pull_output());
+    #[cfg(any(feature = "esp32s2", feature = "esp32s3"))]
+    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio4.into_push_pull_output());
 
     #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
     let mut delay = Delay::new(&clocks);
@@ -190,8 +201,17 @@ fn main() -> ! {
     #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
     let mut display = Ili9341::new(di, reset, &mut delay, Orientation::Portrait, DisplaySize240x320).unwrap();
 
+    display
+    .init(
+        &mut delay,
+        DisplayOptions {
+            orientation: Orientation::PortraitInverted(false),
+            ..DisplayOptions::default()
+        },
+    )
+    .unwrap();
     // display.clear(RgbColor::WHITE).unwrap();
-    println!("Initialized");
+    println!("Display initialized");
 
     Text::new(
         "Initializing...",
@@ -304,7 +324,7 @@ fn main() -> ! {
     )
     .draw(&mut display)
     .unwrap();
-    let mut delay = Delay::new(&clocks);
+
     loop {
         ghost2.draw(&mut display).unwrap();
         delay.delay_ms(500u32);

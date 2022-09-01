@@ -29,7 +29,8 @@ esp-println = { version = "0.2.1", features = [ "esp32s2" ] }
 
 [target.xtensa-esp32s3-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.2.0"
-esp32s3-hal = "0.1.0"
+esp32s3-hal = { package = "esp32s3-hal", git = "https://github.com/esp-rs/esp-hal.git" }
+# esp32s3-hal = "0.1.0"
 esp-backtrace = { version = "0.2" , features = [
     "esp32s3",
     "panic-handler",
@@ -51,27 +52,24 @@ esp-println = { version = "0.2.1", features = [ "esp32c3" ] }
 
 
 [dependencies]
-# esp-alloc = { version = "*", git = "https://github.com/esp-rs/esp-alloc" }
+esp-alloc = "0.1.0"
 embedded-graphics = "0.7"
 embedded-hal = "0.2"
 display-interface = "0.4"
 display-interface-spi = "0.4"
 # getrandom = { version = "0.2", features = ["custom"], default-features = false }
-ili9341 = { version = "0.5", git = "https://github.com/yuri91/ili9341-rs" }
-# mipidsi = "0.2.1"
-mipidsi = { git = "https://github.com/jessebraham/mipidsi.git", branch = "feature/ili9342c" }
+# ili9341 = { version = "0.5", git = "https://github.com/yuri91/ili9341-rs" }
+mipidsi = "0.3.0"
 panic-halt = "0.2"
 tinybmp = "0.3.3"
 rand = { version = "0.8.5", default-features = false }
 rand_chacha = { version = "0.3.1", default-features = false }
 # petgraph = "0.6.2"
 petgraph = { git = "https://github.com/zendurix/petgraph.git", branch = "better_no_std", default-features = false, features = ["graphmap"] }
-esp-alloc = "0.1.0"
 # fixedbitset = { version = "0.4.2", default-features = false }
 # hashbrown = { version = "0.12.3", default-features = false }
 anyhow = { version = "1.0.56",  default-features = false }
 maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "feature/no_std", default-features = false, features = [ "recursive_backtracking"] }
-
 
 [features]
 # default = [ "esp32s3_box" ]
