@@ -202,7 +202,17 @@ fn main() -> ! {
     #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
     let mut display = Ili9341::new(di, reset, &mut delay, Orientation::Portrait, DisplaySize240x320).unwrap();
 
-    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg", feature = "esp32s3_box"))]
+    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
+    display
+    .init(
+        &mut delay,
+        DisplayOptions {
+            ..DisplayOptions::default()
+        },
+    )
+    .unwrap();
+
+    #[cfg(any(feature = "esp32s3_box"))]
     display
     .init(
         &mut delay,
@@ -212,6 +222,7 @@ fn main() -> ! {
         },
     )
     .unwrap();
+
     // display.clear(RgbColor::WHITE).unwrap();
     println!("Display initialized");
 
