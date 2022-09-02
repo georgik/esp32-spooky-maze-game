@@ -20,17 +20,23 @@ cargo espflash --release --target xtensa-esp32s2-none-elf --features esp32s2_ili
 
 ### Build for ESP32-S2-USB-OTG with ST7789
 
+Control: buttons - press button to move the character
+
 ```
 cargo espflash --release --target xtensa-esp32s2-none-elf --features esp32s2_usb_otg --monitor
 ```
 
 ### Build for ESP32-S3-USB-OTG with ST7789
 
+Control: buttons - press button to move the character
+
 ```
 cargo espflash --release --target xtensa-esp32s3-none-elf --features esp32s3_usb_otg --monitor
 ```
 
 ### Build for ESP32-S3-BOX with ILI9486
+
+Control: IMU - tilt the board to move the character
 
 ```
 cargo espflash --release --target xtensa-esp32s3-none-elf --features esp32s3_box --monitor

@@ -90,6 +90,9 @@ maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "
 
 system_timer = []
 
+button_controls = []
+imu_controls = []
+
 esp32 = []
 esp32s2 = [ "system_timer" ]
 esp32s3 = [ "system_timer" ]
@@ -99,13 +102,13 @@ esp32c3 = [ "system_timer" ]
 esp32_wrover_kit = [ "xtensa-lx-rt", "esp32", "esp32-hal/eh1" ]
 
 # Enable this feature in case you have an ESP32-S3-USB-OTG board with ST7789
-esp32s2_usb_otg = [ "xtensa-lx-rt", "esp32s2" ]
+esp32s2_usb_otg = [ "xtensa-lx-rt", "esp32s2",  "button_controls" ]
 
 # Enable this feature in case you have an ESP32-S3-USB-OTG board with ST7789
-esp32s3_usb_otg = [ "xtensa-lx-rt", "esp32s3", "esp32s3-hal/eh1" ]
+esp32s3_usb_otg = [ "xtensa-lx-rt", "esp32s3", "esp32s3-hal/eh1", "button_controls" ]
 
 # Enable this feature in case you have an ESP32-S3-BOX board with ILI9342C
-esp32s3_box = [ "xtensa-lx-rt", "esp32s3", "esp32s3-hal/eh1" ]
+esp32s3_box = [ "xtensa-lx-rt", "esp32s3", "esp32s3-hal/eh1", "imu_controls" ]
 
 # Enable this feature in case you have an ESP32S2 with ILI9341
 esp32s2_ili9341 = [ "xtensa-lx-rt", "esp32s2", "esp32s2-hal/eh1" ]
