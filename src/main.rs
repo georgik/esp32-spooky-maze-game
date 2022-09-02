@@ -296,6 +296,10 @@ fn main() -> ! {
     const TILE_WIDTH:usize = 16;
     const TILE_HEIGHT:usize = 16;
 
+    // Dimension of Playground
+    const PLAYGROUND_WIDTH:usize = MAZE_WIDTH * TILE_WIDTH;
+    const PLAYGROUND_HEIGHT:usize = MAZE_HEIGHT * MAZE_HEIGHT;
+
     // Dimensions of maze graph produced by algorithm
     const MAZE_GRAPH_WIDTH:usize = 8;
     const MAZE_GRAPH_HEIGHT:usize = 8;
@@ -394,11 +398,8 @@ fn main() -> ! {
             let accel_norm = icm.accel_norm().unwrap();
             let gyro_norm = icm.gyro_norm().unwrap();
             println!(
-                "ACCEL = X: {:+.04} Y: {:+.04} Z: {:+.04}",
-                accel_norm.x, accel_norm.y, accel_norm.z
-            );
-            println!(
-                "GYRO  = X: {:+.04} Y: {:+.04} Z: {:+.04}",
+                "ACCEL = X: {:+.04} Y: {:+.04} Z: {:+.04}; GYRO  = X: {:+.04} Y: {:+.04} Z: {:+.04}",
+                accel_norm.x, accel_norm.y, accel_norm.z,
                 gyro_norm.x, gyro_norm.y, gyro_norm.z
             );
 
@@ -409,16 +410,16 @@ fn main() -> ! {
             }
 
             if accel_norm.y  < -accel_threshold {
-                if ghost_x < 16*16 {
-                    if maze[(ghost_x/16)+1+ghost_y] == 0 {
+                if ghost_x < PLAYGROUND_WIDTH {
+                    if maze[(ghost_x/TILE_WIDTH)+1+ghost_y] == 0 {
                         ghost_x += TILE_WIDTH;
                     }
                 }
             }
 
             if accel_norm.x > accel_threshold {
-                if ghost_y < 16*16 {
-                    if maze[(ghost_x/16)+ghost_y+TILE_HEIGHT] == 0 {
+                if ghost_y < PLAYGROUND_HEIGHT {
+                    if maze[(ghost_x/TILE_WIDTH)+ghost_y+TILE_HEIGHT] == 0 {
                         ghost_y += TILE_HEIGHT;
                     }
                 }
@@ -426,7 +427,7 @@ fn main() -> ! {
 
             if accel_norm.x < -accel_threshold {
                 if ghost_y > 0 {
-                    if maze[(ghost_x/16)+ghost_y-TILE_HEIGHT] == 0 {
+                    if maze[(ghost_x/TILE_WIDTH)+ghost_y-TILE_HEIGHT] == 0 {
                         ghost_y -= TILE_HEIGHT;
                     }
                 }
@@ -437,15 +438,15 @@ fn main() -> ! {
         {
             if button_down_pin.is_low().unwrap() {
                 if ghost_x > 0 {
-                    if maze[(ghost_x/16)-1+ghost_y] == 0 {
+                    if maze[(ghost_x/TILE_WIDTH)-1+ghost_y] == 0 {
                         ghost_x -= TILE_WIDTH;
                     }
                 }
             }
 
             if button_up_pin.is_low().unwrap() {
-                if ghost_x < 16*16 {
-                    if maze[(ghost_x/16)+1+ghost_y] == 0 {
+                if ghost_x < PLAYGROUND_WIDTH {
+                    if maze[(ghost_x/TILE_WIDTH)+1+ghost_y] == 0 {
                         ghost_x += TILE_WIDTH;
                     }
                 }
@@ -453,15 +454,15 @@ fn main() -> ! {
 
             if button_menu_pin.is_low().unwrap() {
                 if ghost_y > 0 {
-                    if maze[(ghost_x/16)+ghost_y-TILE_HEIGHT] == 0 {
+                    if maze[(ghost_x/TILE_WIDTH)+ghost_y-TILE_HEIGHT] == 0 {
                         ghost_y -= TILE_HEIGHT;
                     }
                 }
             }
 
             if button_ok_pin.is_low().unwrap() {
-                if ghost_y < 16*16 {
-                    if maze[(ghost_x/16)+ghost_y+TILE_HEIGHT] == 0 {
+                if ghost_y < PLAYGROUND_HEIGHT {
+                    if maze[(ghost_x/TILE_WIDTH)+ghost_y+TILE_HEIGHT] == 0 {
                         ghost_y += TILE_HEIGHT;
                     }
                 }
