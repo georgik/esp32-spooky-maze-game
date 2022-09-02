@@ -384,6 +384,8 @@ fn main() -> ! {
     let mut old_x = step_size;
     let mut old_y = step_size;
 
+    let accel_threshold = 0.20;
+
     loop {
 
         old_x = ghost_x;
@@ -400,13 +402,13 @@ fn main() -> ! {
             gyro_norm.x, gyro_norm.y, gyro_norm.z
         );
 
-        if gyro_norm.x > 2.0 {
+        if accel_norm.y > accel_threshold {
             if maze[(ghost_x/16)-1+ghost_y] == 0 {
                 ghost_x -= step_size;
             }
         }
 
-        if gyro_norm.x  < -2.0 {
+        if accel_norm.y  < -accel_threshold {
             if ghost_x < 16*16 {
                 if maze[(ghost_x/16)+1+ghost_y] == 0 {
                     ghost_x += step_size;
@@ -414,7 +416,7 @@ fn main() -> ! {
             }
         }
 
-        if gyro_norm.y > 2.0 {
+        if accel_norm.x > accel_threshold {
             if ghost_y < 16*16 {
                 if maze[(ghost_x/16)+ghost_y+step_size] == 0 {
                     ghost_y += step_size;
@@ -422,7 +424,7 @@ fn main() -> ! {
             }
         }
 
-        if gyro_norm.y < -2.0 {
+        if accel_norm.x < -accel_threshold {
             if ghost_y > 0 {
                 if maze[(ghost_x/16)+ghost_y-step_size] == 0 {
                     ghost_y -= step_size;
