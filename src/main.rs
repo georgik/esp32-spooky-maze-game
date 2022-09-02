@@ -337,7 +337,7 @@ fn main() -> ! {
     for x in 0..15 {
         for y in 0..15 {
             let position = Point::new((x*TILE_WIDTH).try_into().unwrap(), (y*TILE_HEIGHT).try_into().unwrap());
-            if maze[x+y*16] == 0 {
+            if maze[x+y*TILE_WIDTH] == 0 {
                 let tile = Image::new(&ground_bmp, position);
                 tile.draw(&mut display).unwrap();
             } else {
@@ -376,11 +376,10 @@ fn main() -> ! {
 
     let mut delay = Delay::new(&clocks);
 
-    let step_size = 16;
-    let mut ghost_x = step_size;
-    let mut ghost_y = step_size;
-    let mut old_x = step_size;
-    let mut old_y = step_size;
+    let mut ghost_x = TILE_HEIGHT;
+    let mut ghost_y = TILE_WIDTH;
+    let mut old_x = ghost_x;
+    let mut old_y = ghost_y;
 
     #[cfg(any(feature = "imu_controls"))]
     let accel_threshold = 0.20;
@@ -405,30 +404,30 @@ fn main() -> ! {
 
             if accel_norm.y > accel_threshold {
                 if maze[(ghost_x/16)-1+ghost_y] == 0 {
-                    ghost_x -= step_size;
+                    ghost_x -= TILE_WIDTH;
                 }
             }
 
             if accel_norm.y  < -accel_threshold {
                 if ghost_x < 16*16 {
                     if maze[(ghost_x/16)+1+ghost_y] == 0 {
-                        ghost_x += step_size;
+                        ghost_x += TILE_WIDTH;
                     }
                 }
             }
 
             if accel_norm.x > accel_threshold {
                 if ghost_y < 16*16 {
-                    if maze[(ghost_x/16)+ghost_y+step_size] == 0 {
-                        ghost_y += step_size;
+                    if maze[(ghost_x/16)+ghost_y+TILE_HEIGHT] == 0 {
+                        ghost_y += TILE_HEIGHT;
                     }
                 }
             }
 
             if accel_norm.x < -accel_threshold {
                 if ghost_y > 0 {
-                    if maze[(ghost_x/16)+ghost_y-step_size] == 0 {
-                        ghost_y -= step_size;
+                    if maze[(ghost_x/16)+ghost_y-TILE_HEIGHT] == 0 {
+                        ghost_y -= TILE_HEIGHT;
                     }
                 }
             }
@@ -439,7 +438,7 @@ fn main() -> ! {
             if button_down_pin.is_low().unwrap() {
                 if ghost_x > 0 {
                     if maze[(ghost_x/16)-1+ghost_y] == 0 {
-                        ghost_x -= step_size;
+                        ghost_x -= TILE_WIDTH;
                     }
                 }
             }
@@ -447,23 +446,23 @@ fn main() -> ! {
             if button_up_pin.is_low().unwrap() {
                 if ghost_x < 16*16 {
                     if maze[(ghost_x/16)+1+ghost_y] == 0 {
-                        ghost_x += step_size;
+                        ghost_x += TILE_WIDTH;
                     }
                 }
             }
 
             if button_menu_pin.is_low().unwrap() {
                 if ghost_y > 0 {
-                    if maze[(ghost_x/16)+ghost_y-step_size] == 0 {
-                        ghost_y -= step_size;
+                    if maze[(ghost_x/16)+ghost_y-TILE_HEIGHT] == 0 {
+                        ghost_y -= TILE_HEIGHT;
                     }
                 }
             }
 
             if button_ok_pin.is_low().unwrap() {
                 if ghost_y < 16*16 {
-                    if maze[(ghost_x/16)+ghost_y+step_size] == 0 {
-                        ghost_y += step_size;
+                    if maze[(ghost_x/16)+ghost_y+TILE_HEIGHT] == 0 {
+                        ghost_y += TILE_HEIGHT;
                     }
                 }
             }
