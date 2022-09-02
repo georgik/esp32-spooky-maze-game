@@ -30,6 +30,7 @@ use esp32c3_hal as hal;
 
 use hal::{
     clock::ClockControl,
+    i2c,
     pac::Peripherals,
     prelude::*,
     spi,
@@ -64,7 +65,8 @@ use ili9341::{DisplaySize240x320, Ili9341, Orientation};
 use maze_generator::prelude::*;
 use maze_generator::recursive_backtracking::{RbGenerator};
 
-// mod button;
+use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
+use shared_bus::BusManagerSimple;
 
 #[entry]
 fn main() -> ! {
@@ -249,6 +251,28 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
+
+    println!("Initializing IMU");
+    let sda = io.pins.gpio8;
+    let scl = io.pins.gpio18;
+
+    // let config = <i2c::config::MasterConfig as Default>::default().baudrate(100.kHz().into());
+    // let mut i2c = i2c::Master::<i2c::I2C0, _, _>::new(i2c, i2c::MasterPins { sda, scl }, config).unwrap();
+
+
+    let i2c = i2c::I2C::new(
+        peripherals.I2C0,
+        sda,
+        scl,
+        100u32.kHz(),
+        &mut system.peripheral_clock_control,
+        &clocks,
+    )
+    .unwrap();
+
+    let bus = BusManagerSimple::new(i2c);
+    let mut icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
+
     println!("Loading image");
 
     let ground_data = include_bytes!("../assets/img/ground.bmp");
@@ -364,6 +388,47 @@ fn main() -> ! {
 
         old_x = ghost_x;
         old_y = ghost_y;
+
+        let accel_norm = icm.accel_norm().unwrap();
+        let gyro_norm = icm.gyro_norm().unwrap();
+        println!(
+            "ACCEL = X: {:+.04} Y: {:+.04} Z: {:+.04}",
+            accel_norm.x, accel_norm.y, accel_norm.z
+        );
+        println!(
+            "GYRO  = X: {:+.04} Y: {:+.04} Z: {:+.04}",
+            gyro_norm.x, gyro_norm.y, gyro_norm.z
+        );
+
+        if gyro_norm.x > 2.0 {
+            if maze[(ghost_x/16)-1+ghost_y] == 0 {
+                ghost_x -= step_size;
+            }
+        }
+
+        if gyro_norm.x  < -2.0 {
+            if ghost_x < 16*16 {
+                if maze[(ghost_x/16)+1+ghost_y] == 0 {
+                    ghost_x += step_size;
+                }
+            }
+        }
+
+        if gyro_norm.y > 2.0 {
+            if ghost_y < 16*16 {
+                if maze[(ghost_x/16)+ghost_y+step_size] == 0 {
+                    ghost_y += step_size;
+                }
+            }
+        }
+
+        if gyro_norm.y < -2.0 {
+            if ghost_y > 0 {
+                if maze[(ghost_x/16)+ghost_y-step_size] == 0 {
+                    ghost_y -= step_size;
+                }
+            }
+        }
 
         #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
         if button_down_pin.is_low().unwrap() {
