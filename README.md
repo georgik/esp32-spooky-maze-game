@@ -6,6 +6,8 @@ Rust reimplementation of simple game for ESP32. Work in progress.
 
 ## Build and flash
 
+** Warning! ** Use ESP toolchain 1.62 this works. Toolchain 1.63 does not work.
+
 ### Build for ESP32 Wrover Kit
 
 ```
