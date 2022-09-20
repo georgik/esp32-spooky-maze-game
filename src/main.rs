@@ -286,7 +286,32 @@ fn main() -> ! {
 
     println!("Rendering maze");
 
-    let mut maze: [u8; 16*16] = [1; 16*16];
+    // Dimension of tiles
+    const TILE_WIDTH:usize = 16;
+    const TILE_HEIGHT:usize = 16;
+
+    // Simplified maze map in memory for tile mapping
+    #[cfg(any(feature = "esp32s3_box"))]
+    const MAZE_WIDTH:usize = 21;
+    #[cfg(not(feature = "esp32s3_box"))]
+    const MAZE_WIDTH:usize = 16;
+    const MAZE_HEIGHT:usize = 16;
+
+    // Tile map should have small border top line and left column
+    const MAZE_OFFSET:usize = MAZE_WIDTH + 1;
+
+    // Dimension of Playground
+    const PLAYGROUND_WIDTH:usize = MAZE_WIDTH * TILE_WIDTH;
+    const PLAYGROUND_HEIGHT:usize = MAZE_HEIGHT * MAZE_HEIGHT;
+
+    // Dimensions of maze graph produced by algorithm
+    #[cfg(any(feature = "esp32s3_box"))]
+    const MAZE_GRAPH_WIDTH:usize = 10;
+    #[cfg(not(feature = "esp32s3_box"))]
+    const MAZE_GRAPH_WIDTH:usize = 8;
+    const MAZE_GRAPH_HEIGHT:usize = 8;
+
+    let mut maze: [u8; MAZE_WIDTH*MAZE_HEIGHT] = [1; MAZE_WIDTH*MAZE_HEIGHT];
 
     println!("Initializing Random Number Generator Seed");
     let mut rng = Rng::new(peripherals.RNG);
@@ -296,13 +321,13 @@ fn main() -> ! {
     println!("Acquiring maze generator");
     let mut generator = RbGenerator::new(Some(seed_buffer));
     println!("Generating maze");
-    let maze_graph = generator.generate(8, 8).unwrap();
+    let maze_graph = generator.generate(MAZE_GRAPH_WIDTH as i32, MAZE_GRAPH_HEIGHT as i32).unwrap();
 
     println!("Converting to tile maze");
-    for y in 1usize..8 {
-        for x in 1usize..8 {
+    for y in 1usize..MAZE_GRAPH_HEIGHT {
+        for x in 1usize..MAZE_GRAPH_WIDTH {
             let field = maze_graph.get_field(&(x.try_into().unwrap(),y.try_into().unwrap()).into()).unwrap();
-            let tile_index = (x-1)*2+(y-1)*2*16+1+16;
+            let tile_index = (x-1)*2+(y-1)*2*MAZE_WIDTH+MAZE_OFFSET;
 
             maze[tile_index] = 0;
 
@@ -311,7 +336,7 @@ fn main() -> ! {
             }
 
             if field.has_passage(&Direction::South) {
-                maze[tile_index + 16] = 0;
+                maze[tile_index + MAZE_WIDTH] = 0;
             }
         }
     }
@@ -320,10 +345,10 @@ fn main() -> ! {
     #[cfg(feature = "system_timer")]
     let start_timestamp = SystemTimer::now();
 
-    for x in 0..15 {
-        for y in 0..15 {
-            let position = Point::new((x*16).try_into().unwrap(), (y*16).try_into().unwrap());
-            if maze[x+y*16] == 0 {
+    for x in 0..(MAZE_WIDTH-1) {
+        for y in 0..(MAZE_HEIGHT-1) {
+            let position = Point::new((x*TILE_WIDTH).try_into().unwrap(), (y*TILE_HEIGHT).try_into().unwrap());
+            if maze[x+y*MAZE_WIDTH] == 0 {
                 let tile = Image::new(&ground_bmp, position);
                 tile.draw(&mut display).unwrap();
             } else {
@@ -362,11 +387,10 @@ fn main() -> ! {
 
     let mut delay = Delay::new(&clocks);
 
-    let step_size = 16;
-    let mut ghost_x = step_size;
-    let mut ghost_y = step_size;
-    let mut old_x = step_size;
-    let mut old_y = step_size;
+    let mut ghost_x = TILE_HEIGHT;
+    let mut ghost_y = TILE_WIDTH;
+    let mut old_x = ghost_x;
+    let mut old_y = ghost_y;
 
     #[cfg(any(feature = "imu_controls"))]
     let accel_threshold = 0.20;
@@ -381,40 +405,39 @@ fn main() -> ! {
             let accel_norm = icm.accel_norm().unwrap();
             let gyro_norm = icm.gyro_norm().unwrap();
             println!(
-                "ACCEL = X: {:+.04} Y: {:+.04} Z: {:+.04}",
-                accel_norm.x, accel_norm.y, accel_norm.z
-            );
-            println!(
-                "GYRO  = X: {:+.04} Y: {:+.04} Z: {:+.04}",
+                "ACCEL = X: {:+.04} Y: {:+.04} Z: {:+.04}; GYRO  = X: {:+.04} Y: {:+.04} Z: {:+.04}",
+                accel_norm.x, accel_norm.y, accel_norm.z,
                 gyro_norm.x, gyro_norm.y, gyro_norm.z
             );
 
+            let tile_index = ghost_x/TILE_WIDTH + ghost_y/TILE_HEIGHT*MAZE_WIDTH;
+
             if accel_norm.y > accel_threshold {
-                if maze[(ghost_x/16)-1+ghost_y] == 0 {
-                    ghost_x -= step_size;
+                if maze[tile_index - 1] == 0 {
+                    ghost_x -= TILE_WIDTH;
                 }
             }
 
             if accel_norm.y  < -accel_threshold {
-                if ghost_x < 16*16 {
-                    if maze[(ghost_x/16)+1+ghost_y] == 0 {
-                        ghost_x += step_size;
+                if ghost_x < PLAYGROUND_WIDTH {
+                    if maze[tile_index + 1] == 0 {
+                        ghost_x += TILE_WIDTH;
                     }
                 }
             }
 
             if accel_norm.x > accel_threshold {
-                if ghost_y < 16*16 {
-                    if maze[(ghost_x/16)+ghost_y+step_size] == 0 {
-                        ghost_y += step_size;
+                if ghost_y < PLAYGROUND_HEIGHT {
+                    if maze[tile_index + MAZE_WIDTH] == 0 {
+                        ghost_y += TILE_HEIGHT;
                     }
                 }
             }
 
             if accel_norm.x < -accel_threshold {
                 if ghost_y > 0 {
-                    if maze[(ghost_x/16)+ghost_y-step_size] == 0 {
-                        ghost_y -= step_size;
+                    if maze[tile_index - MAZE_WIDTH] == 0 {
+                        ghost_y -= TILE_HEIGHT;
                     }
                 }
             }
@@ -424,32 +447,32 @@ fn main() -> ! {
         {
             if button_down_pin.is_low().unwrap() {
                 if ghost_x > 0 {
-                    if maze[(ghost_x/16)-1+ghost_y] == 0 {
-                        ghost_x -= step_size;
+                    if maze[(ghost_x/TILE_WIDTH)-1+ghost_y] == 0 {
+                        ghost_x -= TILE_WIDTH;
                     }
                 }
             }
 
             if button_up_pin.is_low().unwrap() {
-                if ghost_x < 16*16 {
-                    if maze[(ghost_x/16)+1+ghost_y] == 0 {
-                        ghost_x += step_size;
+                if ghost_x < PLAYGROUND_WIDTH {
+                    if maze[(ghost_x/TILE_WIDTH)+1+ghost_y] == 0 {
+                        ghost_x += TILE_WIDTH;
                     }
                 }
             }
 
             if button_menu_pin.is_low().unwrap() {
                 if ghost_y > 0 {
-                    if maze[(ghost_x/16)+ghost_y-step_size] == 0 {
-                        ghost_y -= step_size;
+                    if maze[(ghost_x/TILE_WIDTH)+ghost_y-TILE_HEIGHT] == 0 {
+                        ghost_y -= TILE_HEIGHT;
                     }
                 }
             }
 
             if button_ok_pin.is_low().unwrap() {
-                if ghost_y < 16*16 {
-                    if maze[(ghost_x/16)+ghost_y+step_size] == 0 {
-                        ghost_y += step_size;
+                if ghost_y < PLAYGROUND_HEIGHT {
+                    if maze[(ghost_x/TILE_WIDTH)+ghost_y+TILE_HEIGHT] == 0 {
+                        ghost_y += TILE_HEIGHT;
                     }
                 }
             }
