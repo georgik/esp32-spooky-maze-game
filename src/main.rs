@@ -286,15 +286,15 @@ fn main() -> ! {
 
     println!("Rendering maze");
 
-    // Simplified maze map in memory for tile mapping
-    const MAZE_WIDTH:usize = 16;
-    const MAZE_HEIGHT:usize = 16;
-    // Tile map should have small border top line and left column
-    const MAZE_OFFSET:usize = MAZE_WIDTH + 1;
-
     // Dimension of tiles
     const TILE_WIDTH:usize = 16;
     const TILE_HEIGHT:usize = 16;
+
+    // Simplified maze map in memory for tile mapping
+    const MAZE_WIDTH:usize = 32;
+    const MAZE_HEIGHT:usize = 32;
+    // Tile map should have small border top line and left column
+    const MAZE_OFFSET:usize = MAZE_WIDTH + 1;
 
     // Dimension of Playground
     const PLAYGROUND_WIDTH:usize = MAZE_WIDTH * TILE_WIDTH;
@@ -341,7 +341,7 @@ fn main() -> ! {
     for x in 0..15 {
         for y in 0..15 {
             let position = Point::new((x*TILE_WIDTH).try_into().unwrap(), (y*TILE_HEIGHT).try_into().unwrap());
-            if maze[x+y*TILE_WIDTH] == 0 {
+            if maze[x+y*MAZE_WIDTH] == 0 {
                 let tile = Image::new(&ground_bmp, position);
                 tile.draw(&mut display).unwrap();
             } else {
@@ -403,15 +403,17 @@ fn main() -> ! {
                 gyro_norm.x, gyro_norm.y, gyro_norm.z
             );
 
+            let tile_index = ghost_x/TILE_WIDTH + ghost_y/TILE_HEIGHT*MAZE_WIDTH;
+
             if accel_norm.y > accel_threshold {
-                if maze[(ghost_x/16)-1+ghost_y] == 0 {
+                if maze[tile_index - 1] == 0 {
                     ghost_x -= TILE_WIDTH;
                 }
             }
 
             if accel_norm.y  < -accel_threshold {
                 if ghost_x < PLAYGROUND_WIDTH {
-                    if maze[(ghost_x/TILE_WIDTH)+1+ghost_y] == 0 {
+                    if maze[tile_index + 1] == 0 {
                         ghost_x += TILE_WIDTH;
                     }
                 }
@@ -419,7 +421,7 @@ fn main() -> ! {
 
             if accel_norm.x > accel_threshold {
                 if ghost_y < PLAYGROUND_HEIGHT {
-                    if maze[(ghost_x/TILE_WIDTH)+ghost_y+TILE_HEIGHT] == 0 {
+                    if maze[tile_index + MAZE_WIDTH] == 0 {
                         ghost_y += TILE_HEIGHT;
                     }
                 }
@@ -427,7 +429,7 @@ fn main() -> ! {
 
             if accel_norm.x < -accel_threshold {
                 if ghost_y > 0 {
-                    if maze[(ghost_x/TILE_WIDTH)+ghost_y-TILE_HEIGHT] == 0 {
+                    if maze[tile_index - MAZE_WIDTH] == 0 {
                         ghost_y -= TILE_HEIGHT;
                     }
                 }
