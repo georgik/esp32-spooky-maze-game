@@ -291,8 +291,12 @@ fn main() -> ! {
     const TILE_HEIGHT:usize = 16;
 
     // Simplified maze map in memory for tile mapping
-    const MAZE_WIDTH:usize = 32;
-    const MAZE_HEIGHT:usize = 32;
+    #[cfg(any(feature = "esp32s3_box"))]
+    const MAZE_WIDTH:usize = 21;
+    #[cfg(not(feature = "esp32s3_box"))]
+    const MAZE_WIDTH:usize = 16;
+    const MAZE_HEIGHT:usize = 16;
+
     // Tile map should have small border top line and left column
     const MAZE_OFFSET:usize = MAZE_WIDTH + 1;
 
@@ -301,6 +305,9 @@ fn main() -> ! {
     const PLAYGROUND_HEIGHT:usize = MAZE_HEIGHT * MAZE_HEIGHT;
 
     // Dimensions of maze graph produced by algorithm
+    #[cfg(any(feature = "esp32s3_box"))]
+    const MAZE_GRAPH_WIDTH:usize = 10;
+    #[cfg(not(feature = "esp32s3_box"))]
     const MAZE_GRAPH_WIDTH:usize = 8;
     const MAZE_GRAPH_HEIGHT:usize = 8;
 
@@ -314,11 +321,11 @@ fn main() -> ! {
     println!("Acquiring maze generator");
     let mut generator = RbGenerator::new(Some(seed_buffer));
     println!("Generating maze");
-    let maze_graph = generator.generate(8, 8).unwrap();
+    let maze_graph = generator.generate(MAZE_GRAPH_WIDTH as i32, MAZE_GRAPH_HEIGHT as i32).unwrap();
 
     println!("Converting to tile maze");
-    for y in 1usize..MAZE_GRAPH_WIDTH {
-        for x in 1usize..MAZE_GRAPH_HEIGHT {
+    for y in 1usize..MAZE_GRAPH_HEIGHT {
+        for x in 1usize..MAZE_GRAPH_WIDTH {
             let field = maze_graph.get_field(&(x.try_into().unwrap(),y.try_into().unwrap()).into()).unwrap();
             let tile_index = (x-1)*2+(y-1)*2*MAZE_WIDTH+MAZE_OFFSET;
 
@@ -338,8 +345,8 @@ fn main() -> ! {
     #[cfg(feature = "system_timer")]
     let start_timestamp = SystemTimer::now();
 
-    for x in 0..15 {
-        for y in 0..15 {
+    for x in 0..(MAZE_WIDTH-1) {
+        for y in 0..(MAZE_HEIGHT-1) {
             let position = Point::new((x*TILE_WIDTH).try_into().unwrap(), (y*TILE_HEIGHT).try_into().unwrap());
             if maze[x+y*MAZE_WIDTH] == 0 {
                 let tile = Image::new(&ground_bmp, position);
