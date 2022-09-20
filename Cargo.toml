@@ -7,47 +7,47 @@ license = "MIT"
 
 [target.xtensa-esp32-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.2.0"
-esp32-hal = "0.4.0"
+esp32-hal = "0.5.0"
 esp-backtrace = { version = "0.2" , features = [
     "esp32",
     "panic-handler",
     "print-uart",
 ] }
 xtensa-lx-rt = { version = "0.13.0", features = ["esp32"], optional = true }
-esp-println = { version = "0.2.1", features = [ "esp32" ] }
+esp-println = { version = "0.3.1", features = [ "esp32" ] }
 
 [target.xtensa-esp32s2-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.2.0"
-esp32s2-hal = "0.1.0"
+esp32s2-hal = "0.2.0"
 esp-backtrace = { version = "0.2" , features = [
     "esp32s2",
     "panic-handler",
     "print-uart",
 ] }
 xtensa-lx-rt = { version = "0.13.0", features = ["esp32s2"], optional = true }
-esp-println = { version = "0.2.1", features = [ "esp32s2" ] }
+esp-println = { version = "0.3.1", features = [ "esp32s2" ] }
 
 [target.xtensa-esp32s3-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.2.0"
-esp32s3-hal = { package = "esp32s3-hal", git = "https://github.com/esp-rs/esp-hal.git" }
-# esp32s3-hal = "0.1.0"
+# esp32s3-hal = { package = "esp32s3-hal", git = "https://github.com/esp-rs/esp-hal.git" }
+esp32s3-hal = "0.2.0"
 esp-backtrace = { version = "0.2" , features = [
     "esp32s3",
     "panic-handler",
     "print-uart",
 ] }
 xtensa-lx-rt = { version = "0.13.0", features = ["esp32s3"], optional = true }
-esp-println = { version = "0.2.1", features = [ "esp32s3" ] }
+esp-println = { version = "0.3.1", features = [ "esp32s3" ] }
 
 [target.riscv32imac-unknown-none-elf.dependencies]
-esp32c3-hal = "0.1.0"
+esp32c3-hal = "0.2.0"
 esp-backtrace = { version = "0.2" , features = [
     "esp32c3",
     "panic-handler",
     "print-uart",
 ] }
 riscv-rt = { version = "0.9", optional = true }
-esp-println = { version = "0.2.1", features = [ "esp32c3" ] }
+esp-println = { version = "0.3.1", features = [ "esp32c3" ] }
 
 
 
