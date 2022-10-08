@@ -8,7 +8,7 @@ license = "MIT"
 [target.xtensa-esp32-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.2.0"
 esp32-hal = "0.5.0"
-esp-backtrace = { version = "0.2" , features = [
+esp-backtrace = { version = "0.3.0" , features = [
     "esp32",
     "panic-handler",
     "print-uart",
@@ -19,7 +19,7 @@ esp-println = { version = "0.3.1", features = [ "esp32" ] }
 [target.xtensa-esp32s2-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.2.0"
 esp32s2-hal = "0.2.0"
-esp-backtrace = { version = "0.2" , features = [
+esp-backtrace = { version = "0.3.0" , features = [
     "esp32s2",
     "panic-handler",
     "print-uart",
@@ -31,7 +31,7 @@ esp-println = { version = "0.3.1", features = [ "esp32s2" ] }
 xtensa-atomic-emulation-trap = "0.2.0"
 # esp32s3-hal = { package = "esp32s3-hal", git = "https://github.com/esp-rs/esp-hal.git" }
 esp32s3-hal = "0.2.0"
-esp-backtrace = { version = "0.2" , features = [
+esp-backtrace = { version = "0.3.0" , features = [
     "esp32s3",
     "panic-handler",
     "print-uart",
@@ -41,7 +41,7 @@ esp-println = { version = "0.3.1", features = [ "esp32s3" ] }
 
 [target.riscv32imac-unknown-none-elf.dependencies]
 esp32c3-hal = "0.2.0"
-esp-backtrace = { version = "0.2" , features = [
+esp-backtrace = { version = "0.3.0" , features = [
     "esp32c3",
     "panic-handler",
     "print-uart",
@@ -59,10 +59,10 @@ display-interface = "0.4"
 display-interface-spi = "0.4"
 # getrandom = { version = "0.2", features = ["custom"], default-features = false }
 icm42670 = { git = "https://github.com/jessebraham/icm42670/" }
-ili9341 = { version = "0.5", git = "https://github.com/yuri91/ili9341-rs" }
-mipidsi = "0.3.0"
+ili9341 = { version = "0.5", git = "https://github.com/yuri91/ili9341-rs", rev = "32ca78087c481e04863e094cffde62517fd079b4" }
+mipidsi = "0.3"
 panic-halt = "0.2"
-tinybmp = "0.3.3"
+tinybmp = "0.4.0"
 rand = { version = "0.8.5", default-features = false }
 rand_chacha = { version = "0.3.1", default-features = false }
 # petgraph = "0.6.2"
