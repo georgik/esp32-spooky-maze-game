@@ -216,8 +216,14 @@ fn main() -> ! {
     let mut display = mipidsi::Display::st7789(di, reset);
 
     //https://github.com/espressif/esp-box/blob/master/components/bsp/src/boards/esp32_s3_box.c
+
     #[cfg(any(feature = "esp32s3_box"))]
-    let mut display = mipidsi::Display::ili9342c_rgb565(di, reset);
+    let display_options = DisplayOptions {
+        orientation: mipidsi::Orientation::PortraitInverted(false),
+        ..Default::default()
+    };
+    #[cfg(any(feature = "esp32s3_box"))]
+    let mut display = mipidsi::Display::ili9342c_rgb565(di, core::prelude::v1::Some(reset), display_options);
     #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
     let mut display = Ili9341::new(di, reset, &mut delay, Orientation::Portrait, DisplaySize240x320).unwrap();
 
@@ -232,15 +238,7 @@ fn main() -> ! {
     .unwrap();
 
     #[cfg(any(feature = "esp32s3_box"))]
-    display
-    .init(
-        &mut delay,
-        DisplayOptions {
-            orientation: Orientation::PortraitInverted(false),
-            ..DisplayOptions::default()
-        },
-    )
-    .unwrap();
+    display.init(&mut delay).unwrap();
 
     // display.clear(RgbColor::WHITE).unwrap();
     println!("Display initialized");
