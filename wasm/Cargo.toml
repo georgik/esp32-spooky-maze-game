@@ -1,0 +1,36 @@
+[package]
+name = "esp32s3_box"
+version = "0.1.0"
+authors = ["Samuel Benko <samuel.benko@espressif.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# esp32s3-hal = "0.2.0"
+# esp-alloc = { version = "0.1.0", features = ["oom-handler"] }
+# esp-backtrace = { version = "0.2.0", features = ["esp32s3", "panic-handler", "print-uart"] }
+# xtensa-lx-rt = { version = "0.13.0", features = ["esp32s3"], optional = true }
+# esp-println = { version = "0.3.1", features = [ "esp32s3" ] }
+embedded-graphics = "0.7"
+# mipidsi = "0.4"
+# display-interface-spi = "0.4"
+wasm-bindgen = "0.2.83"
+web-sys = { version = "0.3.60", features = ['Window', 'Performance', 'PerformanceTiming']}
+embedded-graphics-web-simulator = "0.3.0"
+rand = { version = "0.8.5", default-features = false }
+rand_chacha = { version = "0.3.1", default-features = false }
+# petgraph = "0.6.2"
+petgraph = { git = "https://github.com/zendurix/petgraph.git", branch = "better_no_std", default-features = false, features = ["graphmap"] }
+maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "feature/no_std", default-features = false, features = [ "recursive_backtracking"] }
+tinybmp = "0.4.0"
+gloo-timers = "0.2.4"
+
+#hallucination dependencies
+# libm = "0.2.5"
+
+# [features]
+# default = ["rt"]
+# rt = ["xtensa-lx-rt"]
