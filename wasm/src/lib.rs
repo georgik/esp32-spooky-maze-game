@@ -74,15 +74,19 @@ fn perf_to_system(amt: f64) -> SystemTime {
 }
 
 struct Assets<'a> {
-    tiles: Vec<Bmp<'a, Rgb565>>,
-    sprites: Vec<Bmp<'a, Rgb565>>,
+    ground: Option<Bmp<'a, Rgb565>>,
+    wall: Option<Bmp<'a, Rgb565>>,
+    ghost1: Option<Bmp<'a, Rgb565>>,
+    ghost2: Option<Bmp<'a, Rgb565>>,
 }
 
 impl Assets<'static> {
     pub fn new() -> Assets<'static> {
         Assets {
-            tiles: Vec::new(),
-            sprites: Vec::new(),
+            ground: None,
+            wall: None,
+            ghost1: None,
+            ghost2: None,
         }
     }
 }
@@ -261,10 +265,10 @@ pub fn initialize(&mut self) {
     let ghost2_data = include_bytes!("../../assets/img/ghost2.bmp");
     let ghost2_bmp = Bmp::<Rgb565>::from_slice(ghost2_data).unwrap();
 
-    assets.tiles.push(ground_bmp);
-    assets.tiles.push(wall_bmp);
-    assets.sprites.push(ghost1_bmp);
-    assets.sprites.push(ghost2_bmp);
+    assets.ground = Some(ground_bmp);
+    assets.wall = Some(wall_bmp);
+    assets.ghost1 = Some(ghost1_bmp);
+    assets.ghost2 = Some(ghost2_bmp);
 
     self.assets = Some(assets);
 
@@ -361,8 +365,8 @@ pub fn initialize(&mut self) {
             Some(ref mut display) => {
                 match self.assets {
                     Some(ref mut assets) => {
-                        let bmp:&Bmp<Rgb565> = assets.sprites.first().unwrap();
-                        let ghost1 = Image::new(bmp, Point::new(self.ghost_x.try_into().unwrap(), self.ghost_y.try_into().unwrap()));
+                        let bmp:Bmp<Rgb565> = assets.ghost1.unwrap();
+                        let ghost1 = Image::new(&bmp, Point::new(self.ghost_x.try_into().unwrap(), self.ghost_y.try_into().unwrap()));
                         ghost1.draw(display).unwrap();
                         display.flush().unwrap();
                     },
