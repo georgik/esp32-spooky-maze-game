@@ -10,11 +10,11 @@ use embedded_graphics::{
     image::Image,
 };
 use embedded_graphics_web_simulator::{
-    display::WebSimulatorDisplay, output_settings::OutputSettingsBuilder,
+    display::{WebSimulatorDisplay, self}, output_settings::OutputSettingsBuilder,
 };
 
 use wasm_bindgen::prelude::*;
-use web_sys::console;
+use web_sys::{console, Performance};
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -73,15 +73,97 @@ fn perf_to_system(amt: f64) -> SystemTime {
     UNIX_EPOCH + Duration::new(secs, nanos)
 }
 
-const NUM_ITER: i32 = 6;
+struct Assets<'a> {
+    tiles: Vec<Bmp<'a, Rgb565>>,
+    sprites: Vec<Bmp<'a, Rgb565>>,
+}
+
+impl Assets<'static> {
+    pub fn new() -> Assets<'static> {
+        Assets { 
+            tiles: Vec::new(),
+            sprites: Vec::new(),
+        }
+    }
+}
+
+#[wasm_bindgen]
+pub struct Universe {
+    pub start_time: u64,
+    pub ghost_x: u32,
+    pub ghost_y: u32,
+    display: Option<WebSimulatorDisplay<Rgb565>>,
+    assets: Option<Assets<'static>>,
+    step_size_x: u32,
+    step_size_y: u32,
+}
+
+
+
+#[wasm_bindgen]
+impl Universe {
+    pub fn new() -> Universe {
+        Universe {
+            start_time: 0,
+            ghost_x: 0,
+            ghost_y: 0,
+            display: None,
+            // ground_tile: Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../assets/img/ground.bmp")).unwrap()),
+            // wall_tile: Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../assets/img/wall.bmp")).unwrap()),
+            // performance: window().performance().expect("performance should be available"),
+            assets: None,
+            step_size_x: 16,
+            step_size_y: 16,
+        }
+    }
+
+    pub fn tick(&mut self) {
+        self.ghost_x += 1;
+        self.ghost_y += 1;
+    }
+
+    pub fn move_right(&mut self) {
+        self.ghost_x += self.step_size_x;
+        console::log_1(&"key_right".into());
+    }
+
+    pub fn move_left(&mut self) {
+        if self.ghost_x > 0 {
+            self.ghost_x -= self.step_size_x;
+        }
+        console::log_1(&"key_left".into());
+    }
+
+    pub fn move_up(&mut self) {
+        if self.ghost_y > 0 {
+            self.ghost_y -= self.step_size_y;
+        }
+        console::log_1(&"key_up".into());
+    }
+
+    pub fn move_down(&mut self) {
+        self.ghost_y += self.step_size_y;
+        console::log_1(&"key_down".into());
+    }
+
+    pub fn ghost_x(&self) -> u32 {
+        self.ghost_x
+    }
+
+    pub fn ghost_y(&self) -> u32 {
+        self.ghost_y
+    }
+
+
+
 // fn document() -> web_sys::Document {
 //     window()
 //         .document()
 //         .expect("should have a document on window")
 // }
 // #[entry]
-#[wasm_bindgen(start)]
-pub fn main_js() -> Result<(), JsValue> {
+// #[wasm_bindgen(start)]
+pub fn initialize(&mut self) {
     // let peripherals = Peripherals::take().unwrap();
     // let mut system = peripherals.SYSTEM.split();
     // let clocks = ClockControl::boot_defaults(system.clock_control).freeze();
@@ -131,16 +213,27 @@ pub fn main_js() -> Result<(), JsValue> {
         .scale(1)
         .pixel_spacing(1)
         .build();
-        let mut display:WebSimulatorDisplay<Rgb565> = WebSimulatorDisplay::new(
+    self.display = Some(WebSimulatorDisplay::new(
             (320, 240),
             &output_settings,
             document.get_element_by_id("graphics").as_ref(),
-        );
+    ));
     // let mut window = Window::new("ESP32-S3-BOX", &output_settings);
     // let mut display = mipidsi::Display::ili9342c_rgb565(di, core::prelude::v1::Some(reset), display_options);
     // display.init(&mut delay).unwrap();
 
-    display.clear(Rgb565::WHITE).unwrap();
+    match self.display {
+        Some(ref mut display) => {
+            display.clear(Rgb565::BLACK).unwrap();
+            display.flush().unwrap();
+        },
+        None => {}
+    }
+    //     let mut display = self.display.lock();
+    //     display.clear(Rgb565::BLACK).unwrap();
+    //     display.flush().unwrap();
+    // }
+    // display.unwrap().clear(Rgb565::WHITE).unwrap();
     // let espressif_style = MonoTextStyleBuilder::new()
     //     .font(&FONT_10X20)
     //     .text_color(RgbColor::BLACK)
@@ -150,17 +243,33 @@ pub fn main_js() -> Result<(), JsValue> {
     //     .draw(&mut display)
     //     .unwrap();
 
-    display.flush().unwrap();
+    // display.flush().unwrap();
     
     // println!("Hello World!");
 
     println!("Loading image");
 
+    let mut assets = Assets::new();
     let ground_data = include_bytes!("../../assets/img/ground.bmp");
     let ground_bmp = Bmp::<Rgb565>::from_slice(ground_data).unwrap();
 
     let wall_data = include_bytes!("../../assets/img/wall.bmp");
     let wall_bmp = Bmp::<Rgb565>::from_slice(wall_data).unwrap();
+
+    let ghost1_data = include_bytes!("../../assets/img/ghost1.bmp");
+    let ghost1_bmp = Bmp::<Rgb565>::from_slice(ghost1_data).unwrap();
+
+    let ghost2_data = include_bytes!("../../assets/img/ghost2.bmp");
+    let ghost2_bmp = Bmp::<Rgb565>::from_slice(ghost2_data).unwrap();
+
+    assets.tiles.push(ground_bmp);
+    assets.tiles.push(wall_bmp);
+    assets.sprites.push(ghost1_bmp);
+    assets.sprites.push(ghost2_bmp);
+
+    self.assets = Some(assets);
+
+    // self.tiles.push(wall_bmp);
 
     println!("Rendering maze");
 
@@ -224,85 +333,49 @@ pub fn main_js() -> Result<(), JsValue> {
     #[cfg(feature = "system_timer")]
     let start_timestamp = SystemTimer::now();
 
-    for x in 0..(MAZE_WIDTH-1) {
-        for y in 0..(MAZE_HEIGHT-1) {
-            let position = Point::new((x*TILE_WIDTH).try_into().unwrap(), (y*TILE_HEIGHT).try_into().unwrap());
-            if maze[x+y*MAZE_WIDTH] == 0 {
-                let tile = Image::new(&ground_bmp, position);
-                tile.draw(&mut display).unwrap();
-            } else {
-                let tile = Image::new(&wall_bmp, position);
-                tile.draw(&mut display).unwrap();
 
+    match self.display {
+        Some(ref mut display) => {
+            for x in 0..(MAZE_WIDTH-1) {
+                for y in 0..(MAZE_HEIGHT-1) {
+                    let position = Point::new((x*TILE_WIDTH).try_into().unwrap(), (y*TILE_HEIGHT).try_into().unwrap());
+                    if maze[x+y*MAZE_WIDTH] == 0 {
+                        let tile = Image::new(&ground_bmp, position);
+                        tile.draw(display).unwrap();
+                    } else {
+                        let tile = Image::new(&wall_bmp, position);
+                        tile.draw(display).unwrap();
+                    }
+                }
             }
-        }
+        },
+        None => {}
     }
 
+    let mut old_x = self.ghost_x;
+    let mut old_y = self.ghost_y;
 
-    let bmp_data = include_bytes!("../../assets/img/ghost1.bmp");
-    println!("Transforming image");
-    let bmp = Bmp::<Rgb565>::from_slice(bmp_data).unwrap();
-    println!("Drawing image");
-    let ghost1 = Image::new(&bmp, Point::new(16, 16));
-    ghost1.draw(&mut display).unwrap();
-    println!("Image visible");
+}
 
-    println!("Loading 2nd image");
-    let bmp_data = include_bytes!("../../assets/img/ghost2.bmp");
-    let bmp = Bmp::<Rgb565>::from_slice(bmp_data).unwrap();
+    pub fn render_frame(&mut self) {
 
-    Text::new(
-        "Ready",
-        Point::new(90, 140),
-        MonoTextStyle::new(&FONT_9X18_BOLD, RgbColor::RED),
-    )
-    .draw(&mut display)
-    .unwrap();
+        console::log_1(&"tick".into());
+        match self.display {
+            Some(ref mut display) => {
+                match self.assets {
+                    Some(ref mut assets) => {
+                        let bmp:&Bmp<Rgb565> = assets.sprites.first().unwrap();
+                        let ghost1 = Image::new(bmp, Point::new(self.ghost_x.try_into().unwrap(), self.ghost_y.try_into().unwrap()));
+                        ghost1.draw(display).unwrap();
+                        display.flush().unwrap();
+                    },
+                    None => {}
+                }
 
-    // let mut delay = Delay::new(&clocks);
-
-    let mut ghost_x = TILE_HEIGHT;
-    let mut ghost_y = TILE_WIDTH;
-    let mut old_x = ghost_x;
-    let mut old_y = ghost_y;
-
-    let f = Rc::new(RefCell::new(None));
-    let g = f.clone();
-
-    let mut i = 0;
-    let performance = window()
-    .performance()
-    .expect("performance should be available");
-    let mut start = (performance.now() as u64) / 1000;
-
-    *g.borrow_mut() = Some(Closure::wrap(Box::new(move || {
-        let end = (performance.now() as u64) / 1000;
-        if start != end {
-            start = end;
-        
-        if i > NUM_ITER {
-            // text_container().set_text_content(Some("All done!"));
-
-            // Drop our handle to this closure so that it will get cleaned
-            // up once we return.
-            let _ = f.borrow_mut().take();
-            return;
+                display.flush().unwrap();
+            },
+            None => {}
         }
 
-        // Set the body's text content to how many times this
-        // requestAnimationFrame callback has fired.
-        i += 1;
-        ghost_x += TILE_WIDTH;
-        let ghost1 = Image::new(&bmp, Point::new(ghost_x.try_into().unwrap(), 16));
-        ghost1.draw(&mut display).unwrap();
-        display.flush().unwrap();
     }
-        // Schedule ourself for another requestAnimationFrame callback.
-        request_animation_frame(f.borrow().as_ref().unwrap());
-        // i += 1;
-    }) as Box<dyn FnMut()>));
-
-    request_animation_frame(g.borrow().as_ref().unwrap());
-
-    Ok(())
 }
