@@ -10,3 +10,9 @@ Cargo.lock
 **/*.rs.bk
 
 .DS_Store/
+
+node_modules
+/dist/
+/pkg/
+/wasm-pack.log
+
