@@ -80,7 +80,7 @@ struct Assets<'a> {
 
 impl Assets<'static> {
     pub fn new() -> Assets<'static> {
-        Assets { 
+        Assets {
             tiles: Vec::new(),
             sprites: Vec::new(),
         }
@@ -92,6 +92,8 @@ pub struct Universe {
     pub start_time: u64,
     pub ghost_x: u32,
     pub ghost_y: u32,
+    old_ghost_x: u32,
+    old_ghost_y: u32,
     display: Option<WebSimulatorDisplay<Rgb565>>,
     assets: Option<Assets<'static>>,
     step_size_x: u32,
@@ -105,12 +107,11 @@ impl Universe {
     pub fn new() -> Universe {
         Universe {
             start_time: 0,
-            ghost_x: 0,
-            ghost_y: 0,
+            ghost_x: 16,
+            ghost_y: 16,
+            old_ghost_x: 16,
+            old_ghost_y: 16,
             display: None,
-            // ground_tile: Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../assets/img/ground.bmp")).unwrap()),
-            // wall_tile: Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../assets/img/wall.bmp")).unwrap()),
-            // performance: window().performance().expect("performance should be available"),
             assets: None,
             step_size_x: 16,
             step_size_y: 16,
@@ -244,8 +245,6 @@ pub fn initialize(&mut self) {
     //     .unwrap();
 
     // display.flush().unwrap();
-    
-    // println!("Hello World!");
 
     println!("Loading image");
 
@@ -268,8 +267,6 @@ pub fn initialize(&mut self) {
     assets.sprites.push(ghost2_bmp);
 
     self.assets = Some(assets);
-
-    // self.tiles.push(wall_bmp);
 
     println!("Rendering maze");
 
