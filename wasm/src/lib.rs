@@ -133,40 +133,6 @@ impl Universe {
         self.ghost_y
     }
 
-    pub fn generate_maze(&mut self, graph_width: usize, graph_height: usize) {
-        println!("Rendering maze");
-
-        println!("Initializing Random Number Generator Seed");
-        // let mut rng = Rng::new(peripherals.RNG);
-        // let mut rng = Rng::new( 0x12345678 );
-        let mut seed_buffer = [0u8;32];
-        // rng.read(&mut seed_buffer).unwrap();
-
-        println!("Acquiring maze generator");
-        let mut generator = RbGenerator::new(Some(seed_buffer));
-        println!("Generating maze");
-        let maze_graph = generator.generate(graph_width as i32, graph_height as i32).unwrap();
-
-        println!("Converting to tile maze");
-        for y in 1usize..graph_height {
-            for x in 1usize..graph_width {
-                let field = maze_graph.get_field(&(x.try_into().unwrap(),y.try_into().unwrap()).into()).unwrap();
-                let tile_index = (x-1)*2+(y-1)*2*(self.maze.width as usize)+(self.maze.offset as usize);
-
-                self.maze.data[tile_index] = 0;
-
-                if field.has_passage(&Direction::West) {
-                    self.maze.data[tile_index + 1] = 0;
-                }
-
-                if field.has_passage(&Direction::South) {
-                    self.maze.data[tile_index + (self.maze.width as usize)] = 0;
-                }
-            }
-        }
-
-    }
-
     pub fn draw_maze(&mut self, camera_x: i32, camera_y: i32) {
         println!("Rendering the maze to display");
         #[cfg(feature = "system_timer")]
@@ -234,7 +200,7 @@ impl Universe {
         assets.load();
         self.assets = Some(assets);
 
-        self.generate_maze(32, 32);
+        self.maze.generate_maze(32, 32);
         self.draw_maze(self.camera_x,self.camera_y);
 
     }
