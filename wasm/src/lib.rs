@@ -39,8 +39,6 @@ use crate::maze::Maze;
 
 use tinybmp::Bmp;
 
-use maze_generator::prelude::*;
-use maze_generator::recursive_backtracking::{RbGenerator};
 
 fn window() -> web_sys::Window {
     web_sys::window().expect("no global `window` exists")
@@ -201,6 +199,8 @@ impl Universe {
         self.assets = Some(assets);
 
         self.maze.generate_maze(32, 32);
+        self.maze.generate_coins();
+        self.maze.generate_npcs();
         self.draw_maze(self.camera_x,self.camera_y);
 
     }

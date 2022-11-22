@@ -53,6 +53,26 @@ impl Maze {
         }
     }
 
+    pub fn generate_coins(&mut self) {
+        for index in 0..100 {
+            let x:i32 = 1;
+            let y:i32 = 1;
+            self.coins[index].x = x;
+            self.coins[index].y = y;
+        }
+    }
+
+    pub fn generate_npcs(&mut self) {
+        for index in 0..5 {
+            let x:i32 = 1;
+            let y:i32 = 1;
+            self.npcs[index].x = x;
+            self.npcs[index].y = y;
+            self.npcs[index].vector_x = 1;
+            self.npcs[index].vector_y = 1;
+        }
+    }
+
     pub fn generate_maze(&mut self, graph_width: usize, graph_height: usize) {
         println!("Rendering maze");
 
