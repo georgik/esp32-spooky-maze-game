@@ -31,6 +31,12 @@ use embedded_graphics::{
 };
 use gloo_timers::callback::Timeout;
 
+mod assets;
+use crate::assets::Assets;
+
+mod maze;
+use crate::maze::Maze;
+
 use tinybmp::Bmp;
 
 use maze_generator::prelude::*;
@@ -52,52 +58,6 @@ fn perf_to_system(amt: f64) -> SystemTime {
     UNIX_EPOCH + Duration::new(secs, nanos)
 }
 
-struct Assets<'a> {
-    pub ground: Option<Bmp<'a, Rgb565>>,
-    pub wall: Option<Bmp<'a, Rgb565>>,
-    pub empty: Option<Bmp<'a, Rgb565>>,
-    pub ghost1: Option<Bmp<'a, Rgb565>>,
-    pub ghost2: Option<Bmp<'a, Rgb565>>,
-}
-
-impl Assets<'static> {
-    pub fn new() -> Assets<'static> {
-        Assets {
-            ground: None,
-            wall: None,
-            empty: None,
-            ghost1: None,
-            ghost2: None,
-        }
-    }
-}
-
-pub struct Maze {
-    pub width: u32,
-    pub height: u32,
-    pub visible_width: u32,
-    pub visible_height: u32,
-    pub data: [u8; 64*64],
-    // Tile map should have small border top line and left column
-    pub offset: u32,
-    pub tile_width: u32,
-    pub tile_height: u32,
-}
-
-impl Maze {
-    pub fn new(width: u32, height: u32) -> Maze {
-        Maze {
-            width,
-            height,
-            visible_width: 20,
-            visible_height: 16,
-            data: [1; 64*64],
-            offset: width+1,
-            tile_width: 16,
-            tile_height: 16,
-        }
-    }
-}
 
 #[wasm_bindgen]
 pub struct Universe {
@@ -271,34 +231,11 @@ impl Universe {
         println!("Loading image");
 
         let mut assets = Assets::new();
-        let ground_data = include_bytes!("../../assets/img/ground.bmp");
-        let ground_bmp = Bmp::<Rgb565>::from_slice(ground_data).unwrap();
-
-        let wall_data = include_bytes!("../../assets/img/wall.bmp");
-        let wall_bmp = Bmp::<Rgb565>::from_slice(wall_data).unwrap();
-
-        let empty_data = include_bytes!("../../assets/img/empty.bmp");
-        let empty_bmp = Bmp::<Rgb565>::from_slice(empty_data).unwrap();
-
-        let ghost1_data = include_bytes!("../../assets/img/ghost1.bmp");
-        let ghost1_bmp = Bmp::<Rgb565>::from_slice(ghost1_data).unwrap();
-
-        let ghost2_data = include_bytes!("../../assets/img/ghost2.bmp");
-        let ghost2_bmp = Bmp::<Rgb565>::from_slice(ghost2_data).unwrap();
-
-        assets.ground = Some(ground_bmp);
-        assets.wall = Some(wall_bmp);
-        assets.empty = Some(empty_bmp);
-        assets.ghost1 = Some(ghost1_bmp);
-        assets.ghost2 = Some(ghost2_bmp);
-
+        assets.load();
         self.assets = Some(assets);
 
         self.generate_maze(32, 32);
         self.draw_maze(self.camera_x,self.camera_y);
-
-        let mut old_x = self.ghost_x;
-        let mut old_y = self.ghost_y;
 
     }
 
