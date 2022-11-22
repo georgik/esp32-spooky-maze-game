@@ -89,8 +89,8 @@ impl Maze {
         Maze {
             width,
             height,
-            visible_width: 12,
-            visible_height: 10,
+            visible_width: 20,
+            visible_height: 16,
             data: [1; 64*64],
             offset: width+1,
             tile_width: 16,
@@ -233,8 +233,8 @@ impl Universe {
                     for y in camera_tile_y..(camera_tile_y + (self.maze.visible_height as i32)-1) {
                         let position_x = (x as i32 * self.maze.tile_width as i32) - camera_x;
                         let position_y = (y as i32 * self.maze.tile_height as i32) - camera_y;
-                        let position = Point::new(position_x.try_into().unwrap(), position_y.try_into().unwrap());
-                        if position_x < 0 || position_y < 0 {
+                        let position = Point::new(position_x, position_y);
+                        if x < 0 || y < 0 || x > 16*self.maze.width as i32 || y > 16*self.maze.height as i32 {
                             let tile = Image::new(empty, position);
                             tile.draw(display).unwrap();
                         } else if self.maze.data[(x+y*(self.maze.width as i32)) as usize] == 0 {
