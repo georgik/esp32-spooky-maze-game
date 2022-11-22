@@ -17,7 +17,7 @@ const rust = import('./pkg')
     universe.initialize();
     var oldTimestamp = 0;
     function renderFrame(timestamp) {
-        if (timestamp - oldTimestamp > 1000) {
+        if (timestamp - oldTimestamp > 200) {
             universe.render_frame();
             oldTimestamp = timestamp;
         }

@@ -109,6 +109,10 @@ pub struct Universe {
     step_size_x: u32,
     step_size_y: u32,
     maze: Maze,
+    camera_x: i32,
+    camera_y: i32,
+    old_camera_x: i32,
+    old_camera_y: i32,
 }
 
 
@@ -118,15 +122,19 @@ impl Universe {
     pub fn new() -> Universe {
         Universe {
             start_time: 0,
-            ghost_x: 16,
-            ghost_y: 16,
-            old_ghost_x: 16,
-            old_ghost_y: 16,
+            ghost_x: 5*16,
+            ghost_y: 5*16,
+            old_ghost_x: 5*16,
+            old_ghost_y: 5*16,
             display: None,
             assets: None,
             step_size_x: 16,
             step_size_y: 16,
             maze: Maze::new(64, 64),
+            camera_x: 0,
+            camera_y: 0,
+            old_camera_x: 0,
+            old_camera_y: 0,
         }
     }
 
@@ -136,26 +144,22 @@ impl Universe {
     }
 
     pub fn move_right(&mut self) {
-        self.ghost_x += self.step_size_x;
+        self.camera_x += self.step_size_x as i32;
         console::log_1(&"key_right".into());
     }
 
     pub fn move_left(&mut self) {
-        if self.ghost_x > 0 {
-            self.ghost_x -= self.step_size_x;
-        }
+        self.camera_x -= self.step_size_x as i32;
         console::log_1(&"key_left".into());
     }
 
     pub fn move_up(&mut self) {
-        if self.ghost_y > 0 {
-            self.ghost_y -= self.step_size_y;
-        }
+        self.camera_y -= self.step_size_y as i32;
         console::log_1(&"key_up".into());
     }
 
     pub fn move_down(&mut self) {
-        self.ghost_y += self.step_size_y;
+        self.camera_y += self.step_size_y as i32;
         console::log_1(&"key_down".into());
     }
 
@@ -208,7 +212,7 @@ impl Universe {
 
     }
 
-    pub fn draw_maze(&mut self) {
+    pub fn draw_maze(&mut self, camera_x: i32, camera_y: i32) {
         println!("Rendering the maze to display");
         #[cfg(feature = "system_timer")]
         let start_timestamp = SystemTimer::now();
@@ -221,7 +225,9 @@ impl Universe {
                 let wall = assets.wall.as_ref().unwrap();
                 for x in 0..(self.maze.visible_width-1) {
                     for y in 0..(self.maze.visible_height-1) {
-                        let position = Point::new((x*self.maze.tile_width).try_into().unwrap(), (y*self.maze.tile_height).try_into().unwrap());
+                        let position_x = (x as i32 * self.maze.tile_width as i32) - camera_x;
+                        let position_y = (y as i32 * self.maze.tile_height as i32) - camera_y;
+                        let position = Point::new(position_x.try_into().unwrap(), position_y.try_into().unwrap());
                         if self.maze.data[(x+y*self.maze.width) as usize] == 0 {
                             let tile = Image::new(ground, position);
                             tile.draw(display).unwrap();
@@ -282,7 +288,7 @@ impl Universe {
         self.assets = Some(assets);
 
         self.generate_maze();
-        self.draw_maze();
+        self.draw_maze(self.camera_x,self.camera_y);
 
         let mut old_x = self.ghost_x;
         let mut old_y = self.ghost_y;
@@ -292,10 +298,19 @@ impl Universe {
     pub fn render_frame(&mut self) {
 
         console::log_1(&"tick".into());
+
+        if self.old_camera_x != self.camera_x || self.old_camera_y != self.camera_y {
+            self.draw_maze(self.camera_x,self.camera_y);
+            self.old_camera_x = self.camera_x;
+            self.old_camera_y = self.camera_y;
+        }
+
+
         match self.display {
             Some(ref mut display) => {
                 match self.assets {
                     Some(ref mut assets) => {
+
                         let bmp:Bmp<Rgb565> = assets.ghost1.unwrap();
                         let ghost1 = Image::new(&bmp, Point::new(self.ghost_x.try_into().unwrap(), self.ghost_y.try_into().unwrap()));
                         ghost1.draw(display).unwrap();
