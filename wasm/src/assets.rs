@@ -11,6 +11,13 @@ pub struct Assets<'a> {
     pub empty: Option<Bmp<'a, Rgb565>>,
     pub ghost1: Option<Bmp<'a, Rgb565>>,
     pub ghost2: Option<Bmp<'a, Rgb565>>,
+    pub coin: Option<Bmp<'a, Rgb565>>,
+    pub dynamite: Option<Bmp<'a, Rgb565>>,
+    pub explosion1: Option<Bmp<'a, Rgb565>>,
+    pub explosion2: Option<Bmp<'a, Rgb565>>,
+    pub npc: Option<Bmp<'a, Rgb565>>,
+    pub teleport: Option<Bmp<'a, Rgb565>>,
+    pub walker: Option<Bmp<'a, Rgb565>>,
 }
 
 impl Assets<'static> {
@@ -21,6 +28,13 @@ impl Assets<'static> {
             empty: None,
             ghost1: None,
             ghost2: None,
+            coin: None,
+            dynamite: None,
+            explosion1: None,
+            explosion2: None,
+            npc: None,
+            teleport: None,
+            walker: None,
         }
     }
 
@@ -30,5 +44,12 @@ impl Assets<'static> {
         self.empty = Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../assets/img/empty.bmp")).unwrap());
         self.ghost1 = Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../assets/img/ghost1.bmp")).unwrap());
         self.ghost2 = Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../assets/img/ghost2.bmp")).unwrap());
+        self.coin = Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../assets/img/coin.bmp")).unwrap());
+        self.dynamite = Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../assets/img/dynamite.bmp")).unwrap());
+        self.explosion1 = Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../assets/img/explosion1.bmp")).unwrap());
+        self.explosion2 = Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../assets/img/explosion2.bmp")).unwrap());
+        self.npc = Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../assets/img/npc.bmp")).unwrap());
+        self.teleport = Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../assets/img/teleport.bmp")).unwrap());
+        self.walker = Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../assets/img/walker.bmp")).unwrap());
     }
 }
