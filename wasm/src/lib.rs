@@ -173,15 +173,8 @@ impl Universe {
         self.ghost_y
     }
 
-    pub fn generate_maze(&mut self) {
+    pub fn generate_maze(&mut self, graph_width: usize, graph_height: usize) {
         println!("Rendering maze");
-
-        // Dimensions of maze graph produced by algorithm
-        // #[cfg(any(feature = "esp32s3_box"))]
-        const MAZE_GRAPH_WIDTH:usize = 10;
-        // #[cfg(not(feature = "esp32s3_box"))]
-        // const MAZE_GRAPH_WIDTH:usize = 8;
-        const MAZE_GRAPH_HEIGHT:usize = 8;
 
         println!("Initializing Random Number Generator Seed");
         // let mut rng = Rng::new(peripherals.RNG);
@@ -192,11 +185,11 @@ impl Universe {
         println!("Acquiring maze generator");
         let mut generator = RbGenerator::new(Some(seed_buffer));
         println!("Generating maze");
-        let maze_graph = generator.generate(MAZE_GRAPH_WIDTH as i32, MAZE_GRAPH_HEIGHT as i32).unwrap();
+        let maze_graph = generator.generate(graph_width as i32, graph_height as i32).unwrap();
 
         println!("Converting to tile maze");
-        for y in 1usize..MAZE_GRAPH_HEIGHT {
-            for x in 1usize..MAZE_GRAPH_WIDTH {
+        for y in 1usize..graph_height {
+            for x in 1usize..graph_width {
                 let field = maze_graph.get_field(&(x.try_into().unwrap(),y.try_into().unwrap()).into()).unwrap();
                 let tile_index = (x-1)*2+(y-1)*2*(self.maze.width as usize)+(self.maze.offset as usize);
 
@@ -234,7 +227,8 @@ impl Universe {
                         let position_x = (x as i32 * self.maze.tile_width as i32) - camera_x;
                         let position_y = (y as i32 * self.maze.tile_height as i32) - camera_y;
                         let position = Point::new(position_x, position_y);
-                        if x < 0 || y < 0 || x > 16*self.maze.width as i32 || y > 16*self.maze.height as i32 {
+
+                        if x < 0 || y < 0 || x > (self.maze.width-1) as i32 || y > (self.maze.height-1) as i32 {
                             let tile = Image::new(empty, position);
                             tile.draw(display).unwrap();
                         } else if self.maze.data[(x+y*(self.maze.width as i32)) as usize] == 0 {
@@ -300,7 +294,7 @@ impl Universe {
 
         self.assets = Some(assets);
 
-        self.generate_maze();
+        self.generate_maze(32, 32);
         self.draw_maze(self.camera_x,self.camera_y);
 
         let mut old_x = self.ghost_x;
