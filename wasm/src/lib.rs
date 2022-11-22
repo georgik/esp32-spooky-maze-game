@@ -55,6 +55,7 @@ fn perf_to_system(amt: f64) -> SystemTime {
 struct Assets<'a> {
     pub ground: Option<Bmp<'a, Rgb565>>,
     pub wall: Option<Bmp<'a, Rgb565>>,
+    pub empty: Option<Bmp<'a, Rgb565>>,
     pub ghost1: Option<Bmp<'a, Rgb565>>,
     pub ghost2: Option<Bmp<'a, Rgb565>>,
 }
@@ -64,6 +65,7 @@ impl Assets<'static> {
         Assets {
             ground: None,
             wall: None,
+            empty: None,
             ghost1: None,
             ghost2: None,
         }
@@ -223,12 +225,19 @@ impl Universe {
                 let assets = self.assets.as_ref().unwrap();
                 let ground = assets.ground.as_ref().unwrap();
                 let wall = assets.wall.as_ref().unwrap();
-                for x in 0..(self.maze.visible_width-1) {
-                    for y in 0..(self.maze.visible_height-1) {
+                let empty = assets.empty.as_ref().unwrap();
+
+                let camera_tile_x = camera_x / self.maze.tile_width as i32;
+                let camera_tile_y = camera_y / self.maze.tile_height as i32;
+                for x in camera_tile_x..(camera_tile_x + (self.maze.visible_width as i32)-1) {
+                    for y in camera_tile_y..(camera_tile_y + (self.maze.visible_height as i32)-1) {
                         let position_x = (x as i32 * self.maze.tile_width as i32) - camera_x;
                         let position_y = (y as i32 * self.maze.tile_height as i32) - camera_y;
                         let position = Point::new(position_x.try_into().unwrap(), position_y.try_into().unwrap());
-                        if self.maze.data[(x+y*self.maze.width) as usize] == 0 {
+                        if position_x < 0 || position_y < 0 {
+                            let tile = Image::new(empty, position);
+                            tile.draw(display).unwrap();
+                        } else if self.maze.data[(x+y*(self.maze.width as i32)) as usize] == 0 {
                             let tile = Image::new(ground, position);
                             tile.draw(display).unwrap();
                         } else {
@@ -274,6 +283,9 @@ impl Universe {
         let wall_data = include_bytes!("../../assets/img/wall.bmp");
         let wall_bmp = Bmp::<Rgb565>::from_slice(wall_data).unwrap();
 
+        let empty_data = include_bytes!("../../assets/img/empty.bmp");
+        let empty_bmp = Bmp::<Rgb565>::from_slice(empty_data).unwrap();
+
         let ghost1_data = include_bytes!("../../assets/img/ghost1.bmp");
         let ghost1_bmp = Bmp::<Rgb565>::from_slice(ghost1_data).unwrap();
 
@@ -282,6 +294,7 @@ impl Universe {
 
         assets.ground = Some(ground_bmp);
         assets.wall = Some(wall_bmp);
+        assets.empty = Some(empty_bmp);
         assets.ghost1 = Some(ghost1_bmp);
         assets.ghost2 = Some(ghost2_bmp);
 
