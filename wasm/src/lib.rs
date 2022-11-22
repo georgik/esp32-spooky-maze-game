@@ -53,10 +53,10 @@ fn perf_to_system(amt: f64) -> SystemTime {
 }
 
 struct Assets<'a> {
-    ground: Option<Bmp<'a, Rgb565>>,
-    wall: Option<Bmp<'a, Rgb565>>,
-    ghost1: Option<Bmp<'a, Rgb565>>,
-    ghost2: Option<Bmp<'a, Rgb565>>,
+    pub ground: Option<Bmp<'a, Rgb565>>,
+    pub wall: Option<Bmp<'a, Rgb565>>,
+    pub ghost1: Option<Bmp<'a, Rgb565>>,
+    pub ghost2: Option<Bmp<'a, Rgb565>>,
 }
 
 impl Assets<'static> {
@@ -66,6 +66,33 @@ impl Assets<'static> {
             wall: None,
             ghost1: None,
             ghost2: None,
+        }
+    }
+}
+
+pub struct Maze {
+    pub width: u32,
+    pub height: u32,
+    pub visible_width: u32,
+    pub visible_height: u32,
+    pub data: [u8; 64*64],
+    // Tile map should have small border top line and left column
+    pub offset: u32,
+    pub tile_width: u32,
+    pub tile_height: u32,
+}
+
+impl Maze {
+    pub fn new(width: u32, height: u32) -> Maze {
+        Maze {
+            width,
+            height,
+            visible_width: 12,
+            visible_height: 10,
+            data: [1; 64*64],
+            offset: width+1,
+            tile_width: 16,
+            tile_height: 16,
         }
     }
 }
@@ -81,6 +108,7 @@ pub struct Universe {
     assets: Option<Assets<'static>>,
     step_size_x: u32,
     step_size_y: u32,
+    maze: Maze,
 }
 
 
@@ -98,6 +126,7 @@ impl Universe {
             assets: None,
             step_size_x: 16,
             step_size_y: 16,
+            maze: Maze::new(64, 64),
         }
     }
 
@@ -136,6 +165,77 @@ impl Universe {
 
     pub fn ghost_y(&self) -> u32 {
         self.ghost_y
+    }
+
+    pub fn generate_maze(&mut self) {
+        println!("Rendering maze");
+
+        // Dimensions of maze graph produced by algorithm
+        // #[cfg(any(feature = "esp32s3_box"))]
+        const MAZE_GRAPH_WIDTH:usize = 10;
+        // #[cfg(not(feature = "esp32s3_box"))]
+        // const MAZE_GRAPH_WIDTH:usize = 8;
+        const MAZE_GRAPH_HEIGHT:usize = 8;
+
+        println!("Initializing Random Number Generator Seed");
+        // let mut rng = Rng::new(peripherals.RNG);
+        // let mut rng = Rng::new( 0x12345678 );
+        let mut seed_buffer = [0u8;32];
+        // rng.read(&mut seed_buffer).unwrap();
+
+        println!("Acquiring maze generator");
+        let mut generator = RbGenerator::new(Some(seed_buffer));
+        println!("Generating maze");
+        let maze_graph = generator.generate(MAZE_GRAPH_WIDTH as i32, MAZE_GRAPH_HEIGHT as i32).unwrap();
+
+        println!("Converting to tile maze");
+        for y in 1usize..MAZE_GRAPH_HEIGHT {
+            for x in 1usize..MAZE_GRAPH_WIDTH {
+                let field = maze_graph.get_field(&(x.try_into().unwrap(),y.try_into().unwrap()).into()).unwrap();
+                let tile_index = (x-1)*2+(y-1)*2*(self.maze.width as usize)+(self.maze.offset as usize);
+
+                self.maze.data[tile_index] = 0;
+
+                if field.has_passage(&Direction::West) {
+                    self.maze.data[tile_index + 1] = 0;
+                }
+
+                if field.has_passage(&Direction::South) {
+                    self.maze.data[tile_index + (self.maze.width as usize)] = 0;
+                }
+            }
+        }
+
+    }
+
+    pub fn draw_maze(&mut self) {
+        println!("Rendering the maze to display");
+        #[cfg(feature = "system_timer")]
+        let start_timestamp = SystemTimer::now();
+
+
+        match self.display {
+            Some(ref mut display) => {
+                let assets = self.assets.as_ref().unwrap();
+                let ground = assets.ground.as_ref().unwrap();
+                let wall = assets.wall.as_ref().unwrap();
+                for x in 0..(self.maze.visible_width-1) {
+                    for y in 0..(self.maze.visible_height-1) {
+                        let position = Point::new((x*self.maze.tile_width).try_into().unwrap(), (y*self.maze.tile_height).try_into().unwrap());
+                        if self.maze.data[(x+y*self.maze.width) as usize] == 0 {
+                            let tile = Image::new(ground, position);
+                            tile.draw(display).unwrap();
+                        } else {
+                            let tile = Image::new(wall, position);
+                            tile.draw(display).unwrap();
+                        }
+                    }
+                }
+            },
+            None => {}
+        }
+
+
     }
 
 
@@ -181,86 +281,8 @@ impl Universe {
 
         self.assets = Some(assets);
 
-        println!("Rendering maze");
-
-        // Dimension of tiles
-        const TILE_WIDTH:usize = 16;
-        const TILE_HEIGHT:usize = 16;
-
-        // Simplified maze map in memory for tile mapping
-        // #[cfg(any(feature = "esp32s3_box"))]
-        const MAZE_WIDTH:usize = 21;
-        // #[cfg(not(feature = "esp32s3_box"))]
-        // const MAZE_WIDTH:usize = 16;
-        const MAZE_HEIGHT:usize = 16;
-
-        // Tile map should have small border top line and left column
-        const MAZE_OFFSET:usize = MAZE_WIDTH + 1;
-
-        // Dimension of Playground
-        const PLAYGROUND_WIDTH:usize = MAZE_WIDTH * TILE_WIDTH;
-        const PLAYGROUND_HEIGHT:usize = MAZE_HEIGHT * MAZE_HEIGHT;
-
-        // Dimensions of maze graph produced by algorithm
-        // #[cfg(any(feature = "esp32s3_box"))]
-        const MAZE_GRAPH_WIDTH:usize = 10;
-        // #[cfg(not(feature = "esp32s3_box"))]
-        // const MAZE_GRAPH_WIDTH:usize = 8;
-        const MAZE_GRAPH_HEIGHT:usize = 8;
-
-        let mut maze: [u8; MAZE_WIDTH*MAZE_HEIGHT] = [1; MAZE_WIDTH*MAZE_HEIGHT];
-
-        println!("Initializing Random Number Generator Seed");
-        // let mut rng = Rng::new(peripherals.RNG);
-        // let mut rng = Rng::new( 0x12345678 );
-        let mut seed_buffer = [0u8;32];
-        // rng.read(&mut seed_buffer).unwrap();
-
-        println!("Acquiring maze generator");
-        let mut generator = RbGenerator::new(Some(seed_buffer));
-        println!("Generating maze");
-        let maze_graph = generator.generate(MAZE_GRAPH_WIDTH as i32, MAZE_GRAPH_HEIGHT as i32).unwrap();
-
-        println!("Converting to tile maze");
-        for y in 1usize..MAZE_GRAPH_HEIGHT {
-            for x in 1usize..MAZE_GRAPH_WIDTH {
-                let field = maze_graph.get_field(&(x.try_into().unwrap(),y.try_into().unwrap()).into()).unwrap();
-                let tile_index = (x-1)*2+(y-1)*2*MAZE_WIDTH+MAZE_OFFSET;
-
-                maze[tile_index] = 0;
-
-                if field.has_passage(&Direction::West) {
-                    maze[tile_index + 1] = 0;
-                }
-
-                if field.has_passage(&Direction::South) {
-                    maze[tile_index + MAZE_WIDTH] = 0;
-                }
-            }
-        }
-
-        println!("Rendering the maze to display");
-        #[cfg(feature = "system_timer")]
-        let start_timestamp = SystemTimer::now();
-
-
-        match self.display {
-            Some(ref mut display) => {
-                for x in 0..(MAZE_WIDTH-1) {
-                    for y in 0..(MAZE_HEIGHT-1) {
-                        let position = Point::new((x*TILE_WIDTH).try_into().unwrap(), (y*TILE_HEIGHT).try_into().unwrap());
-                        if maze[x+y*MAZE_WIDTH] == 0 {
-                            let tile = Image::new(&ground_bmp, position);
-                            tile.draw(display).unwrap();
-                        } else {
-                            let tile = Image::new(&wall_bmp, position);
-                            tile.draw(display).unwrap();
-                        }
-                    }
-                }
-            },
-            None => {}
-        }
+        self.generate_maze();
+        self.draw_maze();
 
         let mut old_x = self.ghost_x;
         let mut old_y = self.ghost_y;
