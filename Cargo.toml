@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "esp32-s3-box",
     "spooky-core",
     "wasm"
 ]

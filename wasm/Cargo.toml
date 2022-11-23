@@ -1,7 +1,7 @@
 [package]
 name = "esp32s3_box"
 version = "0.1.0"
-authors = ["Samuel Benko <samuel.benko@espressif.com>"]
+authors = ["Juraj Michalek <juraj.michalek@espressif.com>", "Samuel Benko <samuel.benko@espressif.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
@@ -28,7 +28,7 @@ petgraph = { git = "https://github.com/zendurix/petgraph.git", branch = "better_
 maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "feature/no_std", default-features = false, features = [ "recursive_backtracking"] }
 tinybmp = "0.4.0"
 heapless = { version = "0.7.14", default-features = false }
-spooky-core = { path = "../spooky-core" }
+spooky-core = { path = "../spooky-core", features = [ "wasm" ]}
 
 # [features]
 # default = ["rt"]

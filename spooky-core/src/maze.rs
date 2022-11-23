@@ -57,6 +57,7 @@ impl Maze {
 
     fn get_rand(&self) -> i32 {
         let mut seed_buffer = [0u8;2];
+        #[cfg(feature = "getrandom")]
         getrandom::getrandom(&mut seed_buffer).unwrap();
         seed_buffer[0].try_into().unwrap()
     }
@@ -154,20 +155,15 @@ impl Maze {
     }
 
     pub fn generate_maze(&mut self, graph_width: usize, graph_height: usize) {
-        println!("Rendering maze");
-
-        println!("Initializing Random Number Generator Seed");
         // let mut rng = Rng::new(peripherals.RNG);
         // let mut rng = Rng::new( 0x12345678 );
         let mut seed_buffer = [0u8;32];
+        #[cfg(feature = "getrandom")]
         getrandom::getrandom(&mut seed_buffer).unwrap();
 
-        println!("Acquiring maze generator");
         let mut generator = RbGenerator::new(Some(seed_buffer));
-        println!("Generating maze");
         let maze_graph = generator.generate(graph_width as i32, graph_height as i32).unwrap();
 
-        println!("Converting to tile maze");
         for y in 1usize..graph_height {
             for x in 1usize..graph_width {
                 let field = maze_graph.get_field(&(x.try_into().unwrap(),y.try_into().unwrap()).into()).unwrap();
