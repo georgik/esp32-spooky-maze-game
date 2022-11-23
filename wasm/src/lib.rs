@@ -71,8 +71,6 @@ pub struct Universe {
     maze: Maze,
     camera_x: i32,
     camera_y: i32,
-    old_camera_x: i32,
-    old_camera_y: i32,
 }
 
 
@@ -93,8 +91,6 @@ impl Universe {
             maze: Maze::new(64, 64),
             camera_x: 0,
             camera_y: 0,
-            old_camera_x: 0,
-            old_camera_y: 0,
         }
     }
 
@@ -242,12 +238,8 @@ impl Universe {
 
         console::log_1(&"tick".into());
 
-        if self.old_camera_x != self.camera_x || self.old_camera_y != self.camera_y {
-            self.draw_maze(self.camera_x,self.camera_y);
-            self.old_camera_x = self.camera_x;
-            self.old_camera_y = self.camera_y;
-        }
-
+        self.maze.move_npcs();
+        self.draw_maze(self.camera_x,self.camera_y);
 
         match self.display {
             Some(ref mut display) => {

@@ -121,6 +121,30 @@ impl Maze {
         }
     }
 
+    fn get_random_vector(&self) -> (i32, i32) {
+        let mut x = self.get_rand() % 3 - 1;
+        let mut y = self.get_rand() % 3 - 1;
+        if x == 0 && y == 0 {
+            x = 1;
+        }
+        (x, y)
+    }
+
+    pub fn move_npcs(&mut self) {
+        for index in 0..5 {
+            let mut x = self.npcs[index].x;
+            let mut y = self.npcs[index].y;
+            x += self.npcs[index].vector_x * 16;
+            y += self.npcs[index].vector_y * 16;
+            if self.check_wall_collision(x, y) {
+                (self.npcs[index].vector_x, self.npcs[index].vector_y) = self.get_random_vector();
+            } else {
+                self.npcs[index].x = x;
+                self.npcs[index].y = y;
+            }
+        }
+    }
+
     pub fn generate_maze(&mut self, graph_width: usize, graph_height: usize) {
         println!("Rendering maze");
 
