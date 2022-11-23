@@ -30,6 +30,7 @@ pub struct Maze {
     pub visible_height: u32,
     pub data: [u8; 64*64],
     pub coins: [Coin; 100],
+    pub coin_counter: u32,
     pub npcs: [Npc; 5],
     // Tile map should have small border top line and left column
     pub offset: u32,
@@ -49,6 +50,7 @@ impl Maze {
             tile_width: 16,
             tile_height: 16,
             coins: [Coin {x: -1, y: -1}; 100],
+            coin_counter: 100,
             npcs: [Npc {x: -1, y: -1, vector_x: 0, vector_y: 0}; 5],
         }
     }
@@ -84,6 +86,7 @@ impl Maze {
         for index in 0..100 {
             (self.coins[index].x, self.coins[index].y) = self.get_random_coordinates();
         }
+        self.coin_counter = 100;
     }
 
     pub fn generate_npcs(&mut self) {
@@ -117,6 +120,11 @@ impl Maze {
             if self.coins[index].x == coin.x && self.coins[index].y == coin.y {
                 self.coins[index].x = -1;
                 self.coins[index].y = -1;
+                if self.coin_counter > 0 {
+                    self.coin_counter -= 1;
+                } else {
+                    self.generate_coins();
+                }
             }
         }
     }

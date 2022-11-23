@@ -38,6 +38,7 @@ mod maze;
 use crate::maze::Maze;
 
 use tinybmp::Bmp;
+use heapless::String;
 
 
 fn window() -> web_sys::Window {
@@ -239,6 +240,7 @@ impl Universe {
         console::log_1(&"tick".into());
 
         self.maze.move_npcs();
+        self.check_npc_collision();
         self.draw_maze(self.camera_x,self.camera_y);
 
         match self.display {
@@ -285,6 +287,11 @@ impl Universe {
                     },
                     None => {}
                 }
+
+                let coin_message: String<5> = String::from(self.maze.coin_counter);
+                Text::new(&coin_message, Point::new(10, 10), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
+                    .draw(display)
+                    .unwrap();
 
                 display.flush().unwrap();
             },
