@@ -59,22 +59,33 @@ impl Maze {
         seed_buffer[0].try_into().unwrap()
     }
 
+    fn check_wall_collision(&self, x: i32, y: i32) -> bool {
+        let tile_x = x / self.tile_width as i32;
+        let tile_y = y / self.tile_height as i32;
+        let tile_index = (tile_y * self.width as i32 + tile_x) as usize;
+        self.data[tile_index] == 1
+    }
+
+    fn get_random_coordinates(&self) -> (i32, i32) {
+        let mut x = (self.get_rand() % (self.width as i32 - 2) + 1) * self.tile_width as i32;
+        let mut y = (self.get_rand() % (self.height as i32 - 2) + 1) * self.tile_height as i32;
+        while self.check_wall_collision(x, y) {
+            x = (self.get_rand() % (self.width as i32 - 2) + 1) * self.tile_width as i32;
+            y = (self.get_rand() % (self.height as i32 - 2) + 1) * self.tile_height as i32;
+        }
+        (x, y)
+    }
+
     pub fn generate_coins(&mut self) {
 
         for index in 0..100 {
-            let x:i32 = ((self.get_rand() % 63) + 1) * 16;
-            let y:i32 = ((self.get_rand() % 63) + 1) * 16;
-            self.coins[index].x = x;
-            self.coins[index].y = y;
+            (self.coins[index].x, self.coins[index].y) = self.get_random_coordinates();
         }
     }
 
     pub fn generate_npcs(&mut self) {
         for index in 0..5 {
-            let x:i32 = ((self.get_rand() % 63) + 1) * 16;
-            let y:i32 = ((self.get_rand() % 63) + 1) * 16;
-            self.npcs[index].x = x;
-            self.npcs[index].y = y;
+            (self.npcs[index].x, self.npcs[index].y) = self.get_random_coordinates();
             self.npcs[index].vector_x = 1;
             self.npcs[index].vector_y = 1;
         }
