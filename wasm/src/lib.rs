@@ -1,32 +1,26 @@
 // #![no_std]
 // #![no_main]
 
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use embedded_graphics::{
     pixelcolor::Rgb565,
     prelude::*,
-    primitives::{Circle, PrimitiveStyleBuilder, Sector},
     image::Image,
 };
 use embedded_graphics_web_simulator::{
-    display::{WebSimulatorDisplay, self}, output_settings::OutputSettingsBuilder,
+    display::{WebSimulatorDisplay}, output_settings::OutputSettingsBuilder,
 };
 
 use wasm_bindgen::prelude::*;
-use web_sys::{console, Performance};
-
-use std::cell::RefCell;
-use std::rc::Rc;
-use wasm_bindgen::JsCast;
+use web_sys::{console};
 
 use embedded_graphics::{
     prelude::RgbColor,
     mono_font::{
-        ascii::{FONT_8X13, FONT_9X18_BOLD},
+        ascii::{FONT_8X13},
         MonoTextStyle,
     },
     prelude::Point,
-    text::{Alignment, Text},
+    text::{Text},
     Drawable,
 };
 
@@ -36,31 +30,11 @@ use spooky_core::maze::Maze;
 use tinybmp::Bmp;
 use heapless::String;
 
-
-fn window() -> web_sys::Window {
-    web_sys::window().expect("no global `window` exists")
-}
-
-fn request_animation_frame(f: &Closure<dyn FnMut()>) {
-    window()
-        .request_animation_frame(f.as_ref().unchecked_ref())
-        .expect("should register `requestAnimationFrame` OK");
-}
-
-fn perf_to_system(amt: f64) -> SystemTime {
-    let secs = (amt as u64) / 1_000;
-    let nanos = (((amt as u64) % 1_000) as u32) * 1_000_000;
-    UNIX_EPOCH + Duration::new(secs, nanos)
-}
-
-
 #[wasm_bindgen]
 pub struct Universe {
     pub start_time: u64,
     pub ghost_x: i32,
     pub ghost_y: i32,
-    old_ghost_x: i32,
-    old_ghost_y: i32,
     display: Option<WebSimulatorDisplay<Rgb565>>,
     assets: Option<Assets<'static>>,
     step_size_x: u32,
@@ -79,8 +53,6 @@ impl Universe {
             start_time: 0,
             ghost_x: 9*16,
             ghost_y: 7*16,
-            old_ghost_x: 9*16,
-            old_ghost_y: 7*16,
             display: None,
             assets: None,
             step_size_x: 16,
@@ -113,7 +85,7 @@ impl Universe {
         let y = self.camera_y + self.ghost_y;
 
         match self.maze.get_npc_at(x, y) {
-            Some(npc) => {
+            Some(_npc) => {
                 self.relocate_avatar();
             },
             None => {}
