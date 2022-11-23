@@ -59,7 +59,10 @@ impl Maze {
         seed_buffer[0].try_into().unwrap()
     }
 
-    fn check_wall_collision(&self, x: i32, y: i32) -> bool {
+    pub fn check_wall_collision(&self, x: i32, y: i32) -> bool {
+        if x < 0 || y < 0 {
+            return true;
+        }
         let tile_x = x / self.tile_width as i32;
         let tile_y = y / self.tile_height as i32;
         let tile_index = (tile_y * self.width as i32 + tile_x) as usize;

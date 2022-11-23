@@ -60,10 +60,10 @@ fn perf_to_system(amt: f64) -> SystemTime {
 #[wasm_bindgen]
 pub struct Universe {
     pub start_time: u64,
-    pub ghost_x: u32,
-    pub ghost_y: u32,
-    old_ghost_x: u32,
-    old_ghost_y: u32,
+    pub ghost_x: i32,
+    pub ghost_y: i32,
+    old_ghost_x: i32,
+    old_ghost_y: i32,
     display: Option<WebSimulatorDisplay<Rgb565>>,
     assets: Option<Assets<'static>>,
     step_size_x: u32,
@@ -82,10 +82,10 @@ impl Universe {
     pub fn new() -> Universe {
         Universe {
             start_time: 0,
-            ghost_x: 5*16,
-            ghost_y: 5*16,
-            old_ghost_x: 5*16,
-            old_ghost_y: 5*16,
+            ghost_x: 9*16,
+            ghost_y: 7*16,
+            old_ghost_x: 9*16,
+            old_ghost_y: 7*16,
             display: None,
             assets: None,
             step_size_x: 16,
@@ -98,37 +98,36 @@ impl Universe {
         }
     }
 
-    pub fn tick(&mut self) {
-        self.ghost_x += 1;
-        self.ghost_y += 1;
-    }
-
     pub fn move_right(&mut self) {
-        self.camera_x += self.step_size_x as i32;
+        let new_camera_x = self.camera_x + self.step_size_x as i32;
+        if !self.maze.check_wall_collision(new_camera_x + self.ghost_x, self.camera_y + self.ghost_y) {
+            self.camera_x = new_camera_x;
+        }
         console::log_1(&"key_right".into());
     }
 
     pub fn move_left(&mut self) {
-        self.camera_x -= self.step_size_x as i32;
+        let new_camera_x = self.camera_x - self.step_size_x as i32;
+        if !self.maze.check_wall_collision(new_camera_x + self.ghost_x, self.camera_y + self.ghost_y) {
+            self.camera_x = new_camera_x;
+        }
         console::log_1(&"key_left".into());
     }
 
     pub fn move_up(&mut self) {
-        self.camera_y -= self.step_size_y as i32;
+        let new_camera_y = self.camera_y - self.step_size_y as i32;
+        if !self.maze.check_wall_collision(self.camera_x + self.ghost_x, new_camera_y + self.ghost_y) {
+            self.camera_y = new_camera_y;
+        }
         console::log_1(&"key_up".into());
     }
 
     pub fn move_down(&mut self) {
-        self.camera_y += self.step_size_y as i32;
+        let new_camera_y = self.camera_y + self.step_size_y as i32;
+        if !self.maze.check_wall_collision(self.camera_x + self.ghost_x, new_camera_y + self.ghost_y) {
+            self.camera_y = new_camera_y;
+        }
         console::log_1(&"key_down".into());
-    }
-
-    pub fn ghost_x(&self) -> u32 {
-        self.ghost_x
-    }
-
-    pub fn ghost_y(&self) -> u32 {
-        self.ghost_y
     }
 
     pub fn draw_maze(&mut self, camera_x: i32, camera_y: i32) {
