@@ -13,6 +13,7 @@ maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "
 
 
 [features]
+getrandom = []
 js = ["getrandom/js"]
 std = []
-wasm = [ "js" , "std" ]
+wasm = [ "js", "getrandom", "std" ]

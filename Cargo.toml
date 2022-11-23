@@ -1,4 +1,8 @@
 [workspace]
+
+# Set explicit resolver to "2" to avoid problems with std/no_std projects.
+resolver = "2"
+
 members = [
     "esp32-s3-box",
     "spooky-core",

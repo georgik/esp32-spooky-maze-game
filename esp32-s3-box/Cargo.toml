@@ -70,9 +70,8 @@ petgraph = { git = "https://github.com/zendurix/petgraph.git", branch = "better_
 shared-bus = { version = "0.2.4" }
 # fixedbitset = { version = "0.4.2", default-features = false }
 # hashbrown = { version = "0.12.3", default-features = false }
-# anyhow = { version = "1.0.56",  default-features = false }
 # maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "feature/no_std", default-features = false, features = [ "recursive_backtracking"] }
-spooky-core = { path = "../spooky-core" }
+spooky-core = { path = "../spooky-core", default-features = false }
 
 [features]
 default = [ "esp32s3_box" ]
