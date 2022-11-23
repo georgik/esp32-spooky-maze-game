@@ -71,8 +71,8 @@ impl Maze {
 
     pub fn generate_npcs(&mut self) {
         for index in 0..5 {
-            let x:i32 = 1;
-            let y:i32 = 1;
+            let x:i32 = ((self.get_rand() % 63) + 1) * 16;
+            let y:i32 = ((self.get_rand() % 63) + 1) * 16;
             self.npcs[index].x = x;
             self.npcs[index].y = y;
             self.npcs[index].vector_x = 1;

@@ -237,6 +237,22 @@ impl Universe {
                             }
                         }
 
+                        let npc_bmp:Bmp<Rgb565> = assets.npc.unwrap();
+                        for index in 0..5 {
+                            let item = self.maze.npcs[index];
+                            if item.x < 0 || item.y < 0 {
+                                continue;
+                            }
+
+                            let draw_x = item.x - self.camera_x;
+                            let draw_y = item.y - self.camera_y;
+                            if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
+                                let position = Point::new(draw_x, draw_y);
+                                let tile = Image::new(&npc_bmp, position);
+                                tile.draw(display).unwrap();
+                            }
+                        }
+
                         let bmp:Bmp<Rgb565> = assets.ghost1.unwrap();
                         let ghost1 = Image::new(&bmp, Point::new(self.ghost_x.try_into().unwrap(), self.ghost_y.try_into().unwrap()));
                         ghost1.draw(display).unwrap();
