@@ -12,6 +12,8 @@ npm install
 npm run serve
 ```
 
+Open in web browser: http://localhost:8080
+
 ### Build for ESP32-S3-BOX with ILI9486
 
 ![Spooky on ESP32-S3-USB-OTG](assets/screenshot/esp32-spooky-s3-box.jpg)

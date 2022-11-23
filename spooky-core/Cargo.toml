@@ -1,0 +1,8 @@
+[package]
+name = "spooky-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+embedded-graphics = "0.7"
+tinybmp = "0.4.0"

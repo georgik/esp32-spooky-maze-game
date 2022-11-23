@@ -31,8 +31,8 @@ use embedded_graphics::{
 };
 use gloo_timers::callback::Timeout;
 
-mod assets;
-use crate::assets::Assets;
+// mod assets;
+use spooky_core::assets::Assets;
 
 mod maze;
 use crate::maze::Maze;

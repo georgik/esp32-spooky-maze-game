@@ -1,7 +1,6 @@
 
 use embedded_graphics::{
     pixelcolor::Rgb565,
-    prelude::*
 };
 use tinybmp::Bmp;
 

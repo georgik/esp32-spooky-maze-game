@@ -29,6 +29,7 @@ maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "
 tinybmp = "0.4.0"
 gloo-timers = "0.2.4"
 heapless = { version = "0.7.14", default-features = false }
+spooky-core = { path = "../spooky-core" }
 
 #hallucination dependencies
 # libm = "0.2.5"
