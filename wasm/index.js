@@ -14,6 +14,19 @@ const rust = import('./pkg')
     document.getElementById('button-right').addEventListener('click', () => {
         universe.move_right();
     });
+
+    document.addEventListener('keydown', (event) => {
+        if ((event.key === "Up") || (event.key == "ArrowUp")) {
+            universe.move_up();
+        } else if ((event.key === "Down") || (event.key === "ArrowDown")) {
+            universe.move_down();
+        } else if ((event.key === "Left") || (event.key === "ArrowLeft")) {
+            universe.move_left();
+        } else if ((event.key === "Right") || (event.key === "ArrowRight")) {
+            universe.move_right();
+        }
+    });
+
     universe.initialize();
     var oldTimestamp = 0;
     function renderFrame(timestamp) {
