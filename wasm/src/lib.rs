@@ -110,6 +110,23 @@ impl Universe {
         }
     }
 
+    fn relocate_avatar(&mut self) {
+        let (new_camera_x, new_camera_y) = self.maze.get_random_coordinates();
+        (self.camera_x, self.camera_y) = (new_camera_x - self.ghost_x, new_camera_y - self.ghost_y);
+    }
+
+    fn check_npc_collision(&mut self) {
+        let x = self.camera_x + self.ghost_x;
+        let y = self.camera_y + self.ghost_y;
+
+        match self.maze.get_npc_at(x, y) {
+            Some(npc) => {
+                self.relocate_avatar();
+            },
+            None => {}
+        }
+    }
+
     pub fn move_right(&mut self) {
         let new_camera_x = self.camera_x + self.step_size_x as i32;
         if !self.maze.check_wall_collision(new_camera_x + self.ghost_x, self.camera_y + self.ghost_y) {
@@ -214,6 +231,7 @@ impl Universe {
         self.assets = Some(assets);
 
         self.maze.generate_maze(32, 32);
+        self.relocate_avatar();
         self.maze.generate_coins();
         self.maze.generate_npcs();
         self.draw_maze(self.camera_x,self.camera_y);

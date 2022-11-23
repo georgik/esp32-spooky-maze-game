@@ -69,7 +69,7 @@ impl Maze {
         self.data[tile_index] == 1
     }
 
-    fn get_random_coordinates(&self) -> (i32, i32) {
+    pub fn get_random_coordinates(&self) -> (i32, i32) {
         let mut x = (self.get_rand() % (self.width as i32 - 2) + 1) * self.tile_width as i32;
         let mut y = (self.get_rand() % (self.height as i32 - 2) + 1) * self.tile_height as i32;
         while self.check_wall_collision(x, y) {
@@ -98,6 +98,15 @@ impl Maze {
         for coin in self.coins.iter() {
             if coin.x == x && coin.y == y {
                 return Some(*coin);
+            }
+        }
+        None
+    }
+
+    pub fn get_npc_at(&self, x: i32, y: i32) -> Option<Npc> {
+        for npc in self.npcs.iter() {
+            if npc.x == x && npc.y == y {
+                return Some(*npc);
             }
         }
         None
