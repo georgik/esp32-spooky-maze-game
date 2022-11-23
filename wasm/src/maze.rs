@@ -94,6 +94,24 @@ impl Maze {
         }
     }
 
+    pub fn get_coin_at(&self, x: i32, y: i32) -> Option<Coin> {
+        for coin in self.coins.iter() {
+            if coin.x == x && coin.y == y {
+                return Some(*coin);
+            }
+        }
+        None
+    }
+
+    pub fn remove_coin(&mut self, coin: Coin) {
+        for index in 0..100 {
+            if self.coins[index].x == coin.x && self.coins[index].y == coin.y {
+                self.coins[index].x = -1;
+                self.coins[index].y = -1;
+            }
+        }
+    }
+
     pub fn generate_maze(&mut self, graph_width: usize, graph_height: usize) {
         println!("Rendering maze");
 

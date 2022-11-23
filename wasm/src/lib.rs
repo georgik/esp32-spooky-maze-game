@@ -98,10 +98,23 @@ impl Universe {
         }
     }
 
+    fn check_coin_collision(&mut self) {
+        let x = self.camera_x + self.ghost_x;
+        let y = self.camera_y + self.ghost_y;
+
+        match self.maze.get_coin_at(x, y) {
+            Some(coin) => {
+                self.maze.remove_coin(coin);
+            },
+            None => {}
+        }
+    }
+
     pub fn move_right(&mut self) {
         let new_camera_x = self.camera_x + self.step_size_x as i32;
         if !self.maze.check_wall_collision(new_camera_x + self.ghost_x, self.camera_y + self.ghost_y) {
             self.camera_x = new_camera_x;
+            self.check_coin_collision();
         }
         console::log_1(&"key_right".into());
     }
@@ -110,6 +123,7 @@ impl Universe {
         let new_camera_x = self.camera_x - self.step_size_x as i32;
         if !self.maze.check_wall_collision(new_camera_x + self.ghost_x, self.camera_y + self.ghost_y) {
             self.camera_x = new_camera_x;
+            self.check_coin_collision();
         }
         console::log_1(&"key_left".into());
     }
@@ -118,6 +132,7 @@ impl Universe {
         let new_camera_y = self.camera_y - self.step_size_y as i32;
         if !self.maze.check_wall_collision(self.camera_x + self.ghost_x, new_camera_y + self.ghost_y) {
             self.camera_y = new_camera_y;
+            self.check_coin_collision();
         }
         console::log_1(&"key_up".into());
     }
@@ -126,6 +141,7 @@ impl Universe {
         let new_camera_y = self.camera_y + self.step_size_y as i32;
         if !self.maze.check_wall_collision(self.camera_x + self.ghost_x, new_camera_y + self.ghost_y) {
             self.camera_y = new_camera_y;
+            self.check_coin_collision();
         }
         console::log_1(&"key_down".into());
     }
