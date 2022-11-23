@@ -42,7 +42,7 @@ impl Maze {
         Maze {
             width,
             height,
-            visible_width: 20,
+            visible_width: 21,
             visible_height: 16,
             data: [1; 64*64],
             offset: width+1,
@@ -53,10 +53,17 @@ impl Maze {
         }
     }
 
+    fn get_rand(&self) -> i32 {
+        let mut seed_buffer = [0u8;2];
+        getrandom::getrandom(&mut seed_buffer).unwrap();
+        seed_buffer[0].try_into().unwrap()
+    }
+
     pub fn generate_coins(&mut self) {
+
         for index in 0..100 {
-            let x:i32 = 1;
-            let y:i32 = 1;
+            let x:i32 = ((self.get_rand() % 63) + 1) * 16;
+            let y:i32 = ((self.get_rand() % 63) + 1) * 16;
             self.coins[index].x = x;
             self.coins[index].y = y;
         }
@@ -80,7 +87,7 @@ impl Maze {
         // let mut rng = Rng::new(peripherals.RNG);
         // let mut rng = Rng::new( 0x12345678 );
         let mut seed_buffer = [0u8;32];
-        // rng.read(&mut seed_buffer).unwrap();
+        getrandom::getrandom(&mut seed_buffer).unwrap();
 
         println!("Acquiring maze generator");
         let mut generator = RbGenerator::new(Some(seed_buffer));

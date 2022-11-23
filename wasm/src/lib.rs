@@ -221,6 +221,22 @@ impl Universe {
                 match self.assets {
                     Some(ref mut assets) => {
 
+                        let coin_bmp:Bmp<Rgb565> = assets.coin.unwrap();
+                        for index in 0..100 {
+                            let coin = self.maze.coins[index];
+                            if coin.x < 0 || coin.y < 0 {
+                                continue;
+                            }
+
+                            let draw_x = coin.x - self.camera_x;
+                            let draw_y = coin.y - self.camera_y;
+                            if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
+                                let position = Point::new(draw_x, draw_y);
+                                let tile = Image::new(&coin_bmp, position);
+                                tile.draw(display).unwrap();
+                            }
+                        }
+
                         let bmp:Bmp<Rgb565> = assets.ghost1.unwrap();
                         let ghost1 = Image::new(&bmp, Point::new(self.ghost_x.try_into().unwrap(), self.ghost_y.try_into().unwrap()));
                         ghost1.draw(display).unwrap();
