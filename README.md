@@ -8,6 +8,7 @@ Rust reimplementation of simple game for ESP32. Work in progress.
 
 ```
 cd wasm
+npm install
 npm run serve
 ```
 
