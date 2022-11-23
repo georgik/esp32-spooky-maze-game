@@ -131,7 +131,7 @@ impl Maze {
 
     fn get_random_vector(&self) -> (i32, i32) {
         let mut x = self.get_rand() % 3 - 1;
-        let mut y = self.get_rand() % 3 - 1;
+        let y = self.get_rand() % 3 - 1;
         if x == 0 && y == 0 {
             x = 1;
         }

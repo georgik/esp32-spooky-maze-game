@@ -29,13 +29,9 @@ use embedded_graphics::{
     text::{Alignment, Text},
     Drawable,
 };
-use gloo_timers::callback::Timeout;
 
-// mod assets;
 use spooky_core::assets::Assets;
-
-mod maze;
-use crate::maze::Maze;
+use spooky_core::maze::Maze;
 
 use tinybmp::Bmp;
 use heapless::String;
