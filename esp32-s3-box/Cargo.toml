@@ -72,6 +72,7 @@ shared-bus = { version = "0.2.4" }
 # hashbrown = { version = "0.12.3", default-features = false }
 # maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "feature/no_std", default-features = false, features = [ "recursive_backtracking"] }
 spooky-core = { path = "../spooky-core", default-features = false }
+heapless = { version = "0.7.14", default-features = false }
 
 [features]
 default = [ "esp32s3_box" ]
