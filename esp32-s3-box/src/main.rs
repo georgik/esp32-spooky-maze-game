@@ -398,7 +398,7 @@ impl Universe {
         assets.load();
         self.assets = Some(assets);
 
-        //self.maze.generate_maze(32, 32);
+        self.maze.generate_maze(32, 32);
         // self.relocate_avatar();
         // self.maze.generate_coins();
         // self.maze.generate_npcs();
@@ -562,7 +562,7 @@ impl Universe {
 
 #[entry]
 fn main() -> ! {
-    const HEAP_SIZE: usize = 65535;
+    const HEAP_SIZE: usize = 65535*4;
     static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
     unsafe { ALLOCATOR.init(HEAP.as_mut_ptr(), HEAP_SIZE) }
 
