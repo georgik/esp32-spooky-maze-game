@@ -77,12 +77,11 @@ use mipidsi::models::{Model, ILI9342CRgb565};
 
 use heapless::String;
 
-pub struct Universe<D> {
+pub struct Universe<D, I> {
     pub start_time: u64,
     pub ghost_x: i32,
     pub ghost_y: i32,
     display: D,
-    // display: Option<Display<SPIInterfaceNoCS<spi::Spi<hal::pac::SPI2>, hal::gpio::Gpio4<hal::gpio_types::Output<hal::gpio_types::PushPull>>>, ILI9342CRgb565, hal::gpio::Gpio48<hal::gpio_types::Output<hal::gpio_types::PushPull>>>>,
     assets: Option<Assets<'static>>,
     step_size_x: u32,
     step_size_y: u32,
@@ -90,13 +89,13 @@ pub struct Universe<D> {
     camera_x: i32,
     camera_y: i32,
     // #[cfg(any(feature = "imu_controls"))]
+    icm: I
     // icm: Option<Icm42670<shared_bus::I2cProxy<shared_bus::NullMutex<i2c::I2C<I2C0>>>>>
     // delay: Some(Delay),
 }
 
-// impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565, Error = display_interface::DisplayError>> Universe<D> {
-impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565, Error = display_interface::DisplayError>> Universe <D> {
-    pub fn new(display:D) -> Universe<D> {
+impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565, Error = display_interface::DisplayError>, I:Accelerometer > Universe <D, I> {
+    pub fn new(display:D, icm:I) -> Universe<D, I> {
         Universe {
             start_time: 0,
             ghost_x: 9*16,
@@ -109,7 +108,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565, Error = displ
             camera_x: 0,
             camera_y: 0,
             // #[cfg(any(feature = "imu_controls"))]
-            // icm: None,
+            icm,
             // delay: None,
         }
     }
@@ -236,132 +235,133 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565, Error = displ
         #[cfg(any(feature = "imu_controls"))]
         let accel_threshold = 0.20;
 
-                match self.assets {
-                    Some(ref mut assets) => {
+        #[cfg(any(feature = "imu_controls"))]
+        {
+            let accel_norm = self.icm.accel_norm().unwrap();
+            // let gyro_norm = self.icm.gyro_norm().unwrap();
+            // println!(
+            //     "ACCEL = X: {:+.04} Y: {:+.04} Z: {:+.04}; GYRO  = X: {:+.04} Y: {:+.04} Z: {:+.04}",
+            //     accel_norm.x, accel_norm.y, accel_norm.z,
+            //     gyro_norm.x, gyro_norm.y, gyro_norm.z
+            // );
 
-                        // #[cfg(any(feature = "imu_controls"))]
-                        // {
-                        //     let accel_norm = self.icm.accel_norm().unwrap();
-                        //     let gyro_norm = self.icm.gyro_norm().unwrap();
-                        //     println!(
-                        //         "ACCEL = X: {:+.04} Y: {:+.04} Z: {:+.04}; GYRO  = X: {:+.04} Y: {:+.04} Z: {:+.04}",
-                        //         accel_norm.x, accel_norm.y, accel_norm.z,
-                        //         gyro_norm.x, gyro_norm.y, gyro_norm.z
-                        //     );
+            if accel_norm.y > accel_threshold {
+                self.move_left();
+            }
 
-                        //     if accel_norm.y > accel_threshold {
-                        //         self.move_left();
-                        //     }
+            if accel_norm.y  < -accel_threshold {
+                self.move_right();
+            }
 
-                        //     if accel_norm.y  < -accel_threshold {
-                        //         self.move_right();
-                        //     }
+            if accel_norm.x > accel_threshold {
+                self.move_down();
+            }
 
-                        //     if accel_norm.x > accel_threshold {
-                        //         self.move_down();
-                        //     }
+            if accel_norm.x < -accel_threshold {
+                self.move_up();
+            }
+        }
 
-                        //     if accel_norm.x < -accel_threshold {
-                        //         self.move_up();
-                        //     }
-                        // }
 
-                        // #[cfg(any(feature = "button_controls"))]
-                        // {
-                        //     if button_down_pin.is_low().unwrap() {
-                        //         if ghost_x > 0 {
-                        //             if maze[(ghost_x/TILE_WIDTH)-1+ghost_y] == 0 {
-                        //                 ghost_x -= TILE_WIDTH;
-                        //             }
-                        //         }
-                        //     }
+            match self.assets {
+                Some(ref mut assets) => {
 
-                        //     if button_up_pin.is_low().unwrap() {
-                        //         if ghost_x < PLAYGROUND_WIDTH {
-                        //             if maze[(ghost_x/TILE_WIDTH)+1+ghost_y] == 0 {
-                        //                 ghost_x += TILE_WIDTH;
-                        //             }
-                        //         }
-                        //     }
+                    // #[cfg(any(feature = "button_controls"))]
+                    // {
+                    //     if button_down_pin.is_low().unwrap() {
+                    //         if ghost_x > 0 {
+                    //             if maze[(ghost_x/TILE_WIDTH)-1+ghost_y] == 0 {
+                    //                 ghost_x -= TILE_WIDTH;
+                    //             }
+                    //         }
+                    //     }
 
-                        //     if button_menu_pin.is_low().unwrap() {
-                        //         if ghost_y > 0 {
-                        //             if maze[(ghost_x/TILE_WIDTH)+ghost_y-TILE_HEIGHT] == 0 {
-                        //                 ghost_y -= TILE_HEIGHT;
-                        //             }
-                        //         }
-                        //     }
+                    //     if button_up_pin.is_low().unwrap() {
+                    //         if ghost_x < PLAYGROUND_WIDTH {
+                    //             if maze[(ghost_x/TILE_WIDTH)+1+ghost_y] == 0 {
+                    //                 ghost_x += TILE_WIDTH;
+                    //             }
+                    //         }
+                    //     }
 
-                        //     if button_ok_pin.is_low().unwrap() {
-                        //         if ghost_y < PLAYGROUND_HEIGHT {
-                        //             if maze[(ghost_x/TILE_WIDTH)+ghost_y+TILE_HEIGHT] == 0 {
-                        //                 ghost_y += TILE_HEIGHT;
-                        //             }
-                        //         }
-                        //     }
-                        // }
+                    //     if button_menu_pin.is_low().unwrap() {
+                    //         if ghost_y > 0 {
+                    //             if maze[(ghost_x/TILE_WIDTH)+ghost_y-TILE_HEIGHT] == 0 {
+                    //                 ghost_y -= TILE_HEIGHT;
+                    //             }
+                    //         }
+                    //     }
 
-                        // if old_x != ghost_x || old_y != ghost_y {
-                        //     let ground = Image::new(&ground_bmp, Point::new(old_x.try_into().unwrap(), old_y.try_into().unwrap()));
+                    //     if button_ok_pin.is_low().unwrap() {
+                    //         if ghost_y < PLAYGROUND_HEIGHT {
+                    //             if maze[(ghost_x/TILE_WIDTH)+ghost_y+TILE_HEIGHT] == 0 {
+                    //                 ghost_y += TILE_HEIGHT;
+                    //             }
+                    //         }
+                    //     }
+                    // }
 
-                        //     ground.draw(&mut display).unwrap();
+                    // if old_x != ghost_x || old_y != ghost_y {
+                    //     let ground = Image::new(&ground_bmp, Point::new(old_x.try_into().unwrap(), old_y.try_into().unwrap()));
 
-                        //     let ghost2 = Image::new(&bmp, Point::new(ghost_x.try_into().unwrap(), ghost_y.try_into().unwrap()));
+                    //     ground.draw(&mut display).unwrap();
 
-                        //     ghost2.draw(&mut display).unwrap();
-                        //     old_x = ghost_x;
-                        //     old_y = ghost_y;
-                        // }
+                    //     let ghost2 = Image::new(&bmp, Point::new(ghost_x.try_into().unwrap(), ghost_y.try_into().unwrap()));
 
-                        let coin_bmp:Bmp<Rgb565> = assets.coin.unwrap();
-                        for index in 0..100 {
-                            let coin = self.maze.coins[index];
-                            if coin.x < 0 || coin.y < 0 {
-                                continue;
-                            }
+                    //     ghost2.draw(&mut display).unwrap();
+                    //     old_x = ghost_x;
+                    //     old_y = ghost_y;
+                    // }
 
-                            let draw_x = coin.x - self.camera_x;
-                            let draw_y = coin.y - self.camera_y;
-                            if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
-                                let position = Point::new(draw_x, draw_y);
-                                let tile = Image::new(&coin_bmp, position);
-                                tile.draw(&mut self.display).unwrap();
-                            }
+                    let coin_bmp:Bmp<Rgb565> = assets.coin.unwrap();
+                    for index in 0..100 {
+                        let coin = self.maze.coins[index];
+                        if coin.x < 0 || coin.y < 0 {
+                            continue;
                         }
 
-                        let npc_bmp:Bmp<Rgb565> = assets.npc.unwrap();
-                        for index in 0..5 {
-                            let item = self.maze.npcs[index];
-                            if item.x < 0 || item.y < 0 {
-                                continue;
-                            }
-
-                            let draw_x = item.x - self.camera_x;
-                            let draw_y = item.y - self.camera_y;
-                            if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
-                                let position = Point::new(draw_x, draw_y);
-                                let tile = Image::new(&npc_bmp, position);
-                                tile.draw(&mut self.display).unwrap();
-                            }
+                        let draw_x = coin.x - self.camera_x;
+                        let draw_y = coin.y - self.camera_y;
+                        if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
+                            let position = Point::new(draw_x, draw_y);
+                            let tile = Image::new(&coin_bmp, position);
+                            tile.draw(&mut self.display).unwrap();
                         }
-
-                        let bmp:Bmp<Rgb565> = assets.ghost1.unwrap();
-                        let ghost1 = Image::new(&bmp, Point::new(self.ghost_x.try_into().unwrap(), self.ghost_y.try_into().unwrap()));
-                        ghost1.draw(&mut self.display).unwrap();
-                        // display.flush().unwrap();
-                    },
-                    None => {
-                        println!("No assets");
                     }
-                };
 
-                let coin_message: String<5> = String::from(self.maze.coin_counter);
-                Text::new(&coin_message, Point::new(10, 10), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
-                    .draw(&mut self.display)
-                    .unwrap();
+                    let npc_bmp:Bmp<Rgb565> = assets.npc.unwrap();
+                    for index in 0..5 {
+                        let item = self.maze.npcs[index];
+                        if item.x < 0 || item.y < 0 {
+                            continue;
+                        }
 
-                // display.flush().unwrap();
-         
+                        let draw_x = item.x - self.camera_x;
+                        let draw_y = item.y - self.camera_y;
+                        if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
+                            let position = Point::new(draw_x, draw_y);
+                            let tile = Image::new(&npc_bmp, position);
+                            tile.draw(&mut self.display).unwrap();
+                        }
+                    }
+
+                    let bmp:Bmp<Rgb565> = assets.ghost1.unwrap();
+                    let ghost1 = Image::new(&bmp, Point::new(self.ghost_x.try_into().unwrap(), self.ghost_y.try_into().unwrap()));
+                    ghost1.draw(&mut self.display).unwrap();
+                    // display.flush().unwrap();
+                },
+                None => {
+                    println!("No assets");
+                }
+            };
+
+            let coin_message: String<5> = String::from(self.maze.coin_counter);
+            Text::new(&coin_message, Point::new(10, 10), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
+                .draw(&mut self.display)
+                .unwrap();
+
+            // display.flush().unwrap();
+        
         }
 
     }
@@ -551,11 +551,11 @@ fn main() -> ! {
 
     #[cfg(any(feature = "imu_controls"))]
     let bus = BusManagerSimple::new(i2c);
-    // #[cfg(any(feature = "imu_controls"))]
-    // self.icm = Some(Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap());
+    #[cfg(any(feature = "imu_controls"))]
+    let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
 
 
-    let mut universe = Universe::new(display);
+    let mut universe = Universe::new(display, icm);
     universe.initialize();
 
 
