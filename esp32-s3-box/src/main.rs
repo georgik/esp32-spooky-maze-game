@@ -58,7 +58,7 @@ use tinybmp::Bmp;
 // use esp32s2_hal::Rng;
 
 #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg", feature = "esp32s3_box"))]
-use mipidsi::{Display, DisplayOptions, Orientation};
+use mipidsi::{Display, Orientation};
 #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
 use ili9341::{DisplaySize240x320, Ili9341, Orientation};
 
@@ -80,7 +80,7 @@ pub struct Universe {
     pub start_time: u64,
     pub ghost_x: i32,
     pub ghost_y: i32,
-    display: Option<Display<SPIInterfaceNoCS<spi::Spi<hal::pac::SPI2>, hal::gpio::Gpio4<hal::gpio_types::Output<hal::gpio_types::PushPull>>>, hal::gpio::Gpio48<hal::gpio_types::Output<hal::gpio_types::PushPull>>, ILI9342CRgb565>>,
+    display: Option<Display<SPIInterfaceNoCS<spi::Spi<hal::pac::SPI2>, hal::gpio::Gpio4<hal::gpio_types::Output<hal::gpio_types::PushPull>>>, ILI9342CRgb565, hal::gpio::Gpio48<hal::gpio_types::Output<hal::gpio_types::PushPull>>>>,
     assets: Option<Assets<'static>>,
     step_size_x: u32,
     step_size_y: u32,
@@ -341,12 +341,11 @@ impl Universe {
         //https://github.com/espressif/esp-box/blob/master/components/bsp/src/boards/esp32_s3_box.c
 
         #[cfg(any(feature = "esp32s3_box"))]
-        let display_options = DisplayOptions {
-            orientation: mipidsi::Orientation::PortraitInverted(false),
-            ..Default::default()
-        };
-        #[cfg(any(feature = "esp32s3_box"))]
-        let mut display = mipidsi::Display::ili9342c_rgb565(di, core::prelude::v1::Some(reset), display_options);
+        let mut display = mipidsi::Builder::ili9342c_rgb565(di)
+            .with_display_size(320, 240)
+            .with_orientation(mipidsi::Orientation::PortraitInverted(false))
+            .init(&mut delay, Some(reset)).unwrap();
+        // let mut display = mipidsi::Display::ili9342c_rgb565(di, core::prelude::v1::Some(reset), display_options);
         #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
         let mut display = Ili9341::new(di, reset, &mut delay, Orientation::Portrait, DisplaySize240x320).unwrap();
 
@@ -359,9 +358,6 @@ impl Universe {
             },
         )
         .unwrap();
-
-        #[cfg(any(feature = "esp32s3_box"))]
-        display.init(&mut delay).unwrap();
 
         // display.clear(RgbColor::WHITE).unwrap();
 
