@@ -7,12 +7,12 @@ static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
-    prelude::RgbColor,
+    prelude::{RgbColor, PixelIteratorExt},
     mono_font::{
         ascii::{FONT_8X13, FONT_9X18_BOLD},
         MonoTextStyle,
     },
-    prelude::Point,
+    prelude::{Point, DrawTarget},
     text::Text,
     Drawable,
 };
@@ -76,6 +76,7 @@ use embedded_hal::digital::v2::OutputPin;
 use mipidsi::models::{Model, ILI9342CRgb565};
 
 use heapless::String;
+use embedded_graphics_framebuf::{FrameBuf, backends::FrameBufferBackend};
 
 pub struct Universe<D, I> {
     pub start_time: u64,
@@ -94,7 +95,9 @@ pub struct Universe<D, I> {
     // delay: Some(Delay),
 }
 
-impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565, Error = display_interface::DisplayError>, I:Accelerometer > Universe <D, I> {
+
+
+impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>, I:Accelerometer> Universe <D, I> {
     pub fn new(display:D, icm:I, seed: Option<[u8; 32]>) -> Universe<D, I> {
         Universe {
             start_time: 0,
@@ -195,13 +198,13 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565, Error = displ
 
                         if x < 0 || y < 0 || x > (self.maze.width-1) as i32 || y > (self.maze.height-1) as i32 {
                             let tile = Image::new(empty, position);
-                            tile.draw(&mut self.display).unwrap();
+                            tile.draw(&mut self.display);
                         } else if self.maze.data[(x+y*(self.maze.width as i32)) as usize] == 0 {
                             let tile = Image::new(ground, position);
-                            tile.draw(&mut self.display).unwrap();
+                            tile.draw(&mut self.display);
                         } else {
                             let tile = Image::new(wall, position);
-                            tile.draw(&mut self.display).unwrap();
+                            tile.draw(&mut self.display);
                         }
                     }
                 }
@@ -226,7 +229,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565, Error = displ
 
     }
 
-    pub fn render_frame(&mut self) {
+    pub fn render_frame(&mut self) -> &D {
 
         self.maze.move_npcs();
         self.check_npc_collision();
@@ -325,7 +328,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565, Error = displ
                         if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
                             let position = Point::new(draw_x, draw_y);
                             let tile = Image::new(&coin_bmp, position);
-                            tile.draw(&mut self.display).unwrap();
+                            tile.draw(&mut self.display);
                         }
                     }
 
@@ -341,13 +344,13 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565, Error = displ
                         if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
                             let position = Point::new(draw_x, draw_y);
                             let tile = Image::new(&npc_bmp, position);
-                            tile.draw(&mut self.display).unwrap();
+                            tile.draw(&mut self.display);
                         }
                     }
 
                     let bmp:Bmp<Rgb565> = assets.ghost1.unwrap();
                     let ghost1 = Image::new(&bmp, Point::new(self.ghost_x.try_into().unwrap(), self.ghost_y.try_into().unwrap()));
-                    ghost1.draw(&mut self.display).unwrap();
+                    ghost1.draw(&mut self.display);
                     // display.flush().unwrap();
                 },
                 None => {
@@ -358,9 +361,10 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565, Error = displ
             let coin_message: String<5> = String::from(self.maze.coin_counter);
             Text::new(&coin_message, Point::new(10, 10), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
                 .draw(&mut self.display)
-                .unwrap();
+                ;
 
             // display.flush().unwrap();
+            &self.display
 
         }
 
@@ -558,8 +562,10 @@ fn main() -> ! {
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8;32];
     rng.read(&mut seed_buffer).unwrap();
+    let mut data = [Rgb565::BLACK ; 320*240];
+    let mut fbuf = FrameBuf::new(&mut data, 320, 240);
 
-    let mut universe = Universe::new(display, icm, Some(seed_buffer));
+    let mut universe = Universe::new(fbuf, icm, Some(seed_buffer));
     universe.initialize();
 
 
@@ -567,8 +573,7 @@ fn main() -> ! {
     // let accel_threshold = 0.20;
 
     loop {
-        universe.render_frame();
-
+        display.draw_iter(universe.render_frame().into_iter()).unwrap();
         // delay.delay_ms(300u32);
     }
 }
