@@ -29,7 +29,7 @@ use esp32s3_hal as hal;
 use esp32c3_hal as hal;
 
 use hal::{
-    clock::ClockControl,
+    clock::{ ClockControl, CpuClock },
     i2c,
     pac::Peripherals,
     // pac::Peripheral::I2C0,
@@ -379,7 +379,8 @@ fn main() -> ! {
     let mut system = peripherals.DPORT.split();
     #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
     let mut system = peripherals.SYSTEM.split();
-    let mut clocks = ClockControl::boot_defaults(system.clock_control).freeze();
+    let mut clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
+    // let mut clocks = ClockControl::boot_defaults(system.clock_control).freeze();
 
     // Disable the RTC and TIMG watchdog timers
     let mut rtc = Rtc::new(peripherals.RTC_CNTL);
