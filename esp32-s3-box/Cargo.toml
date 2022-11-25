@@ -57,7 +57,6 @@ embedded-graphics = "0.7"
 embedded-hal = "0.2"
 display-interface = "0.4"
 display-interface-spi = "0.4"
-# getrandom = { version = "0.2", features = ["custom"], default-features = false }
 icm42670 = { git = "https://github.com/jessebraham/icm42670/" }
 # ili9341 = { version = "0.5", git = "https://github.com/yuri91/ili9341-rs", rev = "32ca78087c481e04863e094cffde62517fd079b4" }
 mipidsi = "0.5.0"

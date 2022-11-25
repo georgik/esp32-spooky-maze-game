@@ -89,13 +89,13 @@ pub struct Universe<D, I> {
     camera_x: i32,
     camera_y: i32,
     // #[cfg(any(feature = "imu_controls"))]
-    icm: I
+    icm: I,
     // icm: Option<Icm42670<shared_bus::I2cProxy<shared_bus::NullMutex<i2c::I2C<I2C0>>>>>
     // delay: Some(Delay),
 }
 
 impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565, Error = display_interface::DisplayError>, I:Accelerometer > Universe <D, I> {
-    pub fn new(display:D, icm:I) -> Universe<D, I> {
+    pub fn new(display:D, icm:I, seed: Option<[u8; 32]>) -> Universe<D, I> {
         Universe {
             start_time: 0,
             ghost_x: 9*16,
@@ -104,7 +104,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565, Error = displ
             assets: None,
             step_size_x: 16,
             step_size_y: 16,
-            maze: Maze::new(64, 64),
+            maze: Maze::new(64, 64, seed),
             camera_x: 0,
             camera_y: 0,
             // #[cfg(any(feature = "imu_controls"))]
@@ -219,9 +219,9 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565, Error = displ
         self.assets = Some(assets);
 
         self.maze.generate_maze(32, 32);
-        // self.relocate_avatar();
-        // self.maze.generate_coins();
-        // self.maze.generate_npcs();
+        self.relocate_avatar();
+        self.maze.generate_coins();
+        self.maze.generate_npcs();
         self.draw_maze(self.camera_x,self.camera_y);
 
     }
@@ -361,7 +361,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565, Error = displ
                 .unwrap();
 
             // display.flush().unwrap();
-        
+
         }
 
     }
@@ -555,8 +555,11 @@ fn main() -> ! {
     #[cfg(any(feature = "imu_controls"))]
     let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
 
+    let mut rng = Rng::new(peripherals.RNG);
+    let mut seed_buffer = [0u8;32];
+    rng.read(&mut seed_buffer).unwrap();
 
-    let mut universe = Universe::new(display, icm);
+    let mut universe = Universe::new(display, icm, Some(seed_buffer));
     universe.initialize();
 
 

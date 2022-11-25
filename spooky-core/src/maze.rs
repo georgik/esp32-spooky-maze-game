@@ -1,6 +1,8 @@
 use maze_generator::prelude::*;
 use maze_generator::recursive_backtracking::{RbGenerator};
 
+use rand::prelude::*;
+use rand_chacha::ChaChaRng;
 
 #[derive(Copy, Clone)]
 pub struct Coin {
@@ -36,10 +38,11 @@ pub struct Maze {
     pub offset: u32,
     pub tile_width: u32,
     pub tile_height: u32,
+    rng: ChaChaRng,
 }
 
 impl Maze {
-    pub fn new(width: u32, height: u32) -> Maze {
+    pub fn new(width: u32, height: u32, seed: Option<[u8; 32]>) -> Maze {
         Maze {
             width,
             height,
@@ -52,14 +55,16 @@ impl Maze {
             coins: [Coin {x: -1, y: -1}; 100],
             coin_counter: 100,
             npcs: [Npc {x: -1, y: -1, vector_x: 0, vector_y: 0}; 5],
+            rng:  match seed {
+                // None => ChaChaRng::from_entropy(), - from_entropy is not present in latest rand
+                None => ChaChaRng::from_seed([42; 32]),
+                Some(seed) => ChaChaRng::from_seed(seed),
+            },
         }
     }
 
-    fn get_rand(&self) -> i32 {
-        let mut seed_buffer = [0u8;2];
-        #[cfg(feature = "getrandom")]
-        getrandom::getrandom(&mut seed_buffer).unwrap();
-        seed_buffer[0].try_into().unwrap()
+    fn get_rand(&mut self) -> i32 {
+        self.rng.gen_range(0..255)
     }
 
     pub fn check_wall_collision(&self, x: i32, y: i32) -> bool {
@@ -72,7 +77,7 @@ impl Maze {
         self.data[tile_index] == 1
     }
 
-    pub fn get_random_coordinates(&self) -> (i32, i32) {
+    pub fn get_random_coordinates(&mut self) -> (i32, i32) {
         let mut x = (self.get_rand() % (self.width as i32 - 2) + 1) * self.tile_width as i32;
         let mut y = (self.get_rand() % (self.height as i32 - 2) + 1) * self.tile_height as i32;
         while self.check_wall_collision(x, y) {
@@ -130,7 +135,7 @@ impl Maze {
         }
     }
 
-    fn get_random_vector(&self) -> (i32, i32) {
+    fn get_random_vector(&mut self) -> (i32, i32) {
         let mut x = self.get_rand() % 3 - 1;
         let y = self.get_rand() % 3 - 1;
         if x == 0 && y == 0 {
@@ -158,8 +163,12 @@ impl Maze {
         // let mut rng = Rng::new(peripherals.RNG);
         // let mut rng = Rng::new( 0x12345678 );
         let mut seed_buffer = [0u8;32];
-        #[cfg(feature = "getrandom")]
-        getrandom::getrandom(&mut seed_buffer).unwrap();
+        // match &self.rng {
+        //     Some(rng) => rng.fill_bytes(&mut seed_buffer),
+        //     None => {}
+        // };
+        // #[cfg(feature = "getrandom")]
+        // getrandom::getrandom(&mut seed_buffer).unwrap();
 
         let mut generator = RbGenerator::new(Some(seed_buffer));
         let maze_graph = generator.generate(graph_width as i32, graph_height as i32).unwrap();

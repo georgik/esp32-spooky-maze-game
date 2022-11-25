@@ -44,7 +44,11 @@ pub struct Universe {
     camera_y: i32,
 }
 
-
+fn get_seed_buffer() -> Option<[u8; 32]> {
+    let mut seed_buffer = [0u8; 32];
+    getrandom::getrandom(&mut seed_buffer).unwrap();
+    Some(seed_buffer)
+}
 
 #[wasm_bindgen]
 impl Universe {
@@ -57,7 +61,7 @@ impl Universe {
             assets: None,
             step_size_x: 16,
             step_size_y: 16,
-            maze: Maze::new(64, 64),
+            maze: Maze::new(64, 64, get_seed_buffer()),
             camera_x: 0,
             camera_y: 0,
         }
