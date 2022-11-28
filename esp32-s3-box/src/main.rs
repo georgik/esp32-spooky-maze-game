@@ -30,11 +30,14 @@ use esp32c3_hal as hal;
 
 use hal::{
     clock::{ ClockControl, CpuClock },
+    dma::{DmaPriority},
+    gdma::Gdma,
     i2c,
     pac::Peripherals,
     // pac::Peripheral::I2C0,
     prelude::*,
     spi,
+    spi::dma::WithDmaSpi2,
     timer::TimerGroup,
     Rng,
     Rtc,
@@ -455,16 +458,28 @@ fn main() -> ! {
     #[cfg(any(feature = "esp32s3_box"))]
     let mosi = io.pins.gpio6;
 
+    let dma = Gdma::new(peripherals.DMA, &mut system.peripheral_clock_control);
+    let dma_channel = dma.channel0;
+
+    let mut descriptors = [0u32; 8 * 3];
+    let mut rx_descriptors = [0u32; 8 * 3];
+
     #[cfg(any(feature = "esp32s3_box"))]
     let spi = spi::Spi::new_no_cs_no_miso(
         peripherals.SPI2,
         sclk,
         mosi,
-        4u32.MHz(),
+        60u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
         &clocks,
     );
+    // .with_dma(dma_channel.configure(
+    //     false,
+    //     &mut descriptors,
+    //     &mut rx_descriptors,
+    //     DmaPriority::Priority0,
+    // ));
 
     #[cfg(any(feature = "esp32s3_box"))]
     let mut backlight = io.pins.gpio45.into_push_pull_output();
