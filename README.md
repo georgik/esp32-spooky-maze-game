@@ -4,19 +4,37 @@ Rust reimplementation of simple game for ESP32. Work in progress.
 
 ## Build and flash
 
-** Warning! ** Use ESP toolchain 1.62 this works. Toolchain 1.63 does not work.
+### Build WASM version
+
+```
+cd wasm
+npm install
+npm run serve
+```
+
+Open in web browser: http://localhost:8080
 
 ### Build for ESP32-S3-BOX with ILI9486
 
-![Spooky on ESP32-S3-USB-OTG](assets/screenshot/esp32-spooky-s3-box.jpg)
+![Spooky on ESP32-S3-BOX](assets/screenshot/esp32-spooky-s3-box.jpg)
 
 Control: IMU - tilt the board to move the character
 
 ```
-cargo espflash --release --target xtensa-esp32s3-none-elf --features esp32s3_box --monitor
+cd esp32-s3-box
+cargo espflash --release --monitor
 ```
 
+#### Features
+
+- Embedded Graphics
+- Framebuffer
+- Random maze generator
+- IMU Accelerometer control
+
 ### Build for ESP32-S3-USB-OTG with ST7789
+
+See tag v0.1.0.
 
 ![Spooky on ESP32-S3-USB-OTG](assets/screenshot/esp32-spooky-s3-usb-otg.jpg)
 
@@ -28,17 +46,23 @@ cargo espflash --release --target xtensa-esp32s3-none-elf --features esp32s3_usb
 
 ### Build for ESP32 Wrover Kit
 
+See tag v0.1.0.
+
 ```
 cargo espflash --release --target xtensa-esp32-none-elf --features esp32_wrover_kit --monitor
 ```
 
 ### Build for ESP32-S2 with ILI9341
 
+See tag v0.1.0.
+
 ```
 cargo espflash --release --target xtensa-esp32s2-none-elf --features esp32s2_ili9341 --monitor
 ```
 
 ### Build for ESP32-S2-USB-OTG with ST7789
+
+See tag v0.1.0.
 
 Control: buttons - press button to move the character
 
@@ -47,6 +71,8 @@ cargo espflash --release --target xtensa-esp32s2-none-elf --features esp32s2_usb
 ```
 
 ### Build for ESP32-C3 with ILI9341
+
+See tag v0.1.0.
 
 It's necessary to override default toolchain specified in `rust-toolchain.toml`. One option is to pass `+nightly` to command line.
 
@@ -73,19 +99,3 @@ Check default `features` in `Cargo.toml`. Make sure that default set contains yo
 
 If no value is selected, make sure to specify features on command line.
 
-## Plans
-
-- [X] randomly generated maze
-- [ ] add Wokwi simulation
-- [ ] add GitPod, CodeSpaces and VS Code Dev Container integration
-- [ ] add support for sprite
-- [ ] add support for interactivng with the character
-
-## Notes
-
-Rendering for ESP32-S2
-
-- SPI freq 80kHz - 9.8s
-- SPI freq 1000kHz - 1.0s
-- SPI freq 10000kHz - 0.32s
-- SPI freq 100000kHz - 0.25s

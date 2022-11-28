@@ -266,7 +266,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "857b0ab2194767e4354c607b980b00a3f507659a3b793245144a992f3d81673f"
 dependencies = [
  "esp-println",
- "riscv 0.8.0",
  "xtensa-lx-rt",
 ]
 
@@ -281,15 +280,10 @@ dependencies = [
  "embedded-hal 0.2.7",
  "embedded-hal 1.0.0-alpha.8",
  "esp-hal-procmacros",
- "esp32",
- "esp32c3",
- "esp32s2",
  "esp32s3",
  "fugit",
  "nb 1.0.0",
  "paste",
- "riscv 0.8.0",
- "riscv-atomic-emulation-trap",
  "void",
  "xtensa-lx",
  "xtensa-lx-rt",
@@ -313,82 +307,6 @@ name = "esp-println"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "adcfe5d532cf2029b11996cab6b4af948f41c24b131c76422115634711549aaa"
-
-[[package]]
-name = "esp32"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d26be703e6ca53cf5b81ae164c13eecd31d5cc4e25d04082f682345eab8cfc9"
-dependencies = [
- "bare-metal 1.0.0",
- "vcell",
- "xtensa-lx",
- "xtensa-lx-rt",
-]
-
-[[package]]
-name = "esp32-hal"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec1fd69a380bd342a4c3b14335af33e57c4f97b043f906f38c7d52b019a75b37"
-dependencies = [
- "embedded-hal 0.2.7",
- "embedded-hal 1.0.0-alpha.8",
- "esp-hal-common",
- "xtensa-lx",
- "xtensa-lx-rt",
-]
-
-[[package]]
-name = "esp32c3"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc0e61897c90cfc713243af3d7fab2a7615669faf1652bd3718a1172012b1a02"
-dependencies = [
- "bare-metal 1.0.0",
- "riscv 0.8.0",
- "riscv-rt",
- "vcell",
-]
-
-[[package]]
-name = "esp32c3-hal"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8468c747a18ab43bf80889ecf24c3a190421434fef4d70eaff3a49ffd67cde4"
-dependencies = [
- "embedded-hal 0.2.7",
- "embedded-hal 1.0.0-alpha.8",
- "esp-hal-common",
- "r0",
- "riscv 0.8.0",
- "riscv-rt",
-]
-
-[[package]]
-name = "esp32s2"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5fbabe525c4909f6ca9bca2dbcca0ac3a230f1a8f4e60fda2c9b7af3260a571e"
-dependencies = [
- "bare-metal 1.0.0",
- "vcell",
- "xtensa-lx",
- "xtensa-lx-rt",
-]
-
-[[package]]
-name = "esp32s2-hal"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "182f0b121f4baf379be2e795924e92a4703128225fbd7e368a72c4dd055bf354"
-dependencies = [
- "embedded-hal 0.2.7",
- "embedded-hal 1.0.0-alpha.8",
- "esp-hal-common",
- "xtensa-lx",
- "xtensa-lx-rt",
-]
 
 [[package]]
 name = "esp32s3"
@@ -788,40 +706,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "riscv-atomic-emulation-trap"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4daa6e1007782fb8d56cf8c39fd97cfdbca77004ef6eadb884c7e11603bc8313"
-dependencies = [
- "riscv 0.8.0",
- "riscv-rt",
- "riscv-target",
-]
-
-[[package]]
-name = "riscv-rt"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "527ddfacbbfeed89256163c2655b0392c4aa76dd95c0189dc05044bf2c47c3f8"
-dependencies = [
- "r0",
- "riscv 0.8.0",
- "riscv-rt-macros",
- "riscv-target",
-]
-
-[[package]]
-name = "riscv-rt-macros"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f38509d7b17c2f604ceab3e5ff8ac97bb8cd2f544688c512be75c715edaf4daf"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "riscv-target"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -920,7 +804,6 @@ dependencies = [
 name = "spooky"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "display-interface",
  "display-interface-spi",
  "embedded-graphics",
@@ -928,23 +811,30 @@ dependencies = [
  "esp-alloc",
  "esp-backtrace",
  "esp-println",
- "esp32-hal",
- "esp32c3-hal",
- "esp32s2-hal",
  "esp32s3-hal",
  "icm42670",
  "ili9341",
- "maze_generator",
  "mipidsi",
  "panic-halt",
  "petgraph",
  "rand",
  "rand_chacha",
- "riscv-rt",
  "shared-bus",
+ "spooky-core",
  "tinybmp",
  "xtensa-atomic-emulation-trap",
  "xtensa-lx-rt",
+]
+
+[[package]]
+name = "spooky-core"
+version = "0.1.0"
+dependencies = [
+ "embedded-graphics",
+ "maze_generator",
+ "petgraph",
+ "rand_chacha",
+ "tinybmp",
 ]
 
 [[package]]
