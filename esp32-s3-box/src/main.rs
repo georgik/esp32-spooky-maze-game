@@ -88,6 +88,7 @@ pub struct Universe<D, I> {
     camera_y: i32,
     // #[cfg(any(feature = "imu_controls"))]
     icm: I,
+    animation_step: u32,
     // icm: Option<Icm42670<shared_bus::I2cProxy<shared_bus::NullMutex<i2c::I2C<I2C0>>>>>
     // delay: Some(Delay),
 }
@@ -109,6 +110,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>, I:Accelerome
             camera_y: 0,
             // #[cfg(any(feature = "imu_controls"))]
             icm,
+            animation_step: 0,
             // delay: None,
         }
     }
@@ -223,6 +225,11 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>, I:Accelerome
     }
 
     pub fn render_frame(&mut self) -> &D {
+
+        self.animation_step += 1;
+        if self.animation_step > 1 {
+            self.animation_step = 0;
+        }
 
         self.maze.move_npcs();
         self.check_npc_collision();
@@ -341,9 +348,19 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>, I:Accelerome
                         }
                     }
 
-                    let bmp:Bmp<Rgb565> = assets.ghost1.unwrap();
-                    let ghost1 = Image::new(&bmp, Point::new(self.ghost_x.try_into().unwrap(), self.ghost_y.try_into().unwrap()));
-                    ghost1.draw(&mut self.display);
+                    match self.animation_step {
+                        0 => {
+                            let bmp:Bmp<Rgb565> = assets.ghost1.unwrap();
+                            let ghost1 = Image::new(&bmp, Point::new(self.ghost_x.try_into().unwrap(), self.ghost_y.try_into().unwrap()));
+                            ghost1.draw(&mut self.display);
+                        },
+                        _ => {
+                            let bmp:Bmp<Rgb565> = assets.ghost2.unwrap();
+                            let ghost2 = Image::new(&bmp, Point::new(self.ghost_x.try_into().unwrap(), self.ghost_y.try_into().unwrap()));
+                            ghost2.draw(&mut self.display);
+                        },
+
+                    }
                     // display.flush().unwrap();
                 },
                 None => {
