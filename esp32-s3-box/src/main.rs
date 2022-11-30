@@ -8,14 +8,17 @@ static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
     prelude::{RgbColor, PixelIteratorExt},
+    prelude::{PixelColor, Point, DrawTarget, Size},
     mono_font::{
         ascii::{FONT_8X13, FONT_9X18_BOLD},
         MonoTextStyle,
     },
-    prelude::{Point, DrawTarget},
     text::Text,
     Drawable,
 };
+
+mod spritebuf;
+use spritebuf::{SpriteBuf};
 
 use esp_println::println;
 
@@ -579,8 +582,9 @@ fn main() -> ! {
     rng.read(&mut seed_buffer).unwrap();
     let mut data = [Rgb565::BLACK ; 320*240];
     let mut fbuf = FrameBuf::new(&mut data, 320, 240);
+    let mut spritebuf = SpriteBuf::new(fbuf);
 
-    let mut universe = Universe::new(fbuf, icm, Some(seed_buffer));
+    let mut universe = Universe::new(spritebuf, icm, Some(seed_buffer));
     universe.initialize();
 
 
