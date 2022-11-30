@@ -7,10 +7,9 @@ static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
-    prelude::{RgbColor, PixelIteratorExt},
-    prelude::{PixelColor, Point, DrawTarget, Size},
+    prelude::{Point, DrawTarget, RgbColor},
     mono_font::{
-        ascii::{FONT_8X13, FONT_9X18_BOLD},
+        ascii::{FONT_8X13},
         MonoTextStyle,
     },
     text::Text,
@@ -33,19 +32,16 @@ use esp32c3_hal as hal;
 
 use hal::{
     clock::{ ClockControl, CpuClock },
-    dma::{DmaPriority},
-    gdma::Gdma,
+    // gdma::Gdma,
     i2c,
     pac::Peripherals,
-    // pac::Peripheral::I2C0,
     prelude::*,
     spi,
-    spi::dma::WithDmaSpi2,
     timer::TimerGroup,
     Rng,
     Rtc,
     IO,
-    Delay, gpio_types::Unknown,
+    Delay,
 };
 
 // systimer was introduced in ESP32-S2, it's not available for ESP32
@@ -64,8 +60,6 @@ use embedded_graphics::{image::Image, pixelcolor::Rgb565};
 use tinybmp::Bmp;
 // use esp32s2_hal::Rng;
 
-#[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg", feature = "esp32s3_box"))]
-use mipidsi::{Display, Orientation};
 #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
 use ili9341::{DisplaySize240x320, Ili9341, Orientation};
 
@@ -77,12 +71,9 @@ use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
 #[cfg(any(feature = "imu_controls"))]
 use shared_bus::BusManagerSimple;
 
-use display_interface::WriteOnlyDataCommand;
 use embedded_hal::digital::v2::OutputPin;
-use mipidsi::models::{Model, ILI9342CRgb565};
-
 use heapless::String;
-use embedded_graphics_framebuf::{FrameBuf, backends::FrameBufferBackend};
+use embedded_graphics_framebuf::{FrameBuf};
 
 pub struct Universe<D, I> {
     pub start_time: u64,
@@ -188,36 +179,32 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>, I:Accelerome
         #[cfg(feature = "system_timer")]
         let start_timestamp = SystemTimer::now();
 
+        let assets = self.assets.as_ref().unwrap();
+        let ground = assets.ground.as_ref().unwrap();
+        let wall = assets.wall.as_ref().unwrap();
+        let empty = assets.empty.as_ref().unwrap();
 
-                let assets = self.assets.as_ref().unwrap();
-                let ground = assets.ground.as_ref().unwrap();
-                let wall = assets.wall.as_ref().unwrap();
-                let empty = assets.empty.as_ref().unwrap();
+        let camera_tile_x = camera_x / self.maze.tile_width as i32;
+        let camera_tile_y = camera_y / self.maze.tile_height as i32;
+        for x in camera_tile_x..(camera_tile_x + (self.maze.visible_width as i32)-1) {
+            for y in camera_tile_y..(camera_tile_y + (self.maze.visible_height as i32)-1) {
+                let position_x = (x as i32 * self.maze.tile_width as i32) - camera_x;
+                let position_y = (y as i32 * self.maze.tile_height as i32) - camera_y;
+                let position = Point::new(position_x, position_y);
 
-                let camera_tile_x = camera_x / self.maze.tile_width as i32;
-                let camera_tile_y = camera_y / self.maze.tile_height as i32;
-                for x in camera_tile_x..(camera_tile_x + (self.maze.visible_width as i32)-1) {
-                    for y in camera_tile_y..(camera_tile_y + (self.maze.visible_height as i32)-1) {
-                        let position_x = (x as i32 * self.maze.tile_width as i32) - camera_x;
-                        let position_y = (y as i32 * self.maze.tile_height as i32) - camera_y;
-                        let position = Point::new(position_x, position_y);
-
-                        if x < 0 || y < 0 || x > (self.maze.width-1) as i32 || y > (self.maze.height-1) as i32 {
-                            let tile = Image::new(empty, position);
-                            tile.draw(&mut self.display);
-                        } else if self.maze.data[(x+y*(self.maze.width as i32)) as usize] == 0 {
-                            let tile = Image::new(ground, position);
-                            tile.draw(&mut self.display);
-                        } else {
-                            let tile = Image::new(wall, position);
-                            tile.draw(&mut self.display);
-                        }
-                    }
+                if x < 0 || y < 0 || x > (self.maze.width-1) as i32 || y > (self.maze.height-1) as i32 {
+                    let tile = Image::new(empty, position);
+                    tile.draw(&mut self.display);
+                } else if self.maze.data[(x+y*(self.maze.width as i32)) as usize] == 0 {
+                    let tile = Image::new(ground, position);
+                    tile.draw(&mut self.display);
+                } else {
+                    let tile = Image::new(wall, position);
+                    tile.draw(&mut self.display);
                 }
-
-
+            }
+        }
     }
-
 
     pub fn initialize(&mut self) {
 
@@ -389,8 +376,7 @@ fn main() -> ! {
     let mut system = peripherals.DPORT.split();
     #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
     let mut system = peripherals.SYSTEM.split();
-    let mut clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
-    // let mut clocks = ClockControl::boot_defaults(system.clock_control).freeze();
+    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
 
     // Disable the RTC and TIMG watchdog timers
     let mut rtc = Rtc::new(peripherals.RTC_CNTL);
@@ -461,11 +447,11 @@ fn main() -> ! {
     #[cfg(any(feature = "esp32s3_box"))]
     let mosi = io.pins.gpio6;
 
-    let dma = Gdma::new(peripherals.DMA, &mut system.peripheral_clock_control);
-    let dma_channel = dma.channel0;
+    // let dma = Gdma::new(peripherals.DMA, &mut system.peripheral_clock_control);
+    // let dma_channel = dma.channel0;
 
-    let mut descriptors = [0u32; 8 * 3];
-    let mut rx_descriptors = [0u32; 8 * 3];
+    // let mut descriptors = [0u32; 8 * 3];
+    // let mut rx_descriptors = [0u32; 8 * 3];
 
     #[cfg(any(feature = "esp32s3_box"))]
     let spi = spi::Spi::new_no_cs_no_miso(
@@ -581,8 +567,8 @@ fn main() -> ! {
     let mut seed_buffer = [0u8;32];
     rng.read(&mut seed_buffer).unwrap();
     let mut data = [Rgb565::BLACK ; 320*240];
-    let mut fbuf = FrameBuf::new(&mut data, 320, 240);
-    let mut spritebuf = SpriteBuf::new(fbuf);
+    let fbuf = FrameBuf::new(&mut data, 320, 240);
+    let spritebuf = SpriteBuf::new(fbuf);
 
     let mut universe = Universe::new(spritebuf, icm, Some(seed_buffer));
     universe.initialize();
