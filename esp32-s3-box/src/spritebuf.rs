@@ -1,17 +1,16 @@
 // Based on https://github.com/bernii/embedded-graphics-framebuf
 
 use embedded_graphics::{
-    prelude::{RgbColor, PixelIteratorExt},
-    prelude::{PixelColor, Point, DrawTarget, Size},
+    prelude::{RgbColor},
+    prelude::{Point, DrawTarget, Size},
     geometry::OriginDimensions,
     Pixel,
 };
-use embedded_graphics::{image::Image, pixelcolor::Rgb565};
+use embedded_graphics::{pixelcolor::Rgb565};
 use embedded_graphics_framebuf::{FrameBuf, backends::FrameBufferBackend};
 
 pub struct SpriteBuf<B: FrameBufferBackend<Color = Rgb565>> {
-    pub data: B,
-    fbuf: FrameBuf<Rgb565, B>,
+    pub fbuf: FrameBuf<Rgb565, B>,
 }
 
 impl<B: FrameBufferBackend<Color = Rgb565>> OriginDimensions for SpriteBuf<B> {
@@ -21,9 +20,8 @@ impl<B: FrameBufferBackend<Color = Rgb565>> OriginDimensions for SpriteBuf<B> {
 }
 
 impl<B: FrameBufferBackend<Color = Rgb565>> SpriteBuf<B> {
-    pub fn new(data: B, fbuf:FrameBuf<Rgb565, B>) -> Self {
+    pub fn new(fbuf:FrameBuf<Rgb565, B>) -> Self {
         Self {
-            data,
             fbuf,
         }
     }
@@ -36,10 +34,6 @@ impl<B: FrameBufferBackend<Color = Rgb565>> SpriteBuf<B> {
     /// Get the framebuffers height.
     pub fn height(&self) -> usize {
         self.fbuf.height()
-    }
-
-    fn point_to_index(&self, p: Point) -> usize {
-        self.fbuf.width() * p.y as usize + p.x as usize
     }
 
     /// Set a pixel's color.
@@ -56,7 +50,7 @@ impl<B: FrameBufferBackend<Color = Rgb565>> SpriteBuf<B> {
 
 /// An iterator for all [Pixels](Pixel) in the framebuffer.
 pub struct PixelIterator<'a, B: FrameBufferBackend<Color = Rgb565>> {
-    fbuf: &'a SpriteBuf<B>,
+    fbuf: &'a FrameBuf<Rgb565, B>,
     index: usize,
 }
 
@@ -67,7 +61,7 @@ impl<'a, B: FrameBufferBackend<Color = Rgb565>> IntoIterator for &'a SpriteBuf<B
 
     fn into_iter(self) -> Self::IntoIter {
         PixelIterator {
-            fbuf: self,
+            fbuf: &self.fbuf,
             index: 0,
         }
     }
@@ -95,17 +89,20 @@ impl<B: FrameBufferBackend<Color = Rgb565>> DrawTarget for SpriteBuf<B> {
         }
         Ok(())
     }
-
-    fn clear(&mut self, color: Self::Color) -> Result<(), Self::Error> {
-        self.fbuf.clear(color);
-        Ok(())
-    }
 }
 
 impl<'a, B: FrameBufferBackend<Color = Rgb565>> Iterator for PixelIterator<'a, B> {
     type Item = Pixel<Rgb565>;
     fn next(&mut self) -> Option<Pixel<Rgb565>> {
-        self.fbuf.next()
+        let y = self.index / self.fbuf.width();
+        let x = self.index - y * self.fbuf.width();
+
+        if self.index >= self.fbuf.width() * self.fbuf.height() {
+            return None;
+        }
+        self.index += 1;
+        let p = Point::new(x as i32, y as i32);
+        Some(Pixel(p, self.fbuf.get_color_at(p)))
     }
 }
 

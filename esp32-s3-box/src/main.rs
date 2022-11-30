@@ -582,7 +582,7 @@ fn main() -> ! {
     rng.read(&mut seed_buffer).unwrap();
     let mut data = [Rgb565::BLACK ; 320*240];
     let mut fbuf = FrameBuf::new(&mut data, 320, 240);
-    let mut spritebuf = SpriteBuf::new(&mut data, fbuf);
+    let mut spritebuf = SpriteBuf::new(fbuf);
 
     let mut universe = Universe::new(spritebuf, icm, Some(seed_buffer));
     universe.initialize();
