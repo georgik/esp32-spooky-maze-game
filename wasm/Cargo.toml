@@ -19,7 +19,8 @@ embedded-graphics = "0.7"
 # display-interface-spi = "0.4"
 wasm-bindgen = "0.2.83"
 web-sys = { version = "0.3.60", features = ['Window', 'Performance', 'PerformanceTiming']}
-embedded-graphics-web-simulator = "0.3.0"
+embedded-graphics-web-simulator = { git = "https://github.com/georgik/embedded-graphics-web-simulator.git", branch = "feature/sprite" }
+# embedded-graphics-web-simulator = { path = "../../embedded-graphics-web-simulator" }
 # rand = { version = "0.8.5", default-features = false }
 getrandom = { version = "0.2.8", features = ["js"] }
 rand_chacha = { version = "0.3.1", default-features = false }

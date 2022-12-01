@@ -16,9 +16,6 @@ use embedded_graphics::{
     Drawable,
 };
 
-mod spritebuf;
-use spritebuf::{SpriteBuf};
-
 use esp_println::println;
 
 #[cfg(feature="esp32")]
@@ -63,8 +60,7 @@ use tinybmp::Bmp;
 #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
 use ili9341::{DisplaySize240x320, Ili9341, Orientation};
 
-use spooky_core::assets::Assets;
-use spooky_core::maze::Maze;
+use spooky_core::{assets::Assets, maze::Maze, spritebuf::SpriteBuf};
 
 #[cfg(any(feature = "imu_controls"))]
 use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
@@ -92,7 +88,6 @@ pub struct Universe<D, I> {
     // icm: Option<Icm42670<shared_bus::I2cProxy<shared_bus::NullMutex<i2c::I2C<I2C0>>>>>
     // delay: Some(Delay),
 }
-
 
 
 impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>, I:Accelerometer> Universe <D, I> {
