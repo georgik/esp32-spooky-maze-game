@@ -32,7 +32,7 @@ use heapless::String;
 
 #[wasm_bindgen]
 pub struct Universe {
-
+    display: WebSimulatorDisplay<Rgb565>,
 }
 
 fn get_seed_buffer() -> Option<[u8; 32]> {
@@ -41,36 +41,41 @@ fn get_seed_buffer() -> Option<[u8; 32]> {
     Some(seed_buffer)
 }
 
+
 #[wasm_bindgen]
 impl Universe {
 
     pub fn new() -> Universe {
         Universe {
+            display: {
+                let document = web_sys::window().unwrap().document().unwrap();
+                let output_settings = OutputSettingsBuilder::new()
+                    .scale(1)
+                    .pixel_spacing(1)
+                    .build();
+                WebSimulatorDisplay::new(
+                        (320, 240),
+                        &output_settings,
+                        document.get_element_by_id("graphics").as_ref(),
+                )
+            }
         }
     }
 
 
     pub fn initialize(&mut self) {
         
-        let document = web_sys::window().unwrap().document().unwrap();
-        let output_settings = OutputSettingsBuilder::new()
-            .scale(1)
-            .pixel_spacing(1)
-            .build();
-        let mut display = WebSimulatorDisplay::new(
-                (320, 240),
-                &output_settings,
-                document.get_element_by_id("graphics").as_ref(),
-        );
-
+        
         display.clear(Rgb565::BLACK).unwrap();
         display.flush().unwrap();
         // display = Some(display);
         let mut data = [Rgb565::BLACK ; 320*240];
         let fbuf = FrameBuf::new(&mut data, 320, 240);
         let spritebuf = SpriteBuf::new(fbuf);
-        let mut engine = Engine::new(spritebuf, get_seed_buffer());
+        unsafe {
+        engine = Engine::new(spritebuf, get_seed_buffer());
         engine.initialize();
+        }
         // self.engine = Some(engine);
 
     }
