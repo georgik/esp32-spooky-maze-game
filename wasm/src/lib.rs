@@ -32,8 +32,7 @@ use heapless::String;
 
 #[wasm_bindgen]
 pub struct Universe {
-    engine: Option<Engine<SpriteBuf<FrameBufferBackend<Color = Rgb565>>>>,
-    display: Option<WebSimulatorDisplay<Rgb565>>,
+
 }
 
 fn get_seed_buffer() -> Option<[u8; 32]> {
@@ -47,8 +46,6 @@ impl Universe {
 
     pub fn new() -> Universe {
         Universe {
-            engine: Engine,
-            display: None,
         }
     }
 
@@ -68,13 +65,13 @@ impl Universe {
 
         display.clear(Rgb565::BLACK).unwrap();
         display.flush().unwrap();
-        self.display = Some(display);
+        // display = Some(display);
         let mut data = [Rgb565::BLACK ; 320*240];
         let fbuf = FrameBuf::new(&mut data, 320, 240);
         let spritebuf = SpriteBuf::new(fbuf);
         let mut engine = Engine::new(spritebuf, get_seed_buffer());
         engine.initialize();
-        self.engine = Some(engine);
+        // self.engine = Some(engine);
 
     }
 
@@ -82,22 +79,22 @@ impl Universe {
 
         console::log_1(&"tick".into());
 
-        match &mut self.engine {
-            Some(engine) => {
-                engine.tick();
-                let buf = engine.draw();
-                match self.display {
-                    Some(ref mut display) => {
-                        display.draw_iter(buf.into_iter()).unwrap();
-                    },
-                    None => {},
-                }
-                // display.flush().unwrap();
-            },
-            None => {
-                console::log_1(&"no engine".into());
-            }
-        }
+        // match &mut self.engine {
+        //     Some(engine) => {
+        //         engine.tick();
+        //         let buf = engine.draw();
+        //         match self.display {
+        //             Some(ref mut display) => {
+        //                 display.draw_iter(buf.into_iter()).unwrap();
+        //             },
+        //             None => {},
+        //         }
+        //         // display.flush().unwrap();
+        //     },
+        //     None => {
+        //         console::log_1(&"no engine".into());
+        //     }
+        // }
 
     }
 }
