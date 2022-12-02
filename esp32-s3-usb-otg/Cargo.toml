@@ -1,5 +1,5 @@
 [package]
-name = "spooky-s2-otg"
+name = "spooky-s3-otg"
 version = "0.1.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
@@ -16,28 +16,28 @@ license = "MIT"
 # xtensa-lx-rt = { version = "0.13.0", features = ["esp32"], optional = true }
 # esp-println = { version = "0.3.1", features = [ "esp32" ] }
 
-[target.xtensa-esp32s2-none-elf.dependencies]
-xtensa-atomic-emulation-trap = "0.3.0"
-esp32s2-hal = "0.3.0"
-esp-backtrace = { version = "0.3.0" , features = [
-    "esp32s2",
-    "panic-handler",
-    "print-uart",
-] }
-xtensa-lx-rt = { version = "0.14.0", features = ["esp32s2"], optional = true }
-esp-println = { version = "0.3.1", features = [ "esp32s2" ] }
-
-# [target.xtensa-esp32s3-none-elf.dependencies]
-# xtensa-atomic-emulation-trap = "0.2.0"
-# # esp32s3-hal = { package = "esp32s3-hal", git = "https://github.com/esp-rs/esp-hal.git" }
-# esp32s3-hal = "0.3.0"
+# [target.xtensa-esp32s2-none-elf.dependencies]
+# xtensa-atomic-emulation-trap = "0.3.0"
+# esp32s2-hal = "0.3.0"
 # esp-backtrace = { version = "0.3.0" , features = [
-#     "esp32s3",
+#     "esp32s2",
 #     "panic-handler",
 #     "print-uart",
 # ] }
-# xtensa-lx-rt = { version = "0.13.0", features = ["esp32s3"], optional = true }
-# esp-println = { version = "0.3.1", features = [ "esp32s3" ] }
+# xtensa-lx-rt = { version = "0.14.0", features = ["esp32s2"], optional = true }
+# esp-println = { version = "0.3.1", features = [ "esp32s2" ] }
+
+[target.xtensa-esp32s3-none-elf.dependencies]
+xtensa-atomic-emulation-trap = "0.3.0"
+# esp32s3-hal = { package = "esp32s3-hal", git = "https://github.com/esp-rs/esp-hal.git" }
+esp32s3-hal = "0.3.0"
+esp-backtrace = { version = "0.3.0" , features = [
+    "esp32s3",
+    "panic-handler",
+    "print-uart",
+] }
+xtensa-lx-rt = { version = "0.14.0", features = ["esp32s3"], optional = true }
+esp-println = { version = "0.3.1", features = [ "esp32s3" ] }
 
 # [target.riscv32imac-unknown-none-elf.dependencies]
 # esp32c3-hal = "0.2.0"
@@ -76,8 +76,8 @@ embedded-graphics-framebuf = "0.2.0"
 #default = [ "esp32s3_box" ]
 # default = [ "rt" ]
 # default = [ "rt", "esp32_wrover_kit"  ]
-default = ["rt", "esp32s2_usb_otg"]
-# default = ["rt", "esp32s3_usb_otg"]
+# default = ["rt", "esp32s2_usb_otg"]
+default = ["rt", "esp32s3_usb_otg"]
 # default = ["rt", "esp32s2_ili9341"]
 # default = [ "rt", "esp32c3_ili9341"]
 rt = ["xtensa-lx-rt"]
@@ -101,10 +101,10 @@ esp32c3 = [ "system_timer" ]
 # esp32_wrover_kit = [ "xtensa-lx-rt", "esp32", "esp32-hal/eh1" ]
 
 # Enable this feature in case you have an ESP32-S3-USB-OTG board with ST7789
-esp32s2_usb_otg = [ "xtensa-lx-rt", "esp32s2",  "button_controls" ]
+# esp32s2_usb_otg = [ "xtensa-lx-rt", "esp32s2",  "button_controls" ]
 
 # Enable this feature in case you have an ESP32-S3-USB-OTG board with ST7789
-#esp32s3_usb_otg = [ "xtensa-lx-rt", "esp32s3", "esp32s3-hal/eh1", "button_controls" ]
+esp32s3_usb_otg = [ "xtensa-lx-rt", "esp32s3", "esp32s3-hal/eh1", "button_controls" ]
 
 # Enable this feature in case you have an ESP32-S3-BOX board with ILI9342C
 #esp32s3_box = [ "xtensa-lx-rt", "esp32s3", "esp32s3-hal/eh1", "imu_controls" ]
