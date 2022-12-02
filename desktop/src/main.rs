@@ -63,7 +63,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D>
 
 fn main() -> Result<(), core::convert::Infallible> {
     // let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(800, 480));
-    let mut window = Window::new("Click to move circle", &OutputSettings::default());
+    let mut window = Window::new("ESP32 Spooky Maze", &OutputSettings::default());
 
     let mut data = [Rgb565::BLACK ; 320*240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);
