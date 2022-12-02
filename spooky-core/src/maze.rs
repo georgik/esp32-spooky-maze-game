@@ -162,7 +162,7 @@ impl Maze {
     pub fn generate_maze(&mut self, graph_width: usize, graph_height: usize) {
         // let mut rng = Rng::new(peripherals.RNG);
         // let mut rng = Rng::new( 0x12345678 );
-        let mut seed_buffer = [0u8;32];
+        let seed_buffer = [0u8;32];
         // match &self.rng {
         //     Some(rng) => rng.fill_bytes(&mut seed_buffer),
         //     None => {}
