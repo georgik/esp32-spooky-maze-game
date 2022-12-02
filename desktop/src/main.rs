@@ -9,12 +9,12 @@ use embedded_graphics::{
 use embedded_graphics_simulator::{
     sdl2::Keycode, OutputSettings, SimulatorDisplay, SimulatorEvent, Window,
 };
+use embedded_graphics_framebuf::{FrameBuf};
 
+use spooky_core::{ spritebuf::SpriteBuf, engine::Engine };
 
-use spooky_core::{ engine::Engine };
-
-pub struct Universe {
-    engine: Engine<SimulatorDisplay<Rgb565>>,
+pub struct Universe<D> {
+    engine: Engine<D>,
 }
 
 fn get_seed_buffer() -> Option<[u8; 32]> {
@@ -23,17 +23,11 @@ fn get_seed_buffer() -> Option<[u8; 32]> {
     Some(seed_buffer)
 }
 
-impl Universe {
+impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D> {
 
-    pub fn new() -> Universe {
+    pub fn new(engine:Engine<D>) -> Universe<D> {
         Universe {
-            engine: {
-                let display = SimulatorDisplay::new(Size::new(320, 200));
-                // let mut data = [Rgb565::BLACK ; 320*240];
-                // let fbuf = FrameBuf::new(&mut data, 320, 240);
-                // let spritebuf = SpriteBuf::new(fbuf);
-                Engine::new(display, get_seed_buffer())
-            }
+            engine
         }
     }
 
@@ -57,7 +51,7 @@ impl Universe {
         self.engine.initialize();
     }
 
-    pub fn render_frame(&mut self) -> &mut SimulatorDisplay<Rgb565> {
+    pub fn render_frame(&mut self) -> &D {
         self.engine.tick();
         self.engine.draw()
         // display.flush().unwrap();
@@ -71,11 +65,21 @@ fn main() -> Result<(), core::convert::Infallible> {
     // let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(800, 480));
     let mut window = Window::new("Click to move circle", &OutputSettings::default());
 
-    let mut universe = Universe::new();
+    let mut data = [Rgb565::BLACK ; 320*240];
+    let fbuf = FrameBuf::new(&mut data, 320, 240);
+    let spritebuf = SpriteBuf::new(fbuf);
+
+    let engine = Engine::new(spritebuf, get_seed_buffer());
+
+    let mut universe = Universe::new(engine);
     universe.initialize();
+    let mut display = SimulatorDisplay::new(Size::new(320, 200));
 
 
-    window.update(universe.render_frame());
+    display.draw_iter(universe.render_frame().into_iter()).unwrap();
+    window.update(&display);
+
+    // window.update(universe.render_frame());
     'running: loop {
         // window.update(&display);
 
@@ -98,7 +102,8 @@ fn main() -> Result<(), core::convert::Infallible> {
                 _ => {}
             }
         }
-        window.update(universe.render_frame());
+        display.draw_iter(universe.render_frame().into_iter()).unwrap();
+        window.update(&display);
     }
 
     Ok(())
