@@ -1,7 +1,7 @@
 
 
 use embedded_graphics::{
-    prelude::{Point, DrawTarget, RgbColor},
+    prelude::{Point, RgbColor},
     mono_font::{
         ascii::{FONT_8X13},
         MonoTextStyle,
@@ -27,11 +27,7 @@ pub struct Engine<D> {
     maze: Maze,
     camera_x: i32,
     camera_y: i32,
-    // #[cfg(any(feature = "imu_controls"))]
-    // icm: I,
     animation_step: u32,
-    // icm: Option<Icm42670<shared_bus::I2cProxy<shared_bus::NullMutex<i2c::I2C<I2C0>>>>>
-    // delay: Some(Delay),
 }
 
 
@@ -178,53 +174,6 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         match self.assets {
             Some(ref mut assets) => {
 
-                // #[cfg(any(feature = "button_controls"))]
-                // {
-                //     if button_down_pin.is_low().unwrap() {
-                //         if ghost_x > 0 {
-                //             if maze[(ghost_x/TILE_WIDTH)-1+ghost_y] == 0 {
-                //                 ghost_x -= TILE_WIDTH;
-                //             }
-                //         }
-                //     }
-
-                //     if button_up_pin.is_low().unwrap() {
-                //         if ghost_x < PLAYGROUND_WIDTH {
-                //             if maze[(ghost_x/TILE_WIDTH)+1+ghost_y] == 0 {
-                //                 ghost_x += TILE_WIDTH;
-                //             }
-                //         }
-                //     }
-
-                //     if button_menu_pin.is_low().unwrap() {
-                //         if ghost_y > 0 {
-                //             if maze[(ghost_x/TILE_WIDTH)+ghost_y-TILE_HEIGHT] == 0 {
-                //                 ghost_y -= TILE_HEIGHT;
-                //             }
-                //         }
-                //     }
-
-                //     if button_ok_pin.is_low().unwrap() {
-                //         if ghost_y < PLAYGROUND_HEIGHT {
-                //             if maze[(ghost_x/TILE_WIDTH)+ghost_y+TILE_HEIGHT] == 0 {
-                //                 ghost_y += TILE_HEIGHT;
-                //             }
-                //         }
-                //     }
-                // }
-
-                // if old_x != ghost_x || old_y != ghost_y {
-                //     let ground = Image::new(&ground_bmp, Point::new(old_x.try_into().unwrap(), old_y.try_into().unwrap()));
-
-                //     ground.draw(&mut display).unwrap();
-
-                //     let ghost2 = Image::new(&bmp, Point::new(ghost_x.try_into().unwrap(), ghost_y.try_into().unwrap()));
-
-                //     ghost2.draw(&mut display).unwrap();
-                //     old_x = ghost_x;
-                //     old_y = ghost_y;
-                // }
-
                 let coin_bmp:Bmp<Rgb565> = assets.coin.unwrap();
                 for index in 0..100 {
                     let coin = self.maze.coins[index];
@@ -280,8 +229,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
 
         let coin_message: String<5> = String::from(self.maze.coin_counter);
         Text::new(&coin_message, Point::new(10, 10), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
-            .draw(&mut self.display)
-            ;
+            .draw(&mut self.display);
 
         &mut self.display
     }

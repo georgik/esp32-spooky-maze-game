@@ -53,14 +53,13 @@ use xtensa_lx_rt::entry;
 #[cfg(feature="riscv-rt")]
 use riscv_rt::entry;
 
-use embedded_graphics::{image::Image, pixelcolor::Rgb565};
-use tinybmp::Bmp;
+use embedded_graphics::{pixelcolor::Rgb565};
 // use esp32s2_hal::Rng;
 
 #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
 use ili9341::{DisplaySize240x320, Ili9341, Orientation};
 
-use spooky_core::{assets::Assets, maze::Maze, spritebuf::SpriteBuf, engine::Engine};
+use spooky_core::{spritebuf::SpriteBuf, engine::Engine};
 
 #[cfg(any(feature = "imu_controls"))]
 use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
@@ -95,19 +94,10 @@ impl <I:Accelerometer, D:embedded_graphics::draw_target::DrawTarget<Color = Rgb5
 
     pub fn render_frame(&mut self) -> &D {
 
-
-        #[cfg(any(feature = "imu_controls"))]
-        let accel_threshold = 0.20;
-
         #[cfg(any(feature = "imu_controls"))]
         {
+            let accel_threshold = 0.20;
             let accel_norm = self.icm.accel_norm().unwrap();
-            // let gyro_norm = self.icm.gyro_norm().unwrap();
-            // println!(
-            //     "ACCEL = X: {:+.04} Y: {:+.04} Z: {:+.04}; GYRO  = X: {:+.04} Y: {:+.04} Z: {:+.04}",
-            //     accel_norm.x, accel_norm.y, accel_norm.z,
-            //     gyro_norm.x, gyro_norm.y, gyro_norm.z
-            // );
 
             if accel_norm.y > accel_threshold {
                 self.engine.move_left();
@@ -128,10 +118,6 @@ impl <I:Accelerometer, D:embedded_graphics::draw_target::DrawTarget<Color = Rgb5
 
         self.engine.tick();
         self.engine.draw()
-
-
-        // display.flush().unwrap();
-        // &self.engine.display
 
     }
 
