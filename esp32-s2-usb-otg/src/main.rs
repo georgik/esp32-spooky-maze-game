@@ -92,7 +92,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D>
 
 #[entry]
 fn main() -> ! {
-    const HEAP_SIZE: usize = 65535*2;
+    const HEAP_SIZE: usize = 65535*3-12790;
     static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
     unsafe { ALLOCATOR.init(HEAP.as_mut_ptr(), HEAP_SIZE) }
 
@@ -264,8 +264,8 @@ fn main() -> ! {
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8;32];
     rng.read(&mut seed_buffer).unwrap();
-    let mut data = [Rgb565::BLACK ; 320*240];
-    let fbuf = FrameBuf::new(&mut data, 320, 240);
+    let mut data = [Rgb565::BLACK ; 240*240];
+    let fbuf = FrameBuf::new(&mut data, 240, 240);
     let spritebuf = SpriteBuf::new(fbuf);
     let engine = Engine::new(spritebuf, Some(seed_buffer));
 
