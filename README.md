@@ -32,6 +32,15 @@ cargo espflash --release --monitor
 - Random maze generator
 - IMU Accelerometer control
 
+### Build for dekstop
+
+```
+cd desktop
+export LIBRARY_PATH="$LIBRARY_PATH:$(brew --prefix)/lib"
+cargo run
+```
+
+
 ### Build for ESP32-S3-USB-OTG with ST7789
 
 See tag v0.1.0.

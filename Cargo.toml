@@ -4,6 +4,7 @@
 resolver = "2"
 
 members = [
+    "desktop",
     "esp32-s3-box",
     "spooky-core",
     "wasm"
