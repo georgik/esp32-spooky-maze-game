@@ -32,7 +32,7 @@ use heapless::String;
 
 #[wasm_bindgen]
 pub struct Universe {
-    display: WebSimulatorDisplay<Rgb565>,
+    engine: Engine<WebSimulatorDisplay<Rgb565>>,
 }
 
 fn get_seed_buffer() -> Option<[u8; 32]> {
@@ -47,59 +47,51 @@ impl Universe {
 
     pub fn new() -> Universe {
         Universe {
-            display: {
+            engine: {
                 let document = web_sys::window().unwrap().document().unwrap();
                 let output_settings = OutputSettingsBuilder::new()
                     .scale(1)
                     .pixel_spacing(1)
                     .build();
-                WebSimulatorDisplay::new(
+                let display = WebSimulatorDisplay::new(
                         (320, 240),
                         &output_settings,
                         document.get_element_by_id("graphics").as_ref(),
-                )
+                );
+                // let mut data = [Rgb565::BLACK ; 320*240];
+                // let fbuf = FrameBuf::new(&mut data, 320, 240);
+                // let spritebuf = SpriteBuf::new(fbuf);
+                Engine::new(display, get_seed_buffer())
             }
         }
     }
 
+    pub fn move_up(&mut self) {
+        self.engine.move_up();
+    }
+
+    pub fn move_down(&mut self) {
+        self.engine.move_down();
+    }
+
+    pub fn move_left(&mut self) {
+        self.engine.move_left();
+    }
+
+    pub fn move_right(&mut self) {
+        self.engine.move_right();
+    }
 
     pub fn initialize(&mut self) {
-        
-        
-        display.clear(Rgb565::BLACK).unwrap();
-        display.flush().unwrap();
-        // display = Some(display);
-        let mut data = [Rgb565::BLACK ; 320*240];
-        let fbuf = FrameBuf::new(&mut data, 320, 240);
-        let spritebuf = SpriteBuf::new(fbuf);
-        unsafe {
-        engine = Engine::new(spritebuf, get_seed_buffer());
-        engine.initialize();
-        }
-        // self.engine = Some(engine);
-
+        self.engine.initialize();
     }
 
     pub fn render_frame(&mut self) {
 
         console::log_1(&"tick".into());
-
-        // match &mut self.engine {
-        //     Some(engine) => {
-        //         engine.tick();
-        //         let buf = engine.draw();
-        //         match self.display {
-        //             Some(ref mut display) => {
-        //                 display.draw_iter(buf.into_iter()).unwrap();
-        //             },
-        //             None => {},
-        //         }
-        //         // display.flush().unwrap();
-        //     },
-        //     None => {
-        //         console::log_1(&"no engine".into());
-        //     }
-        // }
+        self.engine.tick();
+        let display:&mut WebSimulatorDisplay<Rgb565> = self.engine.draw();
+        display.flush().unwrap();
 
     }
 }

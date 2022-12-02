@@ -171,7 +171,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
 
     }
 
-    pub fn draw(&mut self) -> &D {
+    pub fn draw(&mut self) -> &mut D {
         self.draw_maze(self.camera_x,self.camera_y);
 
 
@@ -283,7 +283,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
             .draw(&mut self.display)
             ;
 
-        &self.display
+        &mut self.display
     }
 
 
