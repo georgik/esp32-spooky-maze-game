@@ -92,7 +92,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D>
 
 #[entry]
 fn main() -> ! {
-    const HEAP_SIZE: usize = 65535*4;
+    const HEAP_SIZE: usize = 65535*2;
     static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
     unsafe { ALLOCATOR.init(HEAP.as_mut_ptr(), HEAP_SIZE) }
 
