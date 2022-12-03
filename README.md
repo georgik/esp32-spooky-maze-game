@@ -35,22 +35,30 @@ cargo espflash --release --monitor
 ### Build for dekstop
 
 ```
+brew install SDL2
 cd desktop
 export LIBRARY_PATH="$LIBRARY_PATH:$(brew --prefix)/lib"
 cargo run
 ```
 
-
 ### Build for ESP32-S3-USB-OTG with ST7789
-
-See tag v0.1.0.
 
 ![Spooky on ESP32-S3-USB-OTG](assets/screenshot/esp32-spooky-s3-usb-otg.jpg)
 
 Control: buttons - press button to move the character
 
 ```
-cargo espflash --release --target xtensa-esp32s3-none-elf --features esp32s3_usb_otg --monitor
+cd esp32-s3-usb-otg
+esp32-s3-usb-otg
+```
+
+### Build for ESP32-S2-USB-OTG with ST7789
+
+Control: buttons - press button to move the character
+
+```
+cd esp32-s2-usb-otg
+esp32-s2-usb-otg
 ```
 
 ### Build for ESP32 Wrover Kit
@@ -69,15 +77,6 @@ See tag v0.1.0.
 cargo espflash --release --target xtensa-esp32s2-none-elf --features esp32s2_ili9341 --monitor
 ```
 
-### Build for ESP32-S2-USB-OTG with ST7789
-
-See tag v0.1.0.
-
-Control: buttons - press button to move the character
-
-```
-cargo espflash --release --target xtensa-esp32s2-none-elf --features esp32s2_usb_otg --monitor
-```
 
 ### Build for ESP32-C3 with ILI9341
 
