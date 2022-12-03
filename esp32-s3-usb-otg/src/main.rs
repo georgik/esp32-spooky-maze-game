@@ -80,6 +80,22 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D>
         self.engine.initialize();
     }
 
+    pub fn move_up(&mut self) {
+        self.engine.move_up();
+    }
+
+    pub fn move_down(&mut self) {
+        self.engine.move_down();
+    }
+
+    pub fn move_left(&mut self) {
+        self.engine.move_left();
+    }
+
+    pub fn move_right(&mut self) {
+        self.engine.move_right();
+    }
+
     pub fn render_frame(&mut self) -> &D {
 
         self.engine.tick();
@@ -168,16 +184,6 @@ fn main() -> ! {
         &mut system.peripheral_clock_control,
         &clocks);
 
-    #[cfg(any(feature = "esp32s3_box"))]
-    let sclk = io.pins.gpio7;
-    #[cfg(any(feature = "esp32s3_box"))]
-    let mosi = io.pins.gpio6;
-
-    // let dma = Gdma::new(peripherals.DMA, &mut system.peripheral_clock_control);
-    // let dma_channel = dma.channel0;
-
-    // let mut descriptors = [0u32; 8 * 3];
-    // let mut rx_descriptors = [0u32; 8 * 3];
 
     #[cfg(any(feature = "esp32s3_box"))]
     let spi = spi::Spi::new_no_cs_no_miso(
@@ -189,15 +195,6 @@ fn main() -> ! {
         &mut system.peripheral_clock_control,
         &clocks,
     );
-    // .with_dma(dma_channel.configure(
-    //     false,
-    //     &mut descriptors,
-    //     &mut rx_descriptors,
-    //     DmaPriority::Priority0,
-    // ));
-
-    #[cfg(any(feature = "esp32s3_box"))]
-    let mut backlight = io.pins.gpio45.into_push_pull_output();
 
     #[cfg(feature = "esp32")]
     backlight.set_low().unwrap();
@@ -238,20 +235,6 @@ fn main() -> ! {
         .with_orientation(mipidsi::Orientation::PortraitInverted(false))
         .init(&mut delay, Some(reset)).unwrap();
 
-    //Display::st7789(di, reset);
-
-    //https://github.com/espressif/esp-box/blob/master/components/bsp/src/boards/esp32_s3_box.c
-
-    #[cfg(any(feature = "esp32s3_box"))]
-    let mut display = mipidsi::Builder::ili9342c_rgb565(di)
-        .with_display_size(320, 240)
-        .with_orientation(mipidsi::Orientation::PortraitInverted(false))
-        .init(&mut delay, Some(reset)).unwrap();
-    // let mut display = mipidsi::Display::ili9342c_rgb565(di, core::prelude::v1::Some(reset), display_options);
-    #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
-    let mut display = Ili9341::new(di, reset, &mut delay, Orientation::Portrait, DisplaySize240x320).unwrap();
-
-
     Text::new(
         "Initializing...",
         Point::new(80, 110),
@@ -272,12 +255,23 @@ fn main() -> ! {
     let mut universe = Universe::new(Some(seed_buffer), engine);
     universe.initialize();
 
-
-    // #[cfg(any(feature = "imu_controls"))]
-    // let accel_threshold = 0.20;
-
     loop {
+        if button_down_pin.is_low().unwrap() {
+            universe.engine.move_down();
+        }
+
+        if button_up_pin.is_low().unwrap() {
+            universe.move_up();
+        }
+
+        if button_menu_pin.is_low().unwrap() {
+            universe.move_left();
+        }
+
+        if button_ok_pin.is_low().unwrap() {
+            universe.move_right();
+        }
+
         display.draw_iter(universe.render_frame().into_iter()).unwrap();
-        // delay.delay_ms(300u32);
     }
 }
