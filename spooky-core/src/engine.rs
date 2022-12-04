@@ -28,6 +28,9 @@ pub struct Engine<D> {
     camera_x: i32,
     camera_y: i32,
     animation_step: u32,
+    teleport_counter: u32,
+    walker_counter: u32,
+    dynamite_counter: u32,
 }
 
 
@@ -46,7 +49,9 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
             camera_y: 0,
             // #[cfg(any(feature = "imu_controls"))]
             animation_step: 0,
-            // delay: None,
+            teleport_counter: 0,
+            walker_counter: 0,
+            dynamite_counter: 0,
         }
     }
 
@@ -219,6 +224,28 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
                     },
 
                 }
+
+                // Status bar - coins, teleport, walk time, dynamite
+                let position = Point::new(5, 6);
+                let tile = Image::new(&coin_bmp, position);
+                tile.draw(&mut self.display);
+
+                let teleport_bmp:Bmp<Rgb565> = assets.teleport.unwrap();
+                let position = Point::new(5, 28);
+                let tile = Image::new(&teleport_bmp, position);
+                tile.draw(&mut self.display);
+
+                let walker_bmp:Bmp<Rgb565> = assets.walker.unwrap();
+                let position = Point::new(5, 50);
+                let tile = Image::new(&walker_bmp, position);
+                tile.draw(&mut self.display);
+
+                let dynamite_bmp:Bmp<Rgb565> = assets.dynamite.unwrap();
+                let position = Point::new(5, 72);
+                let tile = Image::new(&dynamite_bmp, position);
+                tile.draw(&mut self.display);
+
+
                 // display.flush().unwrap();
             },
             None => {
@@ -228,7 +255,19 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
 
 
         let coin_message: String<5> = String::from(self.maze.coin_counter);
-        Text::new(&coin_message, Point::new(10, 10), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
+        Text::new(&coin_message, Point::new(24, 17), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
+            .draw(&mut self.display);
+
+        let teleport_message: String<5> = String::from(self.teleport_counter);
+        Text::new(&teleport_message, Point::new(24, 39), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
+            .draw(&mut self.display);
+
+        let walker_message: String<5> = String::from(self.walker_counter);
+        Text::new(&walker_message, Point::new(24, 61), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
+            .draw(&mut self.display);
+
+        let dynamite_message: String<5> = String::from(self.dynamite_counter);
+        Text::new(&dynamite_message, Point::new(24, 83), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
             .draw(&mut self.display);
 
         &mut self.display
