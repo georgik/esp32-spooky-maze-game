@@ -172,6 +172,12 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
 
     }
 
+    fn draw_status_number(&mut self, value: u32, x: i32, y: i32) {
+        let value_message: String<5> = String::from(value);
+        Text::new(&value_message, Point::new(x, y), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
+            .draw(&mut self.display);
+    }
+
     pub fn draw(&mut self) -> &mut D {
         self.draw_maze(self.camera_x,self.camera_y);
 
@@ -253,22 +259,10 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
             }
         };
 
-
-        let coin_message: String<5> = String::from(self.maze.coin_counter);
-        Text::new(&coin_message, Point::new(24, 17), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
-            .draw(&mut self.display);
-
-        let teleport_message: String<5> = String::from(self.teleport_counter);
-        Text::new(&teleport_message, Point::new(24, 39), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
-            .draw(&mut self.display);
-
-        let walker_message: String<5> = String::from(self.walker_counter);
-        Text::new(&walker_message, Point::new(24, 61), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
-            .draw(&mut self.display);
-
-        let dynamite_message: String<5> = String::from(self.dynamite_counter);
-        Text::new(&dynamite_message, Point::new(24, 83), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
-            .draw(&mut self.display);
+        self.draw_status_number(self.maze.coin_counter, 24, 17);
+        self.draw_status_number(self.teleport_counter, 24, 39);
+        self.draw_status_number(self.walker_counter, 24, 61);
+        self.draw_status_number(self.dynamite_counter, 24, 83);
 
         &mut self.display
     }
