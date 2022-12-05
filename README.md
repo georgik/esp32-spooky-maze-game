@@ -18,7 +18,7 @@ Open in web browser: http://localhost:8080
 
 ![Spooky on ESP32-S3-BOX](assets/screenshot/esp32-spooky-s3-box.jpg)
 
-Control: IMU 
+Control: IMU
 - tilt the board to move the character
 - move up quickly to teleport
 
@@ -35,6 +35,10 @@ cargo espflash --release --monitor
 - IMU Accelerometer control
 
 ### Build for dekstop
+
+Control: keyboard
+- press arrows to move the character
+- press Enter to teleport
 
 ```
 brew install SDL2
