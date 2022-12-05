@@ -14,6 +14,9 @@ const rust = import('./pkg')
     document.getElementById('button-right').addEventListener('click', () => {
         universe.move_right();
     });
+    document.getElementById('button-teleport').addEventListener('click', () => {
+        universe.teleport();
+    });
 
     document.addEventListener('keydown', (event) => {
         if ((event.key === "Up") || (event.key == "ArrowUp")) {

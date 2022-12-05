@@ -47,6 +47,10 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D>
         self.engine.move_right();
     }
 
+    pub fn teleport(&mut self) {
+        self.engine.teleport();
+    }
+
     pub fn initialize(&mut self) {
         self.engine.initialize();
     }
@@ -92,6 +96,7 @@ fn main() -> Result<(), core::convert::Infallible> {
                         Keycode::Right => universe.move_right(),
                         Keycode::Up => universe.move_up(),
                         Keycode::Down => universe.move_down(),
+                        Keycode::Return => universe.teleport(),
                         _ => {},
                     };
                 }

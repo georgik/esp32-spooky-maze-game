@@ -114,6 +114,11 @@ impl <I:Accelerometer, D:embedded_graphics::draw_target::DrawTarget<Color = Rgb5
             if accel_norm.x < -accel_threshold {
                 self.engine.move_up();
             }
+
+            // Quickly move up to teleport
+            if accel_norm.z < -1.2 {
+                self.engine.teleport();
+            }
         }
 
         self.engine.tick();
