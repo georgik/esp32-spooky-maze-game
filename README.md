@@ -18,7 +18,9 @@ Open in web browser: http://localhost:8080
 
 ![Spooky on ESP32-S3-BOX](assets/screenshot/esp32-spooky-s3-box.jpg)
 
-Control: IMU - tilt the board to move the character
+Control: IMU 
+- tilt the board to move the character
+- move up quickly to teleport
 
 ```
 cd esp32-s3-box
@@ -45,7 +47,9 @@ cargo run
 
 ![Spooky on ESP32-S3-USB-OTG](assets/screenshot/esp32-spooky-s3-usb-otg.jpg)
 
-Control: buttons - press button to move the character
+Control: buttons
+- press button to move the character
+- press up & down to teleport
 
 ```
 cd esp32-s3-usb-otg
@@ -54,7 +58,9 @@ esp32-s3-usb-otg
 
 ### Build for ESP32-S2-USB-OTG with ST7789
 
-Control: buttons - press button to move the character
+Control: buttons
+- press button to move the character
+- press up & down to teleport
 
 ```
 cd esp32-s2-usb-otg

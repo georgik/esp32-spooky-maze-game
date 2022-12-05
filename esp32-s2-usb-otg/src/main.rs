@@ -244,19 +244,21 @@ fn main() -> ! {
     universe.initialize();
 
     loop {
-        if button_down_pin.is_low().unwrap() {
+        let button_down = button_down_pin.is_low().unwrap();
+        let button_up = button_up_pin.is_low().unwrap();
+        let button_ok = button_ok_pin.is_low().unwrap();
+        let button_menu = button_menu_pin.is_low().unwrap();
+
+        if button_up && button_down {
+            universe.engine.teleport();
+        }
+        if button_down {
             universe.engine.move_down();
-        }
-
-        if button_up_pin.is_low().unwrap() {
+        } else if button_up {
             universe.move_up();
-        }
-
-        if button_menu_pin.is_low().unwrap() {
+        } else if button_menu {
             universe.move_left();
-        }
-
-        if button_ok_pin.is_low().unwrap() {
+        } if button_ok {
             universe.move_right();
         }
 
