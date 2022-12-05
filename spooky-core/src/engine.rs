@@ -95,12 +95,17 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         (self.camera_x, self.camera_y) = (new_camera_x - self.ghost_x, new_camera_y - self.ghost_y);
     }
 
+    fn relocate_coins(&mut self, amount: u32) {
+        self.maze.relocate_coins(amount);
+    }
+
     fn check_npc_collision(&mut self) {
         let x = self.camera_x + self.ghost_x;
         let y = self.camera_y + self.ghost_y;
 
         match self.maze.get_npc_at(x, y) {
             Some(_npc) => {
+                self.relocate_coins(5);
                 self.relocate_avatar();
             },
             None => {}

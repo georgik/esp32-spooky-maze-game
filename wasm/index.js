@@ -17,6 +17,9 @@ const rust = import('./pkg')
     document.getElementById('button-teleport').addEventListener('click', () => {
         universe.teleport();
     });
+    document.getElementById('button-dynamite').addEventListener('click', () => {
+        universe.place_dynamite();
+    });
 
     document.addEventListener('keydown', (event) => {
         if ((event.key === "Up") || (event.key == "ArrowUp")) {

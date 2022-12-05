@@ -1,6 +1,9 @@
 # esp32-spooky-maze-game
 
-Rust reimplementation of simple game for ESP32. Work in progress.
+Spooky Maze is simple game where ghost is located in the maze. The goal is to collect 100 coins.
+The ghost can find artifact "Walker" which allows him to pass throght the wall for limited period of time.
+The ghost can use dynamite to clear wall in the vicinity. The ghost can use also Teleport spell to move to random place in the maze.
+The Teleport spell requires some time to recharge. There are some not friendly spirits running around the maze, when collision occurs the ghost is teleported and loses five coins which are then send randomly back to the maze.
 
 ## Build and flash
 
@@ -20,7 +23,8 @@ Open in web browser: http://localhost:8080
 
 Control: IMU
 - tilt the board to move the character
-- move up quickly to teleport
+- move quickly up to teleport
+- move quickly down to place dynamite and destroy walls around
 
 ```
 cd esp32-s3-box
@@ -54,6 +58,7 @@ cargo run
 Control: buttons
 - press button to move the character
 - press up & down to teleport
+- press ok & menu to place dynamite
 
 ```
 cd esp32-s3-usb-otg
@@ -65,6 +70,7 @@ esp32-s3-usb-otg
 Control: buttons
 - press button to move the character
 - press up & down to teleport
+- press ok & menu to place dynamite
 
 ```
 cd esp32-s2-usb-otg

@@ -106,6 +106,20 @@ impl Maze {
         self.coin_counter = 100;
     }
 
+    pub fn relocate_coins(&mut self, amount:u32) {
+        let mut relocate_counter = 0;
+        for index in 0..100 {
+            if self.coins[index].x == -1 && self.coins[index].y == -1 {
+                (self.coins[index].x, self.coins[index].y) = self.get_random_coordinates();
+                relocate_counter += 1;
+                self.coin_counter += 1;
+                if relocate_counter == amount {
+                    break;
+                }
+            }
+        }
+    }
+
     pub fn generate_walkers(&mut self) {
         for index in 0..5 {
             (self.walkers[index].x, self.walkers[index].y) = self.get_random_coordinates();
