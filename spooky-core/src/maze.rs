@@ -192,6 +192,31 @@ impl Maze {
         }
     }
 
+    pub fn set_tile_at(&mut self, x: i32, y: i32, tile: u8) {
+        let tile_x = x / self.tile_width as i32;
+        let tile_y = y / self.tile_height as i32;
+        let tile_index = (tile_y * self.width as i32 + tile_x) as usize;
+
+        if tile_x < 0 || tile_y < 0 || tile_x >= self.width as i32 || tile_y >= self.height as i32 {
+            return;
+        }
+
+        self.data[tile_index] = tile;
+    }
+
+    pub fn place_dynamite(&mut self, x: i32, y: i32) {
+        self.set_tile_at(x - self.tile_width as i32, y - self.tile_height as i32, 2);
+        self.set_tile_at(x, y - self.tile_height as i32, 2);
+        self.set_tile_at(x + self.tile_width as i32, y - self.tile_height as i32, 2);
+
+        self.set_tile_at(x - self.tile_width as i32, y, 2);
+        self.set_tile_at(x + self.tile_width as i32, y, 2);
+
+        self.set_tile_at(x - self.tile_width as i32, y + self.tile_height as i32, 2);
+        self.set_tile_at(x, y + self.tile_height as i32, 2);
+        self.set_tile_at(x + self.tile_width as i32, y + self.tile_height as i32, 2);
+    }
+
     fn get_random_vector(&mut self) -> (i32, i32) {
         let mut x = self.get_rand() % 3 - 1;
         let y = self.get_rand() % 3 - 1;

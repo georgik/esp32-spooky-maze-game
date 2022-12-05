@@ -51,7 +51,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
             animation_step: 0,
             teleport_counter: 100,
             walker_counter: 0,
-            dynamite_counter: 0,
+            dynamite_counter: 1,
         }
     }
 
@@ -155,6 +155,15 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         }
     }
 
+    pub fn place_dynamite(&mut self) {
+        if self.dynamite_counter == 0 {
+            return;
+        }
+
+        self.maze.place_dynamite(self.camera_x + self.ghost_x, self.camera_y + self.ghost_y);
+        self.dynamite_counter -= 1;
+    }
+
     pub fn draw_maze(&mut self, camera_x: i32, camera_y: i32) {
         #[cfg(feature = "system_timer")]
         let start_timestamp = SystemTimer::now();
@@ -162,6 +171,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         let assets = self.assets.as_ref().unwrap();
         let ground = assets.ground.as_ref().unwrap();
         let wall = assets.wall.as_ref().unwrap();
+        let scorched = assets.scorched.as_ref().unwrap();
         let empty = assets.empty.as_ref().unwrap();
 
         let camera_tile_x = camera_x / self.maze.tile_width as i32;
@@ -175,12 +185,22 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
                 if x < 0 || y < 0 || x > (self.maze.width-1) as i32 || y > (self.maze.height-1) as i32 {
                     let tile = Image::new(empty, position);
                     tile.draw(&mut self.display);
-                } else if self.maze.data[(x+y*(self.maze.width as i32)) as usize] == 0 {
-                    let tile = Image::new(ground, position);
-                    tile.draw(&mut self.display);
                 } else {
-                    let tile = Image::new(wall, position);
-                    tile.draw(&mut self.display);
+                    let tile_index = self.maze.data[(x+y*(self.maze.width as i32)) as usize];
+                    match tile_index {
+                        0 => {
+                            let tile = Image::new(ground, position);
+                            tile.draw(&mut self.display);
+                        },
+                        1 => {
+                            let tile = Image::new(wall, position);
+                            tile.draw(&mut self.display);
+                        },
+                        _ => {
+                            let tile = Image::new(scorched, position);
+                            tile.draw(&mut self.display);
+                        }
+                    }
                 }
             }
         }
