@@ -82,6 +82,10 @@ impl Universe {
         self.engine.move_right();
     }
 
+    pub fn teleport(&mut self) {
+        self.engine.teleport();
+    }
+
     pub fn initialize(&mut self) {
         self.engine.initialize();
     }

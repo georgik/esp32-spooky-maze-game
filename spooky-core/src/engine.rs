@@ -49,7 +49,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
             camera_y: 0,
             // #[cfg(any(feature = "imu_controls"))]
             animation_step: 0,
-            teleport_counter: 0,
+            teleport_counter: 100,
             walker_counter: 0,
             dynamite_counter: 0,
         }
@@ -116,6 +116,12 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         }
     }
 
+    pub fn teleport(&mut self) {
+        if self.teleport_counter == 100 {
+            self.relocate_avatar();
+            self.teleport_counter = 0;
+        }
+    }
 
     pub fn draw_maze(&mut self, camera_x: i32, camera_y: i32) {
         #[cfg(feature = "system_timer")]
@@ -153,6 +159,10 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         self.animation_step += 1;
         if self.animation_step > 1 {
             self.animation_step = 0;
+        }
+
+        if self.teleport_counter < 100 {
+            self.teleport_counter += 1;
         }
 
         self.maze.move_npcs();
