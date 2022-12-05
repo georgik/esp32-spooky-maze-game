@@ -34,6 +34,8 @@ pub struct Maze {
     pub coins: [Coin; 100],
     pub coin_counter: u32,
     pub npcs: [Npc; 5],
+    pub walkers: [Coin; 5],
+    pub dynamites: [Coin; 1],
     // Tile map should have small border top line and left column
     pub offset: u32,
     pub tile_width: u32,
@@ -55,6 +57,8 @@ impl Maze {
             coins: [Coin {x: -1, y: -1}; 100],
             coin_counter: 100,
             npcs: [Npc {x: -1, y: -1, vector_x: 0, vector_y: 0}; 5],
+            walkers: [Coin {x: -1, y: -1}; 5],
+            dynamites: [Coin {x: -1, y: -1}; 1],
             rng:  match seed {
                 // None => ChaChaRng::from_entropy(), - from_entropy is not present in latest rand
                 None => ChaChaRng::from_seed([42; 32]),
@@ -65,6 +69,13 @@ impl Maze {
 
     fn get_rand(&mut self) -> i32 {
         self.rng.gen_range(0..255)
+    }
+
+    pub fn check_boundary_collision(&self, x: i32, y: i32) -> bool {
+        if x < 0 || y < 0 || x >= (self.width * self.tile_width) as i32 || y >= (self.height * self.tile_height) as i32 {
+            return true;
+        }
+        false
     }
 
     pub fn check_wall_collision(&self, x: i32, y: i32) -> bool {
@@ -95,6 +106,18 @@ impl Maze {
         self.coin_counter = 100;
     }
 
+    pub fn generate_walkers(&mut self) {
+        for index in 0..5 {
+            (self.walkers[index].x, self.walkers[index].y) = self.get_random_coordinates();
+        }
+    }
+
+    pub fn generate_dynamites(&mut self) {
+        for index in 0..1 {
+            (self.dynamites[index].x, self.dynamites[index].y) = self.get_random_coordinates();
+        }
+    }
+
     pub fn generate_npcs(&mut self) {
         for index in 0..5 {
             (self.npcs[index].x, self.npcs[index].y) = self.get_random_coordinates();
@@ -121,6 +144,24 @@ impl Maze {
         None
     }
 
+    pub fn get_walker_at(&self, x: i32, y: i32) -> Option<Coin> {
+        for walker in self.walkers.iter() {
+            if walker.x == x && walker.y == y {
+                return Some(*walker);
+            }
+        }
+        None
+    }
+
+    pub fn get_dynamite_at(&self, x: i32, y: i32) -> Option<Coin> {
+        for dynamite in self.dynamites.iter() {
+            if dynamite.x == x && dynamite.y == y {
+                return Some(*dynamite);
+            }
+        }
+        None
+    }
+
     pub fn remove_coin(&mut self, coin: Coin) {
         for index in 0..100 {
             if self.coins[index].x == coin.x && self.coins[index].y == coin.y {
@@ -131,6 +172,22 @@ impl Maze {
                 } else {
                     self.generate_coins();
                 }
+            }
+        }
+    }
+
+    pub fn relocate_walker(&mut self, walker: Coin) {
+        for index in 0..5 {
+            if self.walkers[index].x == walker.x && self.walkers[index].y == walker.y {
+                (self.walkers[index].x, self.walkers[index].y) = self.get_random_coordinates();
+            }
+        }
+    }
+
+    pub fn relocate_dynamite(&mut self, dynamite: Coin) {
+        for index in 0..1 {
+            if self.dynamites[index].x == dynamite.x && self.dynamites[index].y == dynamite.y {
+                (self.dynamites[index].x, self.dynamites[index].y) = self.get_random_coordinates();
             }
         }
     }
