@@ -116,8 +116,11 @@ impl <I:Accelerometer, D:embedded_graphics::draw_target::DrawTarget<Color = Rgb5
             }
 
             // Quickly move up to teleport
+            // Quickly move down to place dynamite
             if accel_norm.z < -1.2 {
                 self.engine.teleport();
+            } else if accel_norm.z > 1.5 {
+                self.engine.place_dynamite();
             }
         }
 

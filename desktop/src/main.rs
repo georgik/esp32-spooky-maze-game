@@ -55,6 +55,10 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D>
         self.engine.initialize();
     }
 
+    pub fn place_dynamite(&mut self) {
+        self.engine.place_dynamite();
+    }
+
     pub fn render_frame(&mut self) -> &D {
         self.engine.tick();
         self.engine.draw()
@@ -97,6 +101,7 @@ fn main() -> Result<(), core::convert::Infallible> {
                         Keycode::Up => universe.move_up(),
                         Keycode::Down => universe.move_down(),
                         Keycode::Return => universe.teleport(),
+                        Keycode::Space => universe.place_dynamite(),
                         _ => {},
                     };
                 }

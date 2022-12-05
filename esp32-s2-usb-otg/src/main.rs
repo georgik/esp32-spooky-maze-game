@@ -251,8 +251,9 @@ fn main() -> ! {
 
         if button_up && button_down {
             universe.engine.teleport();
-        }
-        if button_down {
+        } else if button_menu && button_ok {
+            universe.engine.place_dynamite();
+        } else if button_down {
             universe.engine.move_down();
         } else if button_up {
             universe.move_up();

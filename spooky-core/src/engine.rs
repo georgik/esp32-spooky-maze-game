@@ -51,17 +51,40 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
             animation_step: 0,
             teleport_counter: 100,
             walker_counter: 0,
-            dynamite_counter: 0,
+            dynamite_counter: 1,
         }
     }
 
-    fn check_coin_collision(&mut self) {
+    fn check_object_collisions(&mut self) {
         let x = self.camera_x + self.ghost_x;
         let y = self.camera_y + self.ghost_y;
 
+        // Coin collisions
         match self.maze.get_coin_at(x, y) {
             Some(coin) => {
                 self.maze.remove_coin(coin);
+            },
+            None => {}
+        }
+
+        // Walker collisions
+        match self.maze.get_walker_at(x, y) {
+            Some(walker) => {
+                self.maze.relocate_walker(walker);
+                if self.walker_counter < 10000 {
+                    self.walker_counter += 100;
+                }
+            },
+            None => {}
+        }
+
+        // Dynamite collisions
+        match self.maze.get_dynamite_at(x, y) {
+            Some(dynamite) => {
+                self.maze.relocate_dynamite(dynamite);
+                if self.dynamite_counter < 10000 {
+                    self.dynamite_counter += 1;
+                }
             },
             None => {}
         }
@@ -72,47 +95,61 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         (self.camera_x, self.camera_y) = (new_camera_x - self.ghost_x, new_camera_y - self.ghost_y);
     }
 
+    fn relocate_coins(&mut self, amount: u32) {
+        self.maze.relocate_coins(amount);
+    }
+
     fn check_npc_collision(&mut self) {
         let x = self.camera_x + self.ghost_x;
         let y = self.camera_y + self.ghost_y;
 
         match self.maze.get_npc_at(x, y) {
             Some(_npc) => {
+                self.relocate_coins(5);
                 self.relocate_avatar();
             },
             None => {}
         }
     }
 
+    fn is_walkable(&self, x: i32, y: i32) -> bool {
+        // Walk through walls
+        if self.walker_counter > 0 {
+            !self.maze.check_boundary_collision(x, y)
+        } else {
+            !self.maze.check_wall_collision(x, y)
+        }
+    }
+
     pub fn move_right(&mut self) {
         let new_camera_x = self.camera_x + self.step_size_x as i32;
-        if !self.maze.check_wall_collision(new_camera_x + self.ghost_x, self.camera_y + self.ghost_y) {
+        if self.is_walkable(new_camera_x + self.ghost_x, self.camera_y + self.ghost_y) {
             self.camera_x = new_camera_x;
-            self.check_coin_collision();
+            self.check_object_collisions();
         }
     }
 
     pub fn move_left(&mut self) {
         let new_camera_x = self.camera_x - self.step_size_x as i32;
-        if !self.maze.check_wall_collision(new_camera_x + self.ghost_x, self.camera_y + self.ghost_y) {
+        if self.is_walkable(new_camera_x + self.ghost_x, self.camera_y + self.ghost_y) {
             self.camera_x = new_camera_x;
-            self.check_coin_collision();
+            self.check_object_collisions();
         }
     }
 
     pub fn move_up(&mut self) {
         let new_camera_y = self.camera_y - self.step_size_y as i32;
-        if !self.maze.check_wall_collision(self.camera_x + self.ghost_x, new_camera_y + self.ghost_y) {
+        if self.is_walkable(self.camera_x + self.ghost_x, new_camera_y + self.ghost_y) {
             self.camera_y = new_camera_y;
-            self.check_coin_collision();
+            self.check_object_collisions();
         }
     }
 
     pub fn move_down(&mut self) {
         let new_camera_y = self.camera_y + self.step_size_y as i32;
-        if !self.maze.check_wall_collision(self.camera_x + self.ghost_x, new_camera_y + self.ghost_y) {
+        if self.is_walkable(self.camera_x + self.ghost_x, new_camera_y + self.ghost_y) {
             self.camera_y = new_camera_y;
-            self.check_coin_collision();
+            self.check_object_collisions();
         }
     }
 
@@ -123,6 +160,15 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         }
     }
 
+    pub fn place_dynamite(&mut self) {
+        if self.dynamite_counter == 0 {
+            return;
+        }
+
+        self.maze.place_dynamite(self.camera_x + self.ghost_x, self.camera_y + self.ghost_y);
+        self.dynamite_counter -= 1;
+    }
+
     pub fn draw_maze(&mut self, camera_x: i32, camera_y: i32) {
         #[cfg(feature = "system_timer")]
         let start_timestamp = SystemTimer::now();
@@ -130,6 +176,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         let assets = self.assets.as_ref().unwrap();
         let ground = assets.ground.as_ref().unwrap();
         let wall = assets.wall.as_ref().unwrap();
+        let scorched = assets.scorched.as_ref().unwrap();
         let empty = assets.empty.as_ref().unwrap();
 
         let camera_tile_x = camera_x / self.maze.tile_width as i32;
@@ -143,12 +190,22 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
                 if x < 0 || y < 0 || x > (self.maze.width-1) as i32 || y > (self.maze.height-1) as i32 {
                     let tile = Image::new(empty, position);
                     tile.draw(&mut self.display);
-                } else if self.maze.data[(x+y*(self.maze.width as i32)) as usize] == 0 {
-                    let tile = Image::new(ground, position);
-                    tile.draw(&mut self.display);
                 } else {
-                    let tile = Image::new(wall, position);
-                    tile.draw(&mut self.display);
+                    let tile_index = self.maze.data[(x+y*(self.maze.width as i32)) as usize];
+                    match tile_index {
+                        0 => {
+                            let tile = Image::new(ground, position);
+                            tile.draw(&mut self.display);
+                        },
+                        1 => {
+                            let tile = Image::new(wall, position);
+                            tile.draw(&mut self.display);
+                        },
+                        _ => {
+                            let tile = Image::new(scorched, position);
+                            tile.draw(&mut self.display);
+                        }
+                    }
                 }
             }
         }
@@ -161,8 +218,14 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
             self.animation_step = 0;
         }
 
+        // Recharge teleport
         if self.teleport_counter < 100 {
             self.teleport_counter += 1;
+        }
+
+        // Decrement remaining time when Walker is active
+        if self.walker_counter > 0 {
+            self.walker_counter -= 1;
         }
 
         self.maze.move_npcs();
@@ -178,6 +241,8 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         self.relocate_avatar();
         self.maze.generate_coins();
         self.maze.generate_npcs();
+        self.maze.generate_walkers();
+        self.maze.generate_dynamites();
         self.draw_maze(self.camera_x,self.camera_y);
 
     }
@@ -223,6 +288,38 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
                     if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
                         let position = Point::new(draw_x, draw_y);
                         let tile = Image::new(&npc_bmp, position);
+                        tile.draw(&mut self.display);
+                    }
+                }
+
+                let walker_bmp:Bmp<Rgb565> = assets.walker.unwrap();
+                for index in 0..5 {
+                    let item = self.maze.walkers[index];
+                    if item.x < 0 || item.y < 0 {
+                        continue;
+                    }
+
+                    let draw_x = item.x - self.camera_x;
+                    let draw_y = item.y - self.camera_y;
+                    if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
+                        let position = Point::new(draw_x, draw_y);
+                        let tile = Image::new(&walker_bmp, position);
+                        tile.draw(&mut self.display);
+                    }
+                }
+
+                let dynamite_bmp:Bmp<Rgb565> = assets.dynamite.unwrap();
+                for index in 0..1 {
+                    let item = self.maze.dynamites[index];
+                    if item.x < 0 || item.y < 0 {
+                        continue;
+                    }
+
+                    let draw_x = item.x - self.camera_x;
+                    let draw_y = item.y - self.camera_y;
+                    if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
+                        let position = Point::new(draw_x, draw_y);
+                        let tile = Image::new(&dynamite_bmp, position);
                         tile.draw(&mut self.display);
                     }
                 }

@@ -86,6 +86,10 @@ impl Universe {
         self.engine.teleport();
     }
 
+    pub fn place_dynamite(&mut self) {
+        self.engine.place_dynamite();
+    }
+
     pub fn initialize(&mut self) {
         self.engine.initialize();
     }
