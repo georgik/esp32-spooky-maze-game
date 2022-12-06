@@ -7,7 +7,7 @@ use embedded_graphics::{
     prelude::*,
 };
 use embedded_graphics_simulator::{
-    sdl2::{Keycode, self}, OutputSettings, SimulatorDisplay, SimulatorEvent, Window,
+    sdl2::{Keycode, self}, OutputSettings, SimulatorDisplay, SimulatorEvent, Window, OutputSettingsBuilder,
 };
 use embedded_graphics_framebuf::{FrameBuf};
 
@@ -72,8 +72,8 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D>
 
 
 fn main() -> Result<(), core::convert::Infallible> {
-    // let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(800, 480));
-    let mut window = Window::new("ESP32 Spooky Maze", &OutputSettings::default());
+    let output_settings = OutputSettingsBuilder::new().scale(2).build();
+    let mut window = Window::new("ESP32 Spooky Maze", &output_settings);
 
     let mut data = [Rgb565::BLACK ; 320*240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);
