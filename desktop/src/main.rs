@@ -102,7 +102,6 @@ fn main() -> Result<(), core::convert::Infallible> {
                         Keycode::Down | Keycode::S => universe.move_down(),
                         Keycode::Return => universe.teleport(),
                         Keycode::Space => universe.place_dynamite(),
-                        Keycode::
                         _ => {},
                     };
                 }
