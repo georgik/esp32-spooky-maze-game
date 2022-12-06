@@ -41,7 +41,7 @@ cargo espflash --release --monitor
 ### Build for dekstop
 
 Control: keyboard
-- press arrows to move the character
+- press arrows or W,A,S,D to move the character
 - press Enter to teleport
 
 ```

@@ -7,9 +7,11 @@ use embedded_graphics::{
     prelude::*,
 };
 use embedded_graphics_simulator::{
-    sdl2::Keycode, OutputSettings, SimulatorDisplay, SimulatorEvent, Window,
+    sdl2::{Keycode, self}, OutputSettings, SimulatorDisplay, SimulatorEvent, Window, OutputSettingsBuilder,
 };
 use embedded_graphics_framebuf::{FrameBuf};
+
+use std::time::Duration;
 
 use spooky_core::{ spritebuf::SpriteBuf, engine::Engine };
 
@@ -70,8 +72,8 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D>
 
 
 fn main() -> Result<(), core::convert::Infallible> {
-    // let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(800, 480));
-    let mut window = Window::new("ESP32 Spooky Maze", &OutputSettings::default());
+    let output_settings = OutputSettingsBuilder::new().scale(2).build();
+    let mut window = Window::new("ESP32 Spooky Maze", &output_settings);
 
     let mut data = [Rgb565::BLACK ; 320*240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);
@@ -96,10 +98,10 @@ fn main() -> Result<(), core::convert::Infallible> {
                 SimulatorEvent::Quit => break 'running,
                 SimulatorEvent::KeyDown { keycode, .. } => {
                     match keycode {
-                        Keycode::Left => universe.move_left(),
-                        Keycode::Right => universe.move_right(),
-                        Keycode::Up => universe.move_up(),
-                        Keycode::Down => universe.move_down(),
+                        Keycode::Left | Keycode::A => universe.move_left(),
+                        Keycode::Right | Keycode::D => universe.move_right(),
+                        Keycode::Up | Keycode::W => universe.move_up(),
+                        Keycode::Down | Keycode::S => universe.move_down(),
                         Keycode::Return => universe.teleport(),
                         Keycode::Space => universe.place_dynamite(),
                         _ => {},
@@ -114,6 +116,7 @@ fn main() -> Result<(), core::convert::Infallible> {
         }
         display.draw_iter(universe.render_frame().into_iter()).unwrap();
         window.update(&display);
+        std::thread::sleep(Duration::from_millis(50));
     }
 
     Ok(())
