@@ -96,12 +96,13 @@ fn main() -> Result<(), core::convert::Infallible> {
                 SimulatorEvent::Quit => break 'running,
                 SimulatorEvent::KeyDown { keycode, .. } => {
                     match keycode {
-                        Keycode::Left => universe.move_left(),
-                        Keycode::Right => universe.move_right(),
-                        Keycode::Up => universe.move_up(),
-                        Keycode::Down => universe.move_down(),
+                        Keycode::Left | Keycode::A => universe.move_left(),
+                        Keycode::Right | Keycode::D => universe.move_right(),
+                        Keycode::Up | Keycode::W => universe.move_up(),
+                        Keycode::Down | Keycode::S => universe.move_down(),
                         Keycode::Return => universe.teleport(),
                         Keycode::Space => universe.place_dynamite(),
+                        Keycode::
                         _ => {},
                     };
                 }
