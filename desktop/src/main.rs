@@ -7,9 +7,11 @@ use embedded_graphics::{
     prelude::*,
 };
 use embedded_graphics_simulator::{
-    sdl2::Keycode, OutputSettings, SimulatorDisplay, SimulatorEvent, Window,
+    sdl2::{Keycode, self}, OutputSettings, SimulatorDisplay, SimulatorEvent, Window,
 };
 use embedded_graphics_framebuf::{FrameBuf};
+
+use std::time::Duration;
 
 use spooky_core::{ spritebuf::SpriteBuf, engine::Engine };
 
@@ -114,6 +116,7 @@ fn main() -> Result<(), core::convert::Infallible> {
         }
         display.draw_iter(universe.render_frame().into_iter()).unwrap();
         window.update(&display);
+        std::thread::sleep(Duration::from_millis(50));
     }
 
     Ok(())
