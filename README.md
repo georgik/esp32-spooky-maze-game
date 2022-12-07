@@ -44,12 +44,23 @@ Control: keyboard
 - press arrows or W,A,S,D to move the character
 - press Enter to teleport
 
+- macOS prerequisites:
 ```
 brew install SDL2
-cd desktop
 export LIBRARY_PATH="$LIBRARY_PATH:$(brew --prefix)/lib"
+```
+
+- OpenSUSE Linux prerequisites:
+```
+sudo zypper install SDL2-devel
+```
+
+- run:
+```
+cd desktop
 cargo run
 ```
+
 
 ### Build for ESP32-S3-USB-OTG with ST7789
 
