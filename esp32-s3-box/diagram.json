@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "author": "Juraj Michalek",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-s3-devkitc-1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": { "builder": "rust-nostd-esp" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led-red",
+      "top": 6,
+      "left": 129,
+      "attrs": { "color": "red", "flip": "1", "label": "WiFi" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 86.2,
+      "left": 104.4,
+      "rotate": 90,
+      "attrs": { "value": "1000" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+    [ "esp:GND.1", "led-red:C", "black", [ "h66.9", "v-105.7" ] ],
+    [ "led-red:A", "r1:1", "green", [ "h-9.6", "v19.2" ] ],
+    [ "r1:2", "esp:D2", "green", [ "h0", "v8.4" ] ]
+  ]
+}
