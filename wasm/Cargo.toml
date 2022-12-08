@@ -25,7 +25,7 @@ embedded-graphics-web-simulator = { git = "https://github.com/georgik/embedded-g
 # rand = { version = "0.8.5", default-features = false }
 getrandom = { version = "0.2.8", features = ["js"] }
 rand_chacha = { version = "0.3.1", default-features = false }
-spooky-core = { path = "../spooky-core", features = [ "wasm" ]}
+spooky-core = { path = "../spooky-core", features = [ "wasm", "static_maze" ]}
 
 # [features]
 # default = ["rt"]
