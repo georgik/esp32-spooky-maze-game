@@ -1,6 +1,6 @@
 [package]
 name = "spooky-core"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 [dependencies]
@@ -9,10 +9,13 @@ embedded-graphics-framebuf = "0.2.0"
 tinybmp = "0.4.0"
 rand = { version = "0.8.5", default-features = false }
 rand_chacha = { version = "0.3.1", default-features = false }
-petgraph = { git = "https://github.com/zendurix/petgraph.git", branch = "better_no_std", default-features = false, features = ["graphmap"] }
-maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "feature/no_std", default-features = false, features = [ "recursive_backtracking"] }
+petgraph = { git = "https://github.com/zendurix/petgraph.git", branch = "better_no_std", default-features = false, features = ["graphmap"], optional = true }
+maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "feature/no_std", default-features = false, features = [ "recursive_backtracking"], optional = true }
 heapless = { version = "0.7.14", default-features = false }
 
 [features]
+default = [ "static_maze" ]
 std = []
 wasm = [ "std" ]
+static_maze = []
+dynamic_maze = [ "dep:petgraph", "dep:maze_generator" ]

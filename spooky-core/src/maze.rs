@@ -1,5 +1,5 @@
-use maze_generator::prelude::*;
-use maze_generator::recursive_backtracking::{RbGenerator};
+#[cfg(feature = "dynamic_maze")]
+use maze_generator::{prelude::*, recursive_backtracking::RbGenerator};
 
 use rand::prelude::*;
 use rand_chacha::ChaChaRng;
@@ -50,7 +50,9 @@ impl Maze {
             height,
             visible_width: 21,
             visible_height: 16,
-            // data: [1; 64*64],
+            #[cfg(feature = "dynamic_maze")]
+            data: [1; 64*64],
+            #[cfg(feature = "static_maze")]
             data:  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
                     1,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,1,
                     1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,1,1,1,1,1,
@@ -322,37 +324,41 @@ impl Maze {
         }
     }
 
-   
+    #[cfg(feature = "static_maze")]
     pub fn generate_maze(&mut self, graph_width: usize, graph_height: usize) {
-    //     // let mut rng = Rng::new(peripherals.RNG);
-    //     // let mut rng = Rng::new( 0x12345678 );
-    //     let seed_buffer = [0u8;32];
-    //     // match &self.rng {
-    //     //     Some(rng) => rng.fill_bytes(&mut seed_buffer),
-    //     //     None => {}
-    //     // };
-    //     // #[cfg(feature = "getrandom")]
-    //     // getrandom::getrandom(&mut seed_buffer).unwrap();
+    }
 
-    //     let mut generator = RbGenerator::new(Some(seed_buffer));
-    //     let maze_graph = generator.generate(graph_width as i32, graph_height as i32).unwrap();
+    #[cfg(feature = "dynamic_maze")]
+    pub fn generate_maze(&mut self, graph_width: usize, graph_height: usize) {
+        // let mut rng = Rng::new(peripherals.RNG);
+        // let mut rng = Rng::new( 0x12345678 );
+        let seed_buffer = [0u8;32];
+        // match &self.rng {
+        //     Some(rng) => rng.fill_bytes(&mut seed_buffer),
+        //     None => {}
+        // };
+        // #[cfg(feature = "getrandom")]
+        // getrandom::getrandom(&mut seed_buffer).unwrap();
 
-    //     for y in 1usize..graph_height {
-    //         for x in 1usize..graph_width {
-    //             let field = maze_graph.get_field(&(x.try_into().unwrap(),y.try_into().unwrap()).into()).unwrap();
-    //             let tile_index = (x-1)*2+(y-1)*2*(self.width as usize)+(self.offset as usize);
+        let mut generator = RbGenerator::new(Some(seed_buffer));
+        let maze_graph = generator.generate(graph_width as i32, graph_height as i32).unwrap();
 
-    //             self.data[tile_index] = 0;
+        for y in 1usize..graph_height {
+            for x in 1usize..graph_width {
+                let field = maze_graph.get_field(&(x.try_into().unwrap(),y.try_into().unwrap()).into()).unwrap();
+                let tile_index = (x-1)*2+(y-1)*2*(self.width as usize)+(self.offset as usize);
 
-    //             if field.has_passage(&Direction::West) {
-    //                 self.data[tile_index + 1] = 0;
-    //             }
+                self.data[tile_index] = 0;
 
-    //             if field.has_passage(&Direction::South) {
-    //                 self.data[tile_index + (self.width as usize)] = 0;
-    //             }
-    //         }
-    //     }
+                if field.has_passage(&Direction::West) {
+                    self.data[tile_index + 1] = 0;
+                }
+
+                if field.has_passage(&Direction::South) {
+                    self.data[tile_index + (self.width as usize)] = 0;
+                }
+            }
+        }
 
     }
 }

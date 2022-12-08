@@ -3,8 +3,6 @@
 
 use embedded_graphics::{
     pixelcolor::Rgb565,
-    prelude::*,
-    image::Image,
 };
 use embedded_graphics_web_simulator::{
     display::{WebSimulatorDisplay}, output_settings::OutputSettingsBuilder,
@@ -13,22 +11,7 @@ use embedded_graphics_web_simulator::{
 use wasm_bindgen::prelude::*;
 use web_sys::{console};
 
-use embedded_graphics::{
-    prelude::RgbColor,
-    mono_font::{
-        ascii::{FONT_8X13},
-        MonoTextStyle,
-    },
-    prelude::Point,
-    text::{Text},
-    Drawable,
-};
-
-use spooky_core::{ assets::Assets, maze::Maze, engine::Engine, spritebuf::SpriteBuf };
-use embedded_graphics_framebuf::{FrameBuf, backends::FrameBufferBackend};
-
-use tinybmp::Bmp;
-use heapless::String;
+use spooky_core::{ engine::Engine };
 
 #[wasm_bindgen]
 pub struct Universe {
