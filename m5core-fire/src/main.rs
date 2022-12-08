@@ -2,9 +2,6 @@
 #![no_main]
 #![feature(default_alloc_error_handler)]
 
-#[global_allocator]
-static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
-
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
     prelude::{Point, DrawTarget, RgbColor},
@@ -96,10 +93,6 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D>
 
 #[entry]
 fn main() -> ! {
-    const HEAP_SIZE: usize = 65535*3-16790;
-    static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
-    unsafe { ALLOCATOR.init(HEAP.as_mut_ptr(), HEAP_SIZE) }
-
     let peripherals = Peripherals::take().unwrap();
 
     #[cfg(any(feature = "esp32"))]
