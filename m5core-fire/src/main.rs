@@ -2,6 +2,8 @@
 #![no_main]
 #![feature(default_alloc_error_handler)]
 
+// https://docs.makerfactory.io/m5stack/core/fire/
+
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
     prelude::{Point, DrawTarget, RgbColor},
@@ -26,7 +28,6 @@ use esp32c3_hal as hal;
 
 use hal::{
     clock::{ ClockControl, CpuClock },
-    // gdma::Gdma,
     i2c,
     pac::Peripherals,
     prelude::*,
@@ -38,27 +39,21 @@ use hal::{
     Delay,
 };
 
-// systimer was introduced in ESP32-S2, it's not available for ESP32
-#[cfg(feature="system_timer")]
-use hal::systimer::{SystemTimer};
-
 // use panic_halt as _;
 use esp_backtrace as _;
 
+use mpu9250::ImuMeasurements;
 #[cfg(feature="xtensa-lx-rt")]
 use xtensa_lx_rt::entry;
-#[cfg(feature="riscv-rt")]
-use riscv_rt::entry;
 
 use embedded_graphics::{pixelcolor::Rgb565};
-// use esp32s2_hal::Rng;
 
 use ili9341::{DisplaySize240x320, Ili9341, Orientation};
 
 use spooky_core::{spritebuf::SpriteBuf, engine::Engine};
 
 #[cfg(any(feature = "imu_controls"))]
-use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
+use mpu9250::{Mpu9250, Imu};
 #[cfg(any(feature = "imu_controls"))]
 use shared_bus::BusManagerSimple;
 
@@ -70,7 +65,7 @@ pub struct Universe<D> {
 }
 
 
-impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D> {
+impl < D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D> {
     pub fn new(seed: Option<[u8; 32]>, engine:Engine<D>) -> Universe<D> {
         Universe {
             engine,
@@ -81,15 +76,37 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D>
         self.engine.initialize();
     }
 
-    pub fn render_frame(&mut self) -> &D {
+    pub fn move_up(&mut self) {
+        self.engine.move_up();
+    }
 
+    pub fn move_down(&mut self) {
+        self.engine.move_down();
+    }
+
+    pub fn move_left(&mut self) {
+        self.engine.move_left();
+    }
+
+    pub fn move_right(&mut self) {
+        self.engine.move_right();
+    }
+
+    pub fn teleport(&mut self) {
+        self.engine.teleport();
+    }
+
+    pub fn place_dynamite(&mut self) {
+        self.engine.place_dynamite();
+    }
+
+    pub fn render_frame(&mut self) -> &D {
         self.engine.tick();
         self.engine.draw()
 
     }
 
 }
-
 
 #[entry]
 fn main() -> ! {
@@ -122,14 +139,8 @@ fn main() -> ! {
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
-    // let button_down_pin = io.pins.gpio11.into_pull_up_input();
-    // https://docs.makerfactory.io/m5stack/core/fire/
     #[cfg(feature = "esp32")]
     let mut backlight = io.pins.gpio32.into_push_pull_output();
-    #[cfg(any(feature = "esp32s2", feature = "esp32s3_usb_otg"))]
-    let mut backlight = io.pins.gpio9.into_push_pull_output();
-    #[cfg(feature = "esp32c3")]
-    let mut backlight = io.pins.gpio0.into_push_pull_output();
 
     #[cfg(feature = "esp32")]
     let spi = spi::Spi::new(
@@ -138,53 +149,16 @@ fn main() -> ! {
         io.pins.gpio23,
         io.pins.gpio19,
         io.pins.gpio14,
-        100u32.MHz(),
+        60u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
         &clocks);
 
-    #[cfg(any(feature = "esp32s3_box"))]
-    let mut backlight = io.pins.gpio45.into_push_pull_output();
-
-    // #[cfg(feature = "esp32")]
-    // backlight.set_low().unwrap();
-    // #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
     backlight.set_high().unwrap();
 
-
-    #[cfg(any(feature = "esp32", feature = "esp32s2", feature = "esp32s3_usb_otg"))]
     let reset = io.pins.gpio33.into_push_pull_output();
-    #[cfg(any(feature = "esp32s3_box"))]
-    let reset = io.pins.gpio48.into_push_pull_output();
-    #[cfg(any(feature = "esp32c3"))]
-    let reset = io.pins.gpio9.into_push_pull_output();
-
-    #[cfg(any(feature = "esp32", feature = "esp32c3"))]
     let di = SPIInterfaceNoCS::new(spi, io.pins.gpio27.into_push_pull_output());
-    #[cfg(any(feature = "esp32s2", feature = "esp32s3"))]
-    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio4.into_push_pull_output());
-
-    #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
-    let mut delay = Delay::new(&clocks);
-
-    // let mut display = mipidsi::Builder::ili9342c_rgb565(di)
-    //     .with_display_size(320, 240)
-    //     .with_orientation(mipidsi::Orientation::PortraitInverted(false))
-    //     .init(&mut delay, Some(reset)).unwrap();
-    // let mut display = mipidsi::Display::ili9342c_rgb565(di, core::prelude::v1::Some(reset), display_options);
     let mut display = Ili9341::new(di, reset, &mut delay, Orientation::Portrait, DisplaySize240x320).unwrap();
-
-    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
-    display
-    .init(
-        &mut delay,
-        DisplayOptions {
-            ..DisplayOptions::default()
-        },
-    )
-    .unwrap();
-    
-    // display.clear(RgbColor::WHITE).unwrap();
 
     Text::new(
         "Initializing...",
@@ -197,9 +171,9 @@ fn main() -> ! {
     #[cfg(any(feature = "imu_controls"))]
     println!("Initializing IMU");
     #[cfg(any(feature = "imu_controls"))]
-    let sda = io.pins.gpio8;
+    let sda = io.pins.gpio21;
     #[cfg(any(feature = "imu_controls"))]
-    let scl = io.pins.gpio18;
+    let scl = io.pins.gpio22;
 
     #[cfg(any(feature = "imu_controls"))]
     let i2c = i2c::I2C::new(
@@ -215,7 +189,7 @@ fn main() -> ! {
     #[cfg(any(feature = "imu_controls"))]
     let bus = BusManagerSimple::new(i2c);
     #[cfg(any(feature = "imu_controls"))]
-    let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
+    let mut icm = Mpu9250::imu_default(bus.acquire_i2c(), &mut delay).unwrap();
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8;32];
@@ -228,11 +202,38 @@ fn main() -> ! {
     let mut universe = Universe::new(Some(seed_buffer), engine);
     universe.initialize();
 
-
-    // #[cfg(any(feature = "imu_controls"))]
-    // let accel_threshold = 0.20;
-
     loop {
+
+        #[cfg(any(feature = "imu_controls"))]
+        {
+            let accel_threshold = 1.00;
+            let measurement:ImuMeasurements<[f32;3]> = icm.all().unwrap();
+
+            if measurement.accel[0] > accel_threshold {
+                universe.move_right();
+            }
+
+            if measurement.accel[0]  < -accel_threshold {
+                universe.move_left();
+            }
+
+            if measurement.accel[1] > accel_threshold {
+                universe.move_down();
+            }
+
+            if measurement.accel[1] < -accel_threshold {
+                universe.move_up();
+            }
+
+            // Quickly move up to teleport
+            // Quickly move down to place dynamite
+            if measurement.accel[2] < -10.2 {
+                universe.teleport();
+            } else if measurement.accel[2] > 10.5 {
+                universe.place_dynamite();
+            }
+        }
+
         display.draw_iter(universe.render_frame().into_iter()).unwrap();
         // delay.delay_ms(300u32);
     }
