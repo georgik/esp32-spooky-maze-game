@@ -7,7 +7,7 @@ use embedded_graphics::{
     prelude::*,
 };
 use embedded_graphics_simulator::{
-    sdl2::{Keycode, self}, OutputSettings, SimulatorDisplay, SimulatorEvent, Window, OutputSettingsBuilder,
+    sdl2::Keycode, SimulatorDisplay, SimulatorEvent, Window, OutputSettingsBuilder,
 };
 use embedded_graphics_framebuf::{FrameBuf};
 
