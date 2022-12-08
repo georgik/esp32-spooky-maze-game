@@ -62,13 +62,8 @@ mipidsi = "0.5.0"
 panic-halt = "0.2"
 rand = { version = "0.8.5", default-features = false }
 rand_chacha = { version = "0.3.1", default-features = false }
-# petgraph = "0.6.2"
-petgraph = { git = "https://github.com/zendurix/petgraph.git", branch = "better_no_std", default-features = false, features = ["graphmap"] }
 shared-bus = { version = "0.2.4" }
-# fixedbitset = { version = "0.4.2", default-features = false }
-# hashbrown = { version = "0.12.3", default-features = false }
-# maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "feature/no_std", default-features = false, features = [ "recursive_backtracking"] }
-spooky-core = { path = "../spooky-core", default-features = false }
+spooky-core = { path = "../spooky-core", default-features = false, features = [ "static_maze" ]}
 heapless = { version = "0.7.14", default-features = false }
 embedded-graphics-framebuf = "0.2.0"
 
@@ -76,7 +71,7 @@ embedded-graphics-framebuf = "0.2.0"
 #default = [ "esp32s3_box" ]
 # default = [ "rt" ]
 # default = [ "rt", "esp32_wrover_kit"  ]
-default = ["rt", "esp32s2_usb_otg"]
+default = ["rt", "esp32s2_usb_otg" ]
 # default = ["rt", "esp32s3_usb_otg"]
 # default = ["rt", "esp32s2_ili9341"]
 # default = [ "rt", "esp32c3_ili9341"]
@@ -91,6 +86,8 @@ system_timer = []
 
 button_controls = []
 imu_controls = []
+
+static_maze = []
 
 esp32 = []
 esp32s2 = [ "system_timer" ]
