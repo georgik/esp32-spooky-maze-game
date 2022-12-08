@@ -48,7 +48,7 @@ use xtensa_lx_rt::entry;
 
 use embedded_graphics::{pixelcolor::Rgb565};
 
-use ili9341::{DisplaySize240x320, Ili9341, Orientation};
+// use mipidsi::models::ILI9341::{DisplaySize240x320, Ili9341, Orientation};
 
 use spooky_core::{spritebuf::SpriteBuf, engine::Engine};
 
@@ -158,7 +158,10 @@ fn main() -> ! {
 
     let reset = io.pins.gpio33.into_push_pull_output();
     let di = SPIInterfaceNoCS::new(spi, io.pins.gpio27.into_push_pull_output());
-    let mut display = Ili9341::new(di, reset, &mut delay, Orientation::Portrait, DisplaySize240x320).unwrap();
+    let mut display = mipidsi::Builder::ili9341_rgb565(di)
+        .with_display_size(320, 240)
+        .with_orientation(mipidsi::Orientation::PortraitInverted(false))
+        .init(&mut delay, Some(reset)).unwrap();
 
     Text::new(
         "Initializing...",
