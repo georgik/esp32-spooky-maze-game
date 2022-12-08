@@ -14,7 +14,7 @@ maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "
 heapless = { version = "0.7.14", default-features = false }
 
 [features]
-default = [ "static_maze" ]
+default = [ "dynamic_maze" ]
 std = []
 wasm = [ "std" ]
 static_maze = []
