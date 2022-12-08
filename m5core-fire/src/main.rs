@@ -160,7 +160,7 @@ fn main() -> ! {
     let di = SPIInterfaceNoCS::new(spi, io.pins.gpio27.into_push_pull_output());
     let mut display = mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(320, 240)
-        .with_orientation(mipidsi::Orientation::PortraitInverted(false))
+        // .with_orientation(mipidsi::Orientation::PortraitInverted(false))
         .init(&mut delay, Some(reset)).unwrap();
 
     Text::new(
@@ -213,11 +213,11 @@ fn main() -> ! {
             let measurement:ImuMeasurements<[f32;3]> = icm.all().unwrap();
 
             if measurement.accel[0] > accel_threshold {
-                universe.move_right();
+                universe.move_left();
             }
 
             if measurement.accel[0]  < -accel_threshold {
-                universe.move_left();
+                universe.move_right();
             }
 
             if measurement.accel[1] > accel_threshold {
@@ -232,7 +232,7 @@ fn main() -> ! {
             // Quickly move down to place dynamite
             if measurement.accel[2] < -10.2 {
                 universe.teleport();
-            } else if measurement.accel[2] > 10.5 {
+            } else if measurement.accel[2] > 20.5 {
                 universe.place_dynamite();
             }
         }
