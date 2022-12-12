@@ -25,7 +25,7 @@ ADD --chown=${CONTAINER_USER}:${CONTAINER_GROUP} \
     /home/${CONTAINER_USER}/${INSTALL_RUST_TOOLCHAIN}
 RUN chmod a+x ${INSTALL_RUST_TOOLCHAIN} \
     && ./${INSTALL_RUST_TOOLCHAIN} install \
-    --extra-crates "ldproxy cargo-espflash wokwi-server web-flash" \
+    --extra-crates "ldproxy,cargo-espflash,wokwi-server,web-flash" \
     --export-file /home/${CONTAINER_USER}/export-esp.sh \
     --targets "${ESP_BOARD}"
 #    && rustup component add clippy rustfmt
