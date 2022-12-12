@@ -10,7 +10,8 @@ ARG TOOLCHAIN_VERSION=1.65.0.1
 ARG ESP_BOARD="esp32,esp32s2,esp32s3,esp32c3"
 ARG INSTALL_RUST_TOOLCHAIN=espup
 
-# Install dependencies
+# Install dependencies for building wokwi-server
+RUN sudo install-packages libudev-dev
 # RUN sudo install-packages git curl gcc ninja-build libudev-dev \
 #     libusb-1.0-0 libssl-dev pkg-config libtinfo5 clang \
 #     libsdl2-dev npm
