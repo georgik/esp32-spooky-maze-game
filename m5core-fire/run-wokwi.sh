@@ -3,9 +3,9 @@
 set -e
 
 if [ "${USER}" == "gitpod" ]; then
-    export CURRENT_PROJECT=/workspace/esp32-spooky-maze-game/m5core-fire
+    export CURRENT_PROJECT=/workspace/esp32-spooky-maze-game
 elif [ "${CODESPACE_NAME}" != "" ]; then
-    export CURRENT_PROJECT=/workspaces/esp32-spooky-maze-game/m5core-fire
+    export CURRENT_PROJECT=/workspaces/esp32-spooky-maze-game
 else
     export CURRENT_PROJECT=~/workspace
 fi
@@ -36,6 +36,7 @@ fi
 
 export ESP_BOARD="esp32"
 export ESP_ELF="spooky_m5"
+export ESP_ARCH="xtensa-esp32-none-elf"
 export WOKWI_PROJECT_ID="350825213595746900"
 # if [ "${ESP_BOARD}" == "esp32c3" ]; then
 #     export ESP_ARCH="riscv32imc-esp-espidf"
@@ -50,4 +51,4 @@ export WOKWI_PROJECT_ID="350825213595746900"
 
 echo "WOKWI_HOST=${WOKWI_HOST}"
 echo "Running: wokwi-server --chip ${ESP_BOARD} --id ${WOKWI_PROJECT_ID} ${CURRENT_PROJECT}/target/${ESP_ARCH}/${BUILD_MODE}/${ESP_ELF}"
-wokwi-server --chip ${ESP_BOARD} --id ${WOKWI_PROJECT_ID} /workspaces/esp32-spooky-maze-game/target/xtensa-esp32-none-elf/release/spooky_m5
+wokwi-server --chip ${ESP_BOARD} --id ${WOKWI_PROJECT_ID} "${CURRENT_PROJECT}/target/${ESP_ARCH}/${BUILD_MODE}/${ESP_ELF}"
