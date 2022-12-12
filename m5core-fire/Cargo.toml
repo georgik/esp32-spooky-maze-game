@@ -62,7 +62,8 @@ mpu9250 = { version = "0.24.1", default-features = false, features = [
 ], optional = true }
 mpu6050 = { version = "0.1.6", optional = true }
 # ili9341 = { version = "0.5", git = "https://github.com/yuri91/ili9341-rs" }
-mipidsi = { git = "https://github.com/georgik/mipidsi.git", branch = "feature/ili9341" }
+#mipidsi = { git = "https://github.com/georgik/mipidsi.git", branch = "feature/ili9341" }
+mipidsi = { git = "https://github.com/rfuest/mipidsi.git", branch = "display-driver-hal" }
 # mipidsi = { path = "../../mipidsi" }
 panic-halt = "0.2"
 rand = { version = "0.8.5", default-features = false }

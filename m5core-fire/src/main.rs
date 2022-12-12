@@ -36,6 +36,7 @@ use hal::{
 // use panic_halt as _;
 use esp_backtrace as _;
 
+use mipidsi::hal::{Orientation, Rotation};
 #[cfg(feature = "mpu9250")]
 use mpu9250::{Imu, ImuMeasurements, Mpu9250};
 
@@ -152,7 +153,7 @@ fn main() -> ! {
     let di = SPIInterfaceNoCS::new(spi, io.pins.gpio27.into_push_pull_output());
     let mut display = mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(320, 240)
-        .with_orientation(mipidsi::Orientation::Landscape(false))
+        .with_orientation(Orientation::new().rotate(Rotation::Deg90).flip_vertical())
         .init(&mut delay, Some(reset))
         .unwrap();
 
