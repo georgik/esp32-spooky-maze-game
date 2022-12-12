@@ -31,7 +31,7 @@ if [ "${USER}" == "gitpod" ];then
     echo "gp_url=${gp_url}"
     export WOKWI_HOST=${gp_url:8}
 elif [ "${CODESPACE_NAME}" != "" ];then
-    export WOKWI_HOST=${CODESPACE_NAME}-9012.github.dev
+    export WOKWI_HOST=${CODESPACE_NAME}-9012.preview.app.github.dev
 fi
 
 export ESP_BOARD="esp32"
