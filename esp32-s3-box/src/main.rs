@@ -7,67 +7,68 @@ static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
-    prelude::{Point, DrawTarget, RgbColor},
-    mono_font::{
-        ascii::{FONT_8X13},
-        MonoTextStyle,
-    },
+    mono_font::{ascii::FONT_8X13, MonoTextStyle},
+    prelude::{DrawTarget, Point, RgbColor},
     text::Text,
     Drawable,
 };
 
 use esp_println::println;
 
-#[cfg(feature="esp32")]
+#[cfg(feature = "esp32")]
 use esp32_hal as hal;
-#[cfg(feature="esp32s2")]
-use esp32s2_hal as hal;
-#[cfg(feature="esp32s3")]
-use esp32s3_hal as hal;
-#[cfg(feature="esp32c3")]
+#[cfg(feature = "esp32c3")]
 use esp32c3_hal as hal;
+#[cfg(feature = "esp32s2")]
+use esp32s2_hal as hal;
+#[cfg(feature = "esp32s3")]
+use esp32s3_hal as hal;
 
 use hal::{
-    clock::{ ClockControl, CpuClock },
+    clock::{ClockControl, CpuClock},
     // gdma::Gdma,
     i2c,
     pac::Peripherals,
     prelude::*,
     spi,
     timer::TimerGroup,
+    Delay,
     Rng,
     Rtc,
     IO,
-    Delay,
 };
 
 // systimer was introduced in ESP32-S2, it's not available for ESP32
-#[cfg(feature="system_timer")]
-use hal::systimer::{SystemTimer};
+#[cfg(feature = "system_timer")]
+use hal::systimer::SystemTimer;
 
 // use panic_halt as _;
 use esp_backtrace as _;
 
-#[cfg(feature="xtensa-lx-rt")]
-use xtensa_lx_rt::entry;
-#[cfg(feature="riscv-rt")]
+#[cfg(feature = "riscv-rt")]
 use riscv_rt::entry;
+#[cfg(feature = "xtensa-lx-rt")]
+use xtensa_lx_rt::entry;
 
-use embedded_graphics::{pixelcolor::Rgb565};
+use embedded_graphics::pixelcolor::Rgb565;
 // use esp32s2_hal::Rng;
 
-#[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
+#[cfg(any(
+    feature = "esp32s2_ili9341",
+    feature = "esp32_wrover_kit",
+    feature = "esp32c3_ili9341"
+))]
 use ili9341::{DisplaySize240x320, Ili9341, Orientation};
 
-use spooky_core::{spritebuf::SpriteBuf, engine::Engine};
+use spooky_core::{engine::Engine, spritebuf::SpriteBuf};
 
 #[cfg(any(feature = "imu_controls"))]
 use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
 #[cfg(any(feature = "imu_controls"))]
 use shared_bus::BusManagerSimple;
 
+use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
-use embedded_graphics_framebuf::{FrameBuf};
 
 pub struct Universe<I, D> {
     pub engine: Engine<D>,
@@ -77,9 +78,10 @@ pub struct Universe<I, D> {
     // delay: Some(Delay),
 }
 
-
-impl <I:Accelerometer, D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <I, D> {
-    pub fn new(icm:I, seed: Option<[u8; 32]>, engine:Engine<D>) -> Universe<I, D> {
+impl<I: Accelerometer, D: embedded_graphics::draw_target::DrawTarget<Color = Rgb565>>
+    Universe<I, D>
+{
+    pub fn new(icm: I, seed: Option<[u8; 32]>, engine: Engine<D>) -> Universe<I, D> {
         Universe {
             engine,
             // #[cfg(any(feature = "imu_controls"))]
@@ -93,7 +95,6 @@ impl <I:Accelerometer, D:embedded_graphics::draw_target::DrawTarget<Color = Rgb5
     }
 
     pub fn render_frame(&mut self) -> &D {
-
         #[cfg(any(feature = "imu_controls"))]
         {
             let accel_threshold = 0.20;
@@ -103,7 +104,7 @@ impl <I:Accelerometer, D:embedded_graphics::draw_target::DrawTarget<Color = Rgb5
                 self.engine.move_left();
             }
 
-            if accel_norm.y  < -accel_threshold {
+            if accel_norm.y < -accel_threshold {
                 self.engine.move_right();
             }
 
@@ -126,15 +127,12 @@ impl <I:Accelerometer, D:embedded_graphics::draw_target::DrawTarget<Color = Rgb5
 
         self.engine.tick();
         self.engine.draw()
-
     }
-
 }
-
 
 #[entry]
 fn main() -> ! {
-    const HEAP_SIZE: usize = 65535*4;
+    const HEAP_SIZE: usize = 65535 * 4;
     static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
     unsafe { ALLOCATOR.init(HEAP.as_mut_ptr(), HEAP_SIZE) }
 
@@ -153,9 +151,9 @@ fn main() -> ! {
     let timer_group1 = TimerGroup::new(peripherals.TIMG1, &clocks);
     let mut wdt1 = timer_group1.wdt;
 
-    #[cfg(feature="esp32c3")]
+    #[cfg(feature = "esp32c3")]
     rtc.swd.disable();
-    #[cfg(feature="xtensa-lx-rt")]
+    #[cfg(feature = "xtensa-lx-rt")]
     rtc.rwdt.disable();
 
     wdt0.disable();
@@ -196,7 +194,8 @@ fn main() -> ! {
         100u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
-        &mut clocks);
+        &mut clocks,
+    );
 
     #[cfg(any(feature = "esp32s2", feature = "esp32s3_usb_otg"))]
     let spi = spi::Spi::new(
@@ -208,7 +207,8 @@ fn main() -> ! {
         100u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
-        &mut clocks);
+        &mut clocks,
+    );
 
     #[cfg(any(feature = "esp32s3_box"))]
     let sclk = io.pins.gpio7;
@@ -246,7 +246,6 @@ fn main() -> ! {
     #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
     backlight.set_high().unwrap();
 
-
     #[cfg(feature = "esp32c3")]
     let spi = spi::Spi::new(
         peripherals.SPI2,
@@ -257,7 +256,8 @@ fn main() -> ! {
         100u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
-        &mut clocks);
+        &mut clocks,
+    );
 
     #[cfg(any(feature = "esp32", feature = "esp32s2", feature = "esp32s3_usb_otg"))]
     let reset = io.pins.gpio18.into_push_pull_output();
@@ -271,7 +271,11 @@ fn main() -> ! {
     #[cfg(any(feature = "esp32s2", feature = "esp32s3"))]
     let di = SPIInterfaceNoCS::new(spi, io.pins.gpio4.into_push_pull_output());
 
-    #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
+    #[cfg(any(
+        feature = "esp32s2_ili9341",
+        feature = "esp32_wrover_kit",
+        feature = "esp32c3_ili9341"
+    ))]
     let mut delay = Delay::new(&clocks);
 
     #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
@@ -283,20 +287,32 @@ fn main() -> ! {
     let mut display = mipidsi::Builder::ili9342c_rgb565(di)
         .with_display_size(320, 240)
         .with_orientation(mipidsi::Orientation::PortraitInverted(false))
-        .init(&mut delay, Some(reset)).unwrap();
+        .init(&mut delay, Some(reset))
+        .unwrap();
     // let mut display = mipidsi::Display::ili9342c_rgb565(di, core::prelude::v1::Some(reset), display_options);
-    #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
-    let mut display = Ili9341::new(di, reset, &mut delay, Orientation::Portrait, DisplaySize240x320).unwrap();
+    #[cfg(any(
+        feature = "esp32s2_ili9341",
+        feature = "esp32_wrover_kit",
+        feature = "esp32c3_ili9341"
+    ))]
+    let mut display = Ili9341::new(
+        di,
+        reset,
+        &mut delay,
+        Orientation::Portrait,
+        DisplaySize240x320,
+    )
+    .unwrap();
 
     #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
     display
-    .init(
-        &mut delay,
-        DisplayOptions {
-            ..DisplayOptions::default()
-        },
-    )
-    .unwrap();
+        .init(
+            &mut delay,
+            DisplayOptions {
+                ..DisplayOptions::default()
+            },
+        )
+        .unwrap();
 
     // display.clear(RgbColor::WHITE).unwrap();
 
@@ -323,8 +339,7 @@ fn main() -> ! {
         100u32.kHz(),
         &mut system.peripheral_clock_control,
         &clocks,
-    )
-    .unwrap();
+    );
 
     #[cfg(any(feature = "imu_controls"))]
     let bus = BusManagerSimple::new(i2c);
@@ -332,9 +347,9 @@ fn main() -> ! {
     let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
 
     let mut rng = Rng::new(peripherals.RNG);
-    let mut seed_buffer = [0u8;32];
+    let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
-    let mut data = [Rgb565::BLACK ; 320*240];
+    let mut data = [Rgb565::BLACK; 320 * 240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);
     let spritebuf = SpriteBuf::new(fbuf);
     let engine = Engine::new(spritebuf, Some(seed_buffer));
@@ -342,12 +357,13 @@ fn main() -> ! {
     let mut universe = Universe::new(icm, Some(seed_buffer), engine);
     universe.initialize();
 
-
     // #[cfg(any(feature = "imu_controls"))]
     // let accel_threshold = 0.20;
 
     loop {
-        display.draw_iter(universe.render_frame().into_iter()).unwrap();
+        display
+            .draw_iter(universe.render_frame().into_iter())
+            .unwrap();
         // delay.delay_ms(300u32);
     }
 }

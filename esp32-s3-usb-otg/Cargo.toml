@@ -5,33 +5,11 @@ authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
 
-# [target.xtensa-esp32-none-elf.dependencies]
-# xtensa-atomic-emulation-trap = "0.2.0"
-# esp32-hal = "0.5.0"
-# esp-backtrace = { version = "0.3.0" , features = [
-#     "esp32",
-#     "panic-handler",
-#     "print-uart",
-# ] }
-# xtensa-lx-rt = { version = "0.13.0", features = ["esp32"], optional = true }
-# esp-println = { version = "0.3.1", features = [ "esp32" ] }
-
-# [target.xtensa-esp32s2-none-elf.dependencies]
-# xtensa-atomic-emulation-trap = "0.3.0"
-# esp32s2-hal = "0.3.0"
-# esp-backtrace = { version = "0.3.0" , features = [
-#     "esp32s2",
-#     "panic-handler",
-#     "print-uart",
-# ] }
-# xtensa-lx-rt = { version = "0.14.0", features = ["esp32s2"], optional = true }
-# esp-println = { version = "0.3.1", features = [ "esp32s2" ] }
-
 [target.xtensa-esp32s3-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.3.0"
 # esp32s3-hal = { package = "esp32s3-hal", git = "https://github.com/esp-rs/esp-hal.git" }
-esp32s3-hal = "0.3.0"
-esp-backtrace = { version = "0.3.0" , features = [
+esp32s3-hal = "0.4.0"
+esp-backtrace = { version = "0.4.0" , features = [
     "esp32s3",
     "panic-handler",
     "print-uart",

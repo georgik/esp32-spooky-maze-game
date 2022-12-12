@@ -7,7 +7,7 @@ license = "MIT"
 
 [target.xtensa-esp32-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.3.0"
-esp32-hal = "0.6.0"
+esp32-hal = "0.7.0"
 esp-backtrace = { version = "0.4.0", features = [
     "esp32",
     "panic-handler",
@@ -15,40 +15,6 @@ esp-backtrace = { version = "0.4.0", features = [
 ] }
 xtensa-lx-rt = { version = "0.14.0", features = ["esp32"], optional = true }
 esp-println = { version = "0.3.1", features = ["esp32"] }
-
-# [target.xtensa-esp32s2-none-elf.dependencies]
-# xtensa-atomic-emulation-trap = "0.2.0"
-# esp32s2-hal = "0.2.0"
-# esp-backtrace = { version = "0.3.0" , features = [
-#     "esp32s2",
-#     "panic-handler",
-#     "print-uart",
-# ] }
-# xtensa-lx-rt = { version = "0.13.0", features = ["esp32s2"], optional = true }
-# esp-println = { version = "0.3.1", features = [ "esp32s2" ] }
-
-# [target.xtensa-esp32s3-none-elf.dependencies]
-# xtensa-atomic-emulation-trap = "0.3.0"
-# # esp32s3-hal = { package = "esp32s3-hal", git = "https://github.com/esp-rs/esp-hal.git" }
-# esp32s3-hal = "0.3.0"
-# esp-backtrace = { version = "0.3.0" , features = [
-#     "esp32s3",
-#     "panic-handler",
-#     "print-uart",
-# ] }
-# xtensa-lx-rt = { version = "0.14.0", features = ["esp32s3"], optional = true }
-# esp-println = { version = "0.3.1", features = [ "esp32s3" ] }
-
-# [target.riscv32imac-unknown-none-elf.dependencies]
-# esp32c3-hal = "0.2.0"
-# esp-backtrace = { version = "0.3.0" , features = [
-#     "esp32c3",
-#     "panic-handler",
-#     "print-uart",
-# ] }
-# riscv-rt = { version = "0.9", optional = true }
-# esp-println = { version = "0.3.1", features = [ "esp32c3" ] }
-
 
 [dependencies]
 esp-alloc = "0.1.0"
@@ -61,10 +27,7 @@ mpu9250 = { version = "0.24.1", default-features = false, features = [
     "i2c",
 ], optional = true }
 mpu6050 = { version = "0.1.6", optional = true }
-# ili9341 = { version = "0.5", git = "https://github.com/yuri91/ili9341-rs" }
-#mipidsi = { git = "https://github.com/georgik/mipidsi.git", branch = "feature/ili9341" }
 mipidsi = { git = "https://github.com/rfuest/mipidsi.git", branch = "display-driver-hal" }
-# mipidsi = { path = "../../mipidsi" }
 panic-halt = "0.2"
 rand = { version = "0.8.5", default-features = false }
 rand_chacha = { version = "0.3.1", default-features = false }
