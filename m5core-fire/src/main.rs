@@ -152,7 +152,7 @@ fn main() -> ! {
     let di = SPIInterfaceNoCS::new(spi, io.pins.gpio27.into_push_pull_output());
     let mut display = mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(320, 240)
-        // .with_orientation(mipidsi::Orientation::PortraitInverted(false))
+        .with_orientation(mipidsi::Orientation::Landscape(false))
         .init(&mut delay, Some(reset))
         .unwrap();
 
