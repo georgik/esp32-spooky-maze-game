@@ -13,11 +13,11 @@ fi
 BUILD_MODE=""
 case "$1" in
     ""|"release")
-        cargo build --release
+        cargo build --release --no-default-features --features "xtensa-lx-rt esp32 esp32-hal/eh1"
         BUILD_MODE="release"
         ;;
     "debug")
-        cargo build
+        cargo build  --no-default-features --features "xtensa-lx-rt esp32 esp32-hal/eh1"
         BUILD_MODE="debug"
         ;;
     *)
