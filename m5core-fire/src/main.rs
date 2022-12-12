@@ -6,70 +6,61 @@
 
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
-    prelude::{Point, DrawTarget, RgbColor},
-    mono_font::{
-        ascii::{FONT_8X13},
-        MonoTextStyle,
-    },
+    mono_font::{ascii::FONT_8X13, MonoTextStyle},
+    prelude::{DrawTarget, Point, RgbColor},
     text::Text,
     Drawable,
 };
 
 use esp_println::println;
 
-#[cfg(feature="esp32")]
+#[cfg(feature = "esp32")]
 use esp32_hal as hal;
-#[cfg(feature="esp32s2")]
-use esp32s2_hal as hal;
-#[cfg(feature="esp32s3")]
-use esp32s3_hal as hal;
-#[cfg(feature="esp32c3")]
+#[cfg(feature = "esp32c3")]
 use esp32c3_hal as hal;
+#[cfg(feature = "esp32s2")]
+use esp32s2_hal as hal;
+#[cfg(feature = "esp32s3")]
+use esp32s3_hal as hal;
 
 use hal::{
-    clock::{ ClockControl, CpuClock },
+    clock::{ClockControl, CpuClock},
     i2c,
     pac::Peripherals,
     prelude::*,
     spi,
     timer::TimerGroup,
-    Rng,
-    Rtc,
-    IO,
-    Delay,
+    Delay, Rng, Rtc, IO,
 };
 
 // use panic_halt as _;
 use esp_backtrace as _;
 
 use mpu9250::ImuMeasurements;
-#[cfg(feature="xtensa-lx-rt")]
+#[cfg(feature = "xtensa-lx-rt")]
 use xtensa_lx_rt::entry;
 
-use embedded_graphics::{pixelcolor::Rgb565};
+use embedded_graphics::pixelcolor::Rgb565;
 
 // use mipidsi::models::ILI9341::{DisplaySize240x320, Ili9341, Orientation};
 
-use spooky_core::{spritebuf::SpriteBuf, engine::Engine};
+use spooky_core::{engine::Engine, spritebuf::SpriteBuf};
 
 #[cfg(any(feature = "imu_controls"))]
-use mpu9250::{Mpu9250, Imu};
+use mpu9250::{Imu, Mpu9250};
 #[cfg(any(feature = "imu_controls"))]
 use shared_bus::BusManagerSimple;
 
+use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
-use embedded_graphics_framebuf::{FrameBuf};
 
 pub struct Universe<D> {
     pub engine: Engine<D>,
 }
 
-
-impl < D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D> {
-    pub fn new(seed: Option<[u8; 32]>, engine:Engine<D>) -> Universe<D> {
-        Universe {
-            engine,
-        }
+impl<D: embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe<D> {
+    pub fn new(seed: Option<[u8; 32]>, engine: Engine<D>) -> Universe<D> {
+        Universe { engine }
     }
 
     pub fn initialize(&mut self) {
@@ -103,9 +94,7 @@ impl < D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D
     pub fn render_frame(&mut self) -> &D {
         self.engine.tick();
         self.engine.draw()
-
     }
-
 }
 
 #[entry]
@@ -125,16 +114,15 @@ fn main() -> ! {
     let timer_group1 = TimerGroup::new(peripherals.TIMG1, &clocks);
     let mut wdt1 = timer_group1.wdt;
 
-    #[cfg(feature="esp32c3")]
+    #[cfg(feature = "esp32c3")]
     rtc.swd.disable();
-    #[cfg(feature="xtensa-lx-rt")]
+    #[cfg(feature = "xtensa-lx-rt")]
     rtc.rwdt.disable();
 
     wdt0.disable();
     wdt1.disable();
 
     let mut delay = Delay::new(&clocks);
-    // self.delay = Some(delay);
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
@@ -144,15 +132,16 @@ fn main() -> ! {
 
     #[cfg(feature = "esp32")]
     let spi = spi::Spi::new(
-        peripherals.SPI2,
-        io.pins.gpio18,
-        io.pins.gpio23,
-        io.pins.gpio19,
-        io.pins.gpio14,
+        peripherals.SPI3, // Real HW working with SPI2, but Wokwi seems to work only with SPI3
+        io.pins.gpio18, // SCLK
+        io.pins.gpio23, // MOSI
+        io.pins.gpio19, // MISO
+        io.pins.gpio14, // CS
         60u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
-        &clocks);
+        &clocks,
+    );
 
     backlight.set_high().unwrap();
 
@@ -161,12 +150,14 @@ fn main() -> ! {
     let mut display = mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(320, 240)
         // .with_orientation(mipidsi::Orientation::PortraitInverted(false))
-        .init(&mut delay, Some(reset)).unwrap();
+        .init(&mut delay, Some(reset))
+        .unwrap();
 
+    println!("Initializing...");
     Text::new(
         "Initializing...",
         Point::new(80, 110),
-        MonoTextStyle::new(&FONT_8X13, RgbColor::BLACK),
+        MonoTextStyle::new(&FONT_8X13, RgbColor::WHITE),
     )
     .draw(&mut display)
     .unwrap();
@@ -195,28 +186,30 @@ fn main() -> ! {
     let mut icm = Mpu9250::imu_default(bus.acquire_i2c(), &mut delay).unwrap();
 
     let mut rng = Rng::new(peripherals.RNG);
-    let mut seed_buffer = [0u8;32];
+    let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
-    let mut data = [Rgb565::BLACK ; 320*240];
+    let mut data = [Rgb565::BLACK; 320 * 240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);
     let spritebuf = SpriteBuf::new(fbuf);
     let engine = Engine::new(spritebuf, Some(seed_buffer));
 
+    println!("Constructing univerese...");
     let mut universe = Universe::new(Some(seed_buffer), engine);
+    println!("Initializing universe...");
     universe.initialize();
 
+    println!("Main loop...");
     loop {
-
         #[cfg(any(feature = "imu_controls"))]
         {
             let accel_threshold = 1.00;
-            let measurement:ImuMeasurements<[f32;3]> = icm.all().unwrap();
+            let measurement: ImuMeasurements<[f32; 3]> = icm.all().unwrap();
 
             if measurement.accel[0] > accel_threshold {
                 universe.move_left();
             }
 
-            if measurement.accel[0]  < -accel_threshold {
+            if measurement.accel[0] < -accel_threshold {
                 universe.move_right();
             }
 
@@ -236,8 +229,10 @@ fn main() -> ! {
                 universe.place_dynamite();
             }
         }
-
-        display.draw_iter(universe.render_frame().into_iter()).unwrap();
+        println!("Tick...");
+        display
+            .draw_iter(universe.render_frame().into_iter())
+            .unwrap();
         // delay.delay_ms(300u32);
     }
 }
