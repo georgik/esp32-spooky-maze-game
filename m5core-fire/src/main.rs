@@ -36,7 +36,12 @@ use hal::{
 // use panic_halt as _;
 use esp_backtrace as _;
 
-use mpu9250::ImuMeasurements;
+#[cfg(feature = "mpu9250")]
+use mpu9250::{Imu, ImuMeasurements, Mpu9250};
+
+#[cfg(feature = "mpu6050")]
+use mpu6050::Mpu6050;
+
 #[cfg(feature = "xtensa-lx-rt")]
 use xtensa_lx_rt::entry;
 
@@ -46,8 +51,6 @@ use embedded_graphics::pixelcolor::Rgb565;
 
 use spooky_core::{engine::Engine, spritebuf::SpriteBuf};
 
-#[cfg(any(feature = "imu_controls"))]
-use mpu9250::{Imu, Mpu9250};
 #[cfg(any(feature = "imu_controls"))]
 use shared_bus::BusManagerSimple;
 
@@ -133,10 +136,10 @@ fn main() -> ! {
     #[cfg(feature = "esp32")]
     let spi = spi::Spi::new(
         peripherals.SPI3, // Real HW working with SPI2, but Wokwi seems to work only with SPI3
-        io.pins.gpio18, // SCLK
-        io.pins.gpio23, // MOSI
-        io.pins.gpio19, // MISO
-        io.pins.gpio14, // CS
+        io.pins.gpio18,   // SCLK
+        io.pins.gpio23,   // MOSI
+        io.pins.gpio19,   // MISO
+        io.pins.gpio14,   // CS
         60u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
@@ -182,8 +185,14 @@ fn main() -> ! {
 
     #[cfg(any(feature = "imu_controls"))]
     let bus = BusManagerSimple::new(i2c);
-    #[cfg(any(feature = "imu_controls"))]
+
+    #[cfg(any(feature = "mpu9250"))]
     let mut icm = Mpu9250::imu_default(bus.acquire_i2c(), &mut delay).unwrap();
+
+    #[cfg(any(feature = "mpu6050"))]
+    let mut icm = Mpu6050::new(bus.acquire_i2c());
+    #[cfg(any(feature = "mpu6050"))]
+    icm.init(&mut delay).unwrap();
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
@@ -200,10 +209,11 @@ fn main() -> ! {
 
     println!("Main loop...");
     loop {
-        #[cfg(any(feature = "imu_controls"))]
+        #[cfg(feature = "mpu9250")]
         {
             let accel_threshold = 1.00;
-            let measurement: ImuMeasurements<[f32; 3]> = icm.all().unwrap();
+            let measurement = icm.get_acc();
+            // let measurement: ImuMeasurements<[f32; 3]> = icm.all().unwrap();
 
             if measurement.accel[0] > accel_threshold {
                 universe.move_left();
@@ -229,6 +239,38 @@ fn main() -> ! {
                 universe.place_dynamite();
             }
         }
+
+        #[cfg(feature = "mpu6050")]
+        {
+            let accel_threshold = 1.00;
+            let measurement = icm.get_acc().unwrap();
+            // let measurement: ImuMeasurements<[f32; 3]> = icm.all().unwrap();
+
+            if measurement.x > accel_threshold {
+                universe.move_left();
+            }
+
+            if measurement.x < -accel_threshold {
+                universe.move_right();
+            }
+
+            if measurement.y > accel_threshold {
+                universe.move_down();
+            }
+
+            if measurement.y < -accel_threshold {
+                universe.move_up();
+            }
+
+            // Quickly move up to teleport
+            // Quickly move down to place dynamite
+            if measurement.z < -10.2 {
+                universe.teleport();
+            } else if measurement.z > 20.5 {
+                universe.place_dynamite();
+            }
+        }
+
         println!("Tick...");
         display
             .draw_iter(universe.render_frame().into_iter())
