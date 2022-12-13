@@ -12,9 +12,14 @@ ARG INSTALL_RUST_TOOLCHAIN=espup
 
 # Install dependencies for building wokwi-server
 RUN sudo install-packages libudev-dev
+
+# Install build/runtime dependencies for application
+RUN sudo install-packages libsdl2-dev
+
 # RUN sudo install-packages git curl gcc ninja-build libudev-dev \
 #     libusb-1.0-0 libssl-dev pkg-config libtinfo5 clang \
 #     libsdl2-dev npm
+
 # Set User
 USER ${CONTAINER_USER}
 WORKDIR /home/${CONTAINER_USER}
