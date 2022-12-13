@@ -13,3 +13,7 @@ members = [
     "wasm"
 ]
 
+
+[patch.crates-io]
+# xtensa-lx-rt = { path = "/Users/mabez/Development/rust/embedded/util/xtensa-lx-rt" }
+xtensa-lx-rt = { package = "xtensa-lx-rt", git = "https://github.com/esp-rs/xtensa-lx-rt", branch = "temp/quick-fix-loop" }
