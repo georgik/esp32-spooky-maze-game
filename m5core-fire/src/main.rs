@@ -35,7 +35,7 @@ use hal::{
 use esp_backtrace as _;
 
 #[cfg(feature = "wokwi")]
-use mipidsi::{ Orientation, Rotation };
+use mipidsi::hal::{ Orientation, Rotation };
 
 #[cfg(feature = "mpu9250")]
 use mpu9250::{ImuMeasurements, Mpu9250};
