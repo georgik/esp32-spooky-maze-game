@@ -12,8 +12,6 @@ use embedded_graphics::{
     Drawable,
 };
 
-use esp_println::println;
-
 #[cfg(feature = "esp32")]
 use esp32_hal as hal;
 #[cfg(feature = "esp32c3")]
@@ -36,9 +34,11 @@ use hal::{
 // use panic_halt as _;
 use esp_backtrace as _;
 
-use mipidsi::hal::{Orientation, Rotation};
+#[cfg(feature = "wokwi")]
+use mipidsi::{ Orientation, Rotation };
+
 #[cfg(feature = "mpu9250")]
-use mpu9250::{Imu, ImuMeasurements, Mpu9250};
+use mpu9250::{ImuMeasurements, Mpu9250};
 
 #[cfg(feature = "mpu6050")]
 use mpu6050::Mpu6050;
@@ -47,8 +47,6 @@ use mpu6050::Mpu6050;
 use xtensa_lx_rt::entry;
 
 use embedded_graphics::pixelcolor::Rgb565;
-
-// use mipidsi::models::ILI9341::{DisplaySize240x320, Ili9341, Orientation};
 
 use spooky_core::{engine::Engine, spritebuf::SpriteBuf};
 
@@ -128,7 +126,6 @@ fn main() -> ! {
 
     let mut delay = Delay::new(&clocks);
 
-    println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
     #[cfg(feature = "esp32")]
@@ -151,13 +148,20 @@ fn main() -> ! {
 
     let reset = io.pins.gpio33.into_push_pull_output();
     let di = SPIInterfaceNoCS::new(spi, io.pins.gpio27.into_push_pull_output());
+
+    #[cfg(feature = "m5stack_core2")]
+    let mut display = mipidsi::Builder::ili9341_rgb565(di)
+        .with_display_size(320, 240)
+        .init(&mut delay, Some(reset))
+        .unwrap();
+
+    #[cfg(feature = "wokwi")]
     let mut display = mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(320, 240)
         .with_orientation(Orientation::new().rotate(Rotation::Deg90).flip_vertical())
         .init(&mut delay, Some(reset))
         .unwrap();
 
-    println!("Initializing...");
     Text::new(
         "Initializing...",
         Point::new(80, 110),
@@ -166,8 +170,6 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
-    #[cfg(any(feature = "imu_controls"))]
-    println!("Initializing IMU");
     #[cfg(any(feature = "imu_controls"))]
     let sda = io.pins.gpio21;
     #[cfg(any(feature = "imu_controls"))]
@@ -202,18 +204,14 @@ fn main() -> ! {
     let spritebuf = SpriteBuf::new(fbuf);
     let engine = Engine::new(spritebuf, Some(seed_buffer));
 
-    println!("Constructing univerese...");
     let mut universe = Universe::new(Some(seed_buffer), engine);
-    println!("Initializing universe...");
     universe.initialize();
 
-    println!("Main loop...");
     loop {
         #[cfg(feature = "mpu9250")]
         {
             let accel_threshold = 1.00;
-            let measurement = icm.get_acc();
-            // let measurement: ImuMeasurements<[f32; 3]> = icm.all().unwrap();
+            let measurement: ImuMeasurements<[f32; 3]> = icm.all().unwrap();
 
             if measurement.accel[0] > accel_threshold {
                 universe.move_left();
@@ -271,7 +269,6 @@ fn main() -> ! {
             }
         }
 
-        println!("Tick...");
         display
             .draw_iter(universe.render_frame().into_iter())
             .unwrap();
