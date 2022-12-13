@@ -88,6 +88,39 @@ cd esp32-s2-usb-otg
 esp32-s2-usb-otg
 ```
 
+### Build for M5CORE-FIRE with ESP32 and ILI9341
+
+HW: https://docs.makerfactory.io/m5stack/core/fire/
+
+Control: MPU-9250
+- tilt the board to move the character
+- move quickly up to teleport
+- move quickly down to place dynamite and destroy walls around
+
+```
+cd m5core-fire
+cargo espflash --release --monitor
+```
+
+#### Build M5CORE-FIRE using GitPod.io and run with Wokwi
+
+- Open in (GitPod.io)[https://gitpod.io/github.com/georgik/esp32-spooky-maze-game]
+
+```
+cd m5core-fire
+./run-wokwi.sh
+```
+
+#### Build M5CORE-FIRE using Codespaces and run with Wokwi
+
+- Navigate to (GitHub repository)[https://github.com/georgik/esp32-spooky-maze-game]
+- Click Open, select Codespaces tab, click Create Codespace
+
+```
+cd m5core-fire
+./run-wokwi.sh
+```
+
 ### Build for ESP32 Wrover Kit
 
 See tag v0.1.0.

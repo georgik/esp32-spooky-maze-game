@@ -5,6 +5,7 @@ resolver = "2"
 
 members = [
     "desktop",
+    "m5core-fire",
     "esp32-s2-usb-otg",
     "esp32-s3-usb-otg",
     "esp32-s3-box",
