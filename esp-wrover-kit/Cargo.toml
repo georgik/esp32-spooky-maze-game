@@ -1,0 +1,76 @@
+[package]
+name = "spooky_wrover_kit"
+version = "0.1.0"
+authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
+edition = "2021"
+license = "MIT"
+
+[target.xtensa-esp32-none-elf.dependencies]
+xtensa-atomic-emulation-trap = "0.3.0"
+esp32-hal = "0.7.0"
+esp-backtrace = { version = "0.4.0", features = [
+    "esp32",
+    "panic-handler",
+    "print-uart",
+] }
+xtensa-lx-rt = { version = "0.14.0", features = ["esp32"], optional = true }
+# esp-println = { version = "0.3.1", features = ["esp32"] }
+
+[dependencies]
+embedded-graphics = "0.7"
+embedded-hal = "0.2"
+display-interface = "0.4"
+display-interface-spi = "0.4"
+mipidsi = { git = "https://github.com/rfuest/mipidsi.git", branch = "display-driver-hal" }
+panic-halt = "0.2"
+rand = { version = "0.8.5", default-features = false }
+rand_chacha = { version = "0.3.1", default-features = false }
+shared-bus = { version = "0.2.4" }
+spooky-core = { path = "../spooky-core", default-features = false, features = [
+    "static_maze",
+] }
+heapless = { version = "0.7.14", default-features = false }
+embedded-graphics-framebuf = "0.2.0"
+
+[features]
+default = [ "esp_wrover_kit" ]
+# default = [ "rt" ]
+# default = [ "rt", "esp32_wrover_kit"  ]
+# default = ["rt", "esp32s2_usb_otg"]
+# default = ["rt", "esp32s3_usb_otg"]
+# default = ["rt", "esp32s2_ili9341"]
+# default = [ "rt", "esp32c3_ili9341"]
+# rt = ["xtensa-lx-rt"]
+# rt = ["riscv-rt"]
+# eh1 = ["esp32-hal/eh1"]
+# eh1 = ["esp32s2-hal/eh1"]
+# eh1 = ["esp32s3-hal/eh1"]
+# eh1 = ["esp32c3-hal/eh1"]
+
+system_timer = []
+
+button_controls = []
+imu_controls = []
+
+esp32 = []
+esp32s2 = ["system_timer"]
+esp32s3 = []
+esp32c3 = ["system_timer"]
+
+# Enable this feature in case you have an ESP32 Wrover Kit with ILI9341
+esp_wrover_kit = [ "xtensa-lx-rt", "esp32", "esp32-hal/eh1" ]
+
+# Enable this feature in case you have an ESP32-S3-USB-OTG board with ST7789
+# esp32s2_usb_otg = [ "xtensa-lx-rt", "esp32s2",  "button_controls" ]
+
+# Enable this feature in case you have an ESP32-S3-USB-OTG board with ST7789
+# esp32s3_usb_otg = [ "xtensa-lx-rt", "esp32s3", "esp32s3-hal/eh1", "button_controls" ]
+
+# Enable this feature in case you have an ESP32-S3-BOX board with ILI9342C
+# esp32s3_box = [ "xtensa-lx-rt", "esp32s3", "esp32s3-hal/eh1", "imu_controls" ]
+
+# Enable this feature in case you have an ESP32S2 with ILI9341
+# esp32s2_ili9341 = [ "xtensa-lx-rt", "esp32s2", "esp32s2-hal/eh1" ]
+
+# Enable this feature in case you have an ESP32-C3 Rust board with ILI9341
+# esp32c3_ili9341 = [ "riscv-rt", "esp32c3", "esp32c3-hal/eh1" ]
