@@ -5,10 +5,11 @@ resolver = "2"
 
 members = [
     "desktop",
-    "m5core-fire",
+    "esp-wrover-kit",
     "esp32-s2-usb-otg",
     "esp32-s3-usb-otg",
     "esp32-s3-box",
+    "m5core-fire",
     "spooky-core",
     "wasm"
 ]

@@ -123,12 +123,17 @@ cd m5core-fire
 ./run-wokwi.sh
 ```
 
-### Build for ESP32 Wrover Kit
+### Build for ESP Wrover Kit
 
-See tag v0.1.0.
+HW: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/hw-reference/esp32/get-started-wrover-kit.html
+
+Control: limited, only one button available
+- it's not possible to move the character
+- move quickly up or press button Boot to teleport
 
 ```
-cargo espflash --release --target xtensa-esp32-none-elf --features esp32_wrover_kit --monitor
+cd esp-wrover-kit
+cargo espflash --release --monitor
 ```
 
 ### Build for ESP32-S2 with ILI9341
@@ -138,7 +143,6 @@ See tag v0.1.0.
 ```
 cargo espflash --release --target xtensa-esp32s2-none-elf --features esp32s2_ili9341 --monitor
 ```
-
 
 ### Build for ESP32-C3 with ILI9341
 
