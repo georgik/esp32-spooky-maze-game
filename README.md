@@ -129,7 +129,7 @@ HW: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/hw-reference/esp
 
 Control: limited, only one button available
 - it's not possible to move the character
-- move quickly up or press button Boot to teleport
+- press button Boot to teleport
 
 ```
 cd esp-wrover-kit
