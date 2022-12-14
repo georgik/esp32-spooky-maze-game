@@ -69,7 +69,7 @@ mpu9250 = ["imu_controls", "dep:mpu9250"]
 
 wokwi = [ "xtensa-lx-rt", "esp32", "esp32-hal/eh1", "mpu6050" ]
 
-m5stack_core2 = ["xtensa-lx-rt", "esp32", "esp32-hal/eh1", "mpu9250"]
+m5stack_core2 = ["xtensa-lx-rt", "esp32", "esp32-hal/eh1", "mpu9250" ]
 
 # Enable this feature in case you have an ESP32-S3-USB-OTG board with ST7789
 # esp32s2_usb_otg = [ "xtensa-lx-rt", "esp32s2",  "button_controls" ]
