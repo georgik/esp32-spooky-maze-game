@@ -111,6 +111,8 @@ cd m5core-fire
 ./run-wokwi.sh
 ```
 
+- Wokwi project: https://wokwi.com/projects/350825213595746900
+
 #### Build M5CORE-FIRE using Codespaces and run with Wokwi
 
 - Navigate to (GitHub repository)[https://github.com/georgik/esp32-spooky-maze-game]
