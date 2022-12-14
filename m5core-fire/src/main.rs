@@ -170,6 +170,13 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
+    // #[cfg(feature = "buttons")]
+    // let button_a = io.pins.gpio39.into_pull_up_input();
+    #[cfg(feature = "buttons")]
+    let button_b = io.pins.gpio38.into_pull_up_input();
+    #[cfg(feature = "buttons")]
+    let button_c = io.pins.gpio37.into_pull_up_input();
+
     #[cfg(any(feature = "imu_controls"))]
     let sda = io.pins.gpio21;
     #[cfg(any(feature = "imu_controls"))]
@@ -203,11 +210,22 @@ fn main() -> ! {
     let fbuf = FrameBuf::new(&mut data, 320, 240);
     let spritebuf = SpriteBuf::new(fbuf);
     let engine = Engine::new(spritebuf, Some(seed_buffer));
-
     let mut universe = Universe::new(Some(seed_buffer), engine);
     universe.initialize();
 
     loop {
+        #[cfg(feature = "buttons")]
+        {
+            if button_c.is_low().unwrap() {
+                universe.teleport();
+            }
+
+            if button_b.is_low().unwrap() {
+                universe.place_dynamite();
+            }
+
+        }
+
         #[cfg(feature = "mpu9250")]
         {
             let accel_threshold = 1.00;
@@ -268,7 +286,6 @@ fn main() -> ! {
                 universe.place_dynamite();
             }
         }
-
         display
             .draw_iter(universe.render_frame().into_iter())
             .unwrap();

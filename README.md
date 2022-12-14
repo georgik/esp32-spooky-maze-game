@@ -92,10 +92,10 @@ esp32-s2-usb-otg
 
 HW: https://docs.makerfactory.io/m5stack/core/fire/
 
-Control: MPU-9250
+Control: MPU-9250, buttons
 - tilt the board to move the character
-- move quickly up to teleport
-- move quickly down to place dynamite and destroy walls around
+- move quickly up or press button C to teleport
+- move quickly down or press button B to place dynamite and destroy walls around
 
 ```
 cd m5core-fire
