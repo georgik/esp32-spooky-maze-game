@@ -170,11 +170,14 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
-    // #[cfg(feature = "buttons")]
     // let button_a = io.pins.gpio39.into_pull_up_input();
-    #[cfg(feature = "buttons")]
+    #[cfg(feature = "wokwi")]
+    let button_b = io.pins.gpio34.into_pull_up_input();
+    #[cfg(feature = "wokwi")]
+    let button_c = io.pins.gpio35.into_pull_up_input();
+    #[cfg(feature = "m5stack_core2")]
     let button_b = io.pins.gpio38.into_pull_up_input();
-    #[cfg(feature = "buttons")]
+    #[cfg(feature = "m5stack_core2")]
     let button_c = io.pins.gpio37.into_pull_up_input();
 
     #[cfg(any(feature = "imu_controls"))]
@@ -214,13 +217,25 @@ fn main() -> ! {
     universe.initialize();
 
     loop {
-        #[cfg(feature = "buttons")]
+        #[cfg(feature = "m5stack_core2")]
         {
             if button_c.is_low().unwrap() {
                 universe.teleport();
             }
 
             if button_b.is_low().unwrap() {
+                universe.place_dynamite();
+            }
+
+        }
+
+        #[cfg(feature = "wokwi")]
+        {
+            if button_c.is_high().unwrap() {
+                universe.teleport();
+            }
+
+            if button_b.is_high().unwrap() {
                 universe.place_dynamite();
             }
 
