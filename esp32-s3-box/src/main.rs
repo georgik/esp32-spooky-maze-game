@@ -1,5 +1,7 @@
 #![no_std]
 #![no_main]
+#![feature(c_variadic)]
+#![feature(const_mut_refs)]
 #![feature(default_alloc_error_handler)]
 
 #[global_allocator]
@@ -41,6 +43,19 @@ use hal::{
 // systimer was introduced in ESP32-S2, it's not available for ESP32
 #[cfg(feature = "system_timer")]
 use hal::systimer::SystemTimer;
+
+#[cfg(feature = "wifi")]
+use embedded_io::blocking::*;
+use embedded_svc::ipv4::Interface;
+use embedded_svc::wifi::{AccessPointInfo, ClientConfiguration, Configuration, Wifi};
+use esp_wifi::wifi::utils::create_network_interface;
+use esp_wifi::wifi_interface::{Network, WifiError};
+use esp_wifi::{create_network_stack_storage, network_stack_storage};
+use esp_wifi::{current_millis, initialize};
+use smoltcp::wire::Ipv4Address;
+
+const SSID: &str = env!("SSID");
+const PASSWORD: &str = env!("PASSWORD");
 
 // use panic_halt as _;
 use esp_backtrace as _;
@@ -132,9 +147,13 @@ impl<I: Accelerometer, D: embedded_graphics::draw_target::DrawTarget<Color = Rgb
 
 #[entry]
 fn main() -> ! {
-    const HEAP_SIZE: usize = 65535 * 4;
-    static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
-    unsafe { ALLOCATOR.init(HEAP.as_mut_ptr(), HEAP_SIZE) }
+    #[cfg(feature = "dynamic_maze")]
+    {
+        const HEAP_SIZE: usize = 65535 * 4;
+        static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
+        unsafe { ALLOCATOR.init(HEAP.as_mut_ptr(), HEAP_SIZE) }
+    }
+    esp_wifi::init_heap();
 
     let peripherals = Peripherals::take().unwrap();
 
@@ -315,7 +334,7 @@ fn main() -> ! {
         )
         .unwrap();
 
-    // display.clear(RgbColor::WHITE).unwrap();
+    display.clear(RgbColor::WHITE).unwrap();
 
     Text::new(
         "Initializing...",
@@ -347,19 +366,81 @@ fn main() -> ! {
     #[cfg(any(feature = "imu_controls"))]
     let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
 
-    let mut rng = Rng::new(peripherals.RNG);
+    // TODO: Rng is used for seeding the universe, but it's not working yet, because the initialize moves RNG.
     let mut seed_buffer = [0u8; 32];
-    rng.read(&mut seed_buffer).unwrap();
+    // {
+    //     let mut rng = Rng::new(peripherals.RNG);
+    //     rng.read(&mut seed_buffer).unwrap();
+    // }
     let mut data = [Rgb565::BLACK; 320 * 240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);
     let spritebuf = SpriteBuf::new(fbuf);
-    let engine = Engine::new(spritebuf, Some(seed_buffer));
+    let engine = Engine::new(spritebuf, None);
 
     let mut universe = Universe::new(icm, Some(seed_buffer), engine);
     universe.initialize();
 
-    // #[cfg(any(feature = "imu_controls"))]
-    // let accel_threshold = 0.20;
+    let mut storage = create_network_stack_storage!(3, 8, 1, 1);
+    let ethernet = create_network_interface(network_stack_storage!(storage));
+    let mut wifi_interface = esp_wifi::wifi_interface::Wifi::new(ethernet);
+    use hal::timer::TimerGroup;
+
+    initialize(timer_group1.timer0, peripherals.RNG, &clocks).unwrap();
+
+    println!("is wifi started: {:?}", wifi_interface.is_started());
+
+    println!("Start Wifi Scan");
+    let res: Result<(heapless::Vec<AccessPointInfo, 10>, usize), WifiError> =
+        wifi_interface.scan_n();
+    if let Ok((res, _count)) = res {
+        for ap in res {
+            println!("{:?}", ap);
+        }
+    }
+
+    println!("Call wifi_connect");
+    let client_config = Configuration::Client(ClientConfiguration {
+        ssid: SSID.into(),
+        password: PASSWORD.into(),
+        ..Default::default()
+    });
+    let res = wifi_interface.set_configuration(&client_config);
+    println!("wifi_set_configuration returned {:?}", res);
+
+    println!("{:?}", wifi_interface.get_capabilities());
+    println!("wifi_connect {:?}", wifi_interface.connect());
+
+    // wait to get connected
+    println!("Wait to get connected");
+    loop {
+        let res = wifi_interface.is_connected();
+        match res {
+            Ok(connected) => {
+                if connected {
+                    break;
+                }
+            }
+            Err(err) => {
+                println!("{:?}", err);
+                loop {}
+            }
+        }
+    }
+    println!("{:?}", wifi_interface.is_connected());
+
+   // wait for getting an ip address
+   println!("Wait to get an ip address");
+   let network = Network::new(wifi_interface, current_millis);
+   loop {
+       network.poll_dhcp().unwrap();
+
+       network.work();
+
+       if network.is_iface_up() {
+           println!("got ip {:?}", network.get_ip_info());
+           break;
+       }
+   }
 
     loop {
         display

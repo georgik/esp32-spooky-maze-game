@@ -11,7 +11,10 @@ rustflags = [
   # Enable the atomic codegen option for Xtensa
   "-C", "target-feature=+s32c1i",
   "-C", "link-arg=-Wl,-Tlinkall.x",
-  "-C", "force-frame-pointers"
+  "-C", "force-frame-pointers",
+
+  # esp-wifi
+  "-C", "link-arg=-Tesp32s3_rom_functions.x",
 ]
 
 [target.riscv32imac-unknown-none-elf]
