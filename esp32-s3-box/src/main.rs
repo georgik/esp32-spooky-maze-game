@@ -287,6 +287,7 @@ fn main() -> ! {
     let mut display = mipidsi::Builder::ili9342c_rgb565(di)
         .with_display_size(320, 240)
         .with_orientation(mipidsi::Orientation::PortraitInverted(false))
+        .with_color_order(mipidsi::ColorOrder::Rgb)
         .init(&mut delay, Some(reset))
         .unwrap();
     // let mut display = mipidsi::Display::ili9342c_rgb565(di, core::prelude::v1::Some(reset), display_options);
