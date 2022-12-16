@@ -54,8 +54,14 @@ use esp_wifi::{create_network_stack_storage, network_stack_storage};
 use esp_wifi::{current_millis, initialize};
 use smoltcp::wire::Ipv4Address;
 
+use crate::tiny_mqtt::TinyMqtt;
+mod tiny_mqtt;
+
 const SSID: &str = env!("SSID");
 const PASSWORD: &str = env!("PASSWORD");
+const MQTT_HOST: &str = env!("MQTT_HOST");
+const MQTT_USER: &str = env!("MQTT_USER");
+const MQTT_PASS: &str = env!("MQTT_PASS");
 
 // use panic_halt as _;
 use esp_backtrace as _;
@@ -84,6 +90,7 @@ use shared_bus::BusManagerSimple;
 
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
+use mqttrust::encoding::v4::Pid;
 
 pub struct Universe<I, D> {
     pub engine: Engine<D>,
@@ -441,7 +448,28 @@ fn main() -> ! {
            break;
        }
    }
+   let mut pkt_num = 10;
+    let mut mqtt = TinyMqtt::new(MQTT_USER, wifi_interface, current_millis, None);
+    let mut last_sent_millis = 0;
+    let mut first_msg_sent = false;
 
+    mqtt.connect(
+        Ipv4Address::new(20, 79, 70, 109), // io.adafruit.com
+        8883,
+        10,
+        Some(MQTT_USER),
+        Some(MQTT_PASS),
+    ).unwrap();
+    let topic_name = "spooky/feeds/temperature";
+
+    mqtt
+                    .publish_with_pid(
+                        Some(Pid::try_from(pkt_num).unwrap()),
+                        &topic_name,
+                        "msg",
+                        mqttrust::QoS::AtLeastOnce,
+                    );
+    mqtt.disconnect().ok();
     loop {
         display
             .draw_iter(universe.render_frame().into_iter())
