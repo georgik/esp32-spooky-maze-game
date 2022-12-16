@@ -127,7 +127,8 @@ cd m5core-fire
 
 HW: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/hw-reference/esp32/get-started-wrover-kit.html
 
-Control: buttons
+Control: buttons (Not implemented yet - requires implementation of https://github.com/espressif/esp-bsp/blob/master/esp32_s2_kaluga_kit/esp32_s2_kaluga_kit.c#L59)
+- more details https://github.com/espressif/esp-bsp/blob/master/esp32_s2_kaluga_kit/include/bsp/esp32_s2_kaluga_kit.h#L299
 - K1-K4 to move the character
 - press K5 button to teleport
 - press K6 button to place dynamite
