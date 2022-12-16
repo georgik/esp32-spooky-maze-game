@@ -419,6 +419,15 @@ fn main() -> ! {
 
     // wait to get connected
     println!("Wait to get connected");
+    display.clear(RgbColor::WHITE).unwrap();
+
+    Text::new(
+        "Connecting...",
+        Point::new(80, 110),
+        MonoTextStyle::new(&FONT_8X13, RgbColor::BLACK),
+    )
+    .draw(&mut display)
+    .unwrap();
     loop {
         let res = wifi_interface.is_connected();
         match res {
@@ -434,7 +443,15 @@ fn main() -> ! {
         }
     }
     println!("{:?}", wifi_interface.is_connected());
+    display.clear(RgbColor::WHITE).unwrap();
 
+    Text::new(
+        "Acquiring IP...",
+        Point::new(80, 110),
+        MonoTextStyle::new(&FONT_8X13, RgbColor::BLACK),
+    )
+    .draw(&mut display)
+    .unwrap();
    // wait for getting an ip address
    println!("Wait to get an ip address");
    let network = Network::new(wifi_interface, current_millis);
@@ -449,14 +466,23 @@ fn main() -> ! {
        }
    }
    let mut pkt_num = 10;
+   display.clear(RgbColor::WHITE).unwrap();
+
+   Text::new(
+       "Connected...",
+       Point::new(80, 110),
+       MonoTextStyle::new(&FONT_8X13, RgbColor::BLACK),
+   )
+   .draw(&mut display)
+   .unwrap();
 
    let mut rx_buffer = [0u8; 1536];
    let mut tx_buffer = [0u8; 1536];
    let mut socket = network.get_socket(&mut rx_buffer, &mut tx_buffer);
    socket
-       .open(Ipv4Address::new(52, 54, 163, 195), 1883) // io.adafruit.com
+       .open(Ipv4Address::new(20, 79, 70, 109), 1883) // io.adafruit.com
        .unwrap();
-   let mut mqtt = TinyMqtt::new("esp32", socket, esp_wifi::current_millis, None);
+   let mut mqtt = TinyMqtt::new("spooky", socket, esp_wifi::current_millis, None);
     let mut last_sent_millis = 0;
     let mut first_msg_sent = false;
 
@@ -477,6 +503,15 @@ fn main() -> ! {
                         mqttrust::QoS::AtLeastOnce,
                     );
     mqtt.disconnect().ok();
+    display.clear(RgbColor::WHITE).unwrap();
+
+    Text::new(
+        "MQTT Sent...",
+        Point::new(80, 110),
+        MonoTextStyle::new(&FONT_8X13, RgbColor::BLACK),
+    )
+    .draw(&mut display)
+    .unwrap();
     loop {
         display
             .draw_iter(universe.render_frame().into_iter())
