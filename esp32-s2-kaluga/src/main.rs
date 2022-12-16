@@ -2,7 +2,8 @@
 #![no_main]
 #![feature(default_alloc_error_handler)]
 
-// https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/hw-reference/esp32s2/user-guide-esp32-s2-kaluga-1-kit.html
+// Main baord: https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/hw-reference/esp32s2/user-guide-esp32-s2-kaluga-1-kit.html
+// Buttons - Lyra extension board: https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/hw-reference/esp32s2/user-guide-esp-lyrat-8311a_v1.3.html
 
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
@@ -197,26 +198,28 @@ fn main() -> ! {
     universe.initialize();
 
     loop {
-        let button_down = button_k2.is_low().unwrap();
-        let button_up = button_k1.is_low().unwrap();
-        let button_left = button_k3.is_low().unwrap();
-        let button_right = button_k4.is_low().unwrap();
-        let button_teleport = button_k5.is_low().unwrap();
-        let button_dynamite = button_k6.is_low().unwrap();
 
-        if button_teleport {
-            universe.engine.teleport();
-        } else if button_dynamite {
-            universe.engine.place_dynamite();
-        } else if button_down {
-            universe.engine.move_down();
-        } else if button_up {
-            universe.move_up();
-        } else if button_left {
-            universe.move_left();
-        } if button_right {
-            universe.move_right();
-        }
+        // Not implemented - requires https://github.com/espressif/esp-bsp/blob/master/esp32_s2_kaluga_kit/include/bsp/esp32_s2_kaluga_kit.h#L299
+        // let button_down = button_k2.is_low().unwrap();
+        // let button_up = button_k1.is_low().unwrap();
+        // let button_left = button_k3.is_low().unwrap();
+        // let button_right = button_k4.is_low().unwrap();
+        // let button_teleport = button_k5.is_low().unwrap();
+        // let button_dynamite = button_k6.is_low().unwrap();
+
+        // if button_teleport {
+        //     universe.engine.teleport();
+        // } else if button_dynamite {
+        //     universe.engine.place_dynamite();
+        // } else if button_down {
+        //     universe.engine.move_down();
+        // } else if button_up {
+        //     universe.move_up();
+        // } else if button_left {
+        //     universe.move_left();
+        // } if button_right {
+        //     universe.move_right();
+        // }
 
         display.draw_iter(universe.render_frame().into_iter()).unwrap();
         // delay.delay_ms(300u32);
