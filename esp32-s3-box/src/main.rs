@@ -480,12 +480,30 @@ fn main() -> ! {
    let mut tx_buffer = [0u8; 1536];
    let mut socket = network.get_socket(&mut rx_buffer, &mut tx_buffer);
    socket
-       .open(Ipv4Address::new(20, 79, 70, 109), 1883) // io.adafruit.com
+       .open(Ipv4Address::new(20, 79, 70, 109), 8883) // io.adafruit.com
        .unwrap();
+       display.clear(RgbColor::WHITE).unwrap();
+
+       Text::new(
+           "Acquired socket...",
+           Point::new(80, 110),
+           MonoTextStyle::new(&FONT_8X13, RgbColor::BLACK),
+       )
+       .draw(&mut display)
+       .unwrap();
+
    let mut mqtt = TinyMqtt::new("spooky", socket, esp_wifi::current_millis, None);
     let mut last_sent_millis = 0;
     let mut first_msg_sent = false;
+    display.clear(RgbColor::WHITE).unwrap();
 
+    Text::new(
+        "MQTT Connecting...",
+        Point::new(80, 110),
+        MonoTextStyle::new(&FONT_8X13, RgbColor::BLACK),
+    )
+    .draw(&mut display)
+    .unwrap();
     mqtt.connect(
         Ipv4Address::new(20, 79, 70, 109), // io.adafruit.com
         8883,
@@ -494,7 +512,15 @@ fn main() -> ! {
         Some(MQTT_PASS.as_bytes()),
     ).unwrap();
     let topic_name = "spooky/feeds/temperature";
+    display.clear(RgbColor::WHITE).unwrap();
 
+    Text::new(
+        "MQTT Connected...",
+        Point::new(80, 110),
+        MonoTextStyle::new(&FONT_8X13, RgbColor::BLACK),
+    )
+    .draw(&mut display)
+    .unwrap();
     mqtt
                     .publish_with_pid(
                         Some(Pid::try_from(pkt_num).unwrap()),
