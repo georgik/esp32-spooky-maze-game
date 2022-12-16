@@ -123,6 +123,20 @@ cd m5core-fire
 ./run-wokwi.sh
 ```
 
+### Build for ESP32-S2-Kaluga
+
+HW: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/hw-reference/esp32/get-started-wrover-kit.html
+
+Control: buttons
+- K1-K4 to move the character
+- press K5 button to teleport
+- press K6 button to place dynamite
+
+```
+cd esp32-s2-kaluga
+cargo espflash --release --monitor
+```
+
 ### Build for ESP Wrover Kit
 
 HW: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/hw-reference/esp32/get-started-wrover-kit.html

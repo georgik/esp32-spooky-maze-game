@@ -16,6 +16,7 @@ use embedded_graphics::{
 };
 
 use mipidsi::hal::{ Orientation, Rotation };
+use mipidsi::ColorOrder;
 
 use esp_println::println;
 
@@ -170,6 +171,7 @@ fn main() -> ! {
 
     let mut display = mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(320, 240)
+        .with_color_order(ColorOrder::Bgr)
         .with_orientation(Orientation::new().rotate(Rotation::Deg90))
         .init(&mut delay, Some(reset))
         .unwrap();
@@ -186,8 +188,8 @@ fn main() -> ! {
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8;32];
     rng.read(&mut seed_buffer).unwrap();
-    let mut data = [Rgb565::BLACK ; 240*240];
-    let fbuf = FrameBuf::new(&mut data, 240, 240);
+    let mut data = [Rgb565::BLACK ; 320*240];
+    let fbuf = FrameBuf::new(&mut data, 320, 240);
     let spritebuf = SpriteBuf::new(fbuf);
     let engine = Engine::new(spritebuf, Some(seed_buffer));
 
