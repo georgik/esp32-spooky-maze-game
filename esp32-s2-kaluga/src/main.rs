@@ -42,6 +42,7 @@ use hal::{
     Rtc,
     IO,
     Delay,
+    adc::{AdcConfig, Attenuation, ADC, ADC1},
 };
 
 // systimer was introduced in ESP32-S2, it's not available for ESP32
@@ -140,15 +141,19 @@ fn main() -> ! {
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
+    // Create ADC instances
+    let analog = peripherals.SENS.split();
 
-    let button_k1 = io.pins.gpio5.into_pull_up_input(); // REC
-    let button_k2 = io.pins.gpio4.into_pull_up_input(); // MODE
-    let button_k3 = io.pins.gpio2.into_pull_up_input(); // PLAY
-    let button_k4 = io.pins.gpio14.into_pull_up_input(); // SET
-    let button_k5 = io.pins.gpio3.into_pull_up_input(); // VOL-
-    let button_k6 = io.pins.gpio1.into_pull_up_input(); // VOL+
+    let mut adc1_config = AdcConfig::new();
 
-    let mut backlight = io.pins.gpio6.into_push_pull_output();
+    let mut button_ladder_pin =
+        adc1_config.enable_pin(io.pins.gpio6.into_analog(), Attenuation::Attenuation11dB);
+
+    let mut adc1 = ADC::<ADC1>::adc(analog.adc1, adc1_config).unwrap();
+
+    // Backlight is on GPIO6 in version 1.2, version 1.3 has display always on
+    // let mut backlight = io.pins.gpio6.into_push_pull_output();
+    // backlight.set_high().unwrap();
 
     let spi = spi::Spi::new(
         peripherals.SPI2,
@@ -160,8 +165,6 @@ fn main() -> ! {
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
         &clocks);
-
-    backlight.set_high().unwrap();
 
     let reset = io.pins.gpio16.into_push_pull_output();
 
@@ -199,27 +202,17 @@ fn main() -> ! {
 
     loop {
 
-        // Not implemented - requires https://github.com/espressif/esp-bsp/blob/master/esp32_s2_kaluga_kit/include/bsp/esp32_s2_kaluga_kit.h#L299
-        // let button_down = button_k2.is_low().unwrap();
-        // let button_up = button_k1.is_low().unwrap();
-        // let button_left = button_k3.is_low().unwrap();
-        // let button_right = button_k4.is_low().unwrap();
-        // let button_teleport = button_k5.is_low().unwrap();
-        // let button_dynamite = button_k6.is_low().unwrap();
-
-        // if button_teleport {
-        //     universe.engine.teleport();
-        // } else if button_dynamite {
-        //     universe.engine.place_dynamite();
-        // } else if button_down {
-        //     universe.engine.move_down();
-        // } else if button_up {
-        //     universe.move_up();
-        // } else if button_left {
-        //     universe.move_left();
-        // } if button_right {
-        //     universe.move_right();
-        // }
+        let button_value: u16 = nb::block!(adc1.read(&mut button_ladder_pin)).unwrap();
+        // Based on https://github.com/espressif/esp-bsp/blob/master/esp32_s2_kaluga_kit/include/bsp/esp32_s2_kaluga_kit.h#L299
+        if button_value > 4000 && button_value < 5000 {
+            universe.engine.move_right();
+        } else if button_value >= 5000 && button_value < 6000 {
+            universe.engine.move_left();
+        } else if button_value >= 6000 && button_value < 7000 {
+            universe.engine.move_down();
+        } else if button_value >= 7000 && button_value < 8180 {
+            universe.engine.move_up();
+        }
 
         display.draw_iter(universe.render_frame().into_iter()).unwrap();
         // delay.delay_ms(300u32);

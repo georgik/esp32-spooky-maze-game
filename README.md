@@ -123,20 +123,22 @@ cd m5core-fire
 ./run-wokwi.sh
 ```
 
-### Build for ESP32-S2-Kaluga
+### Build for ESP32-S2-Kaluga v1.3
 
 HW: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/hw-reference/esp32/get-started-wrover-kit.html
 
-Control: buttons (Not implemented yet - requires implementation of https://github.com/espressif/esp-bsp/blob/master/esp32_s2_kaluga_kit/esp32_s2_kaluga_kit.c#L59)
+Control: buttons (partialy implemented based on of https://github.com/espressif/esp-bsp/blob/master/esp32_s2_kaluga_kit/esp32_s2_kaluga_kit.c#L59)
 - more details https://github.com/espressif/esp-bsp/blob/master/esp32_s2_kaluga_kit/include/bsp/esp32_s2_kaluga_kit.h#L299
-- K1-K4 to move the character
-- press K5 button to teleport
-- press K6 button to place dynamite
+- K3-K6 to move the character
+- (not supported) press K5 button to teleport
+- (not supported) press K6 button to place dynamite
 
 ```
 cd esp32-s2-kaluga
 cargo espflash --release --monitor
 ```
+
+Note for older version 1.2 - GPIO6 is used to control backlight.
 
 ### Build for ESP Wrover Kit
 
