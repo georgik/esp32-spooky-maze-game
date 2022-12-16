@@ -1,0 +1,227 @@
+#![no_std]
+#![no_main]
+#![feature(default_alloc_error_handler)]
+
+// Main baord: https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/hw-reference/esp32s2/user-guide-esp32-s2-kaluga-1-kit.html
+// Buttons - Lyra extension board: https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/hw-reference/esp32s2/user-guide-esp-lyrat-8311a_v1.3.html
+
+use display_interface_spi::SPIInterfaceNoCS;
+use embedded_graphics::{
+    prelude::{Point, DrawTarget, RgbColor},
+    mono_font::{
+        ascii::{FONT_8X13},
+        MonoTextStyle,
+    },
+    text::Text,
+    Drawable,
+};
+
+use mipidsi::hal::{ Orientation, Rotation };
+use mipidsi::ColorOrder;
+
+use esp_println::println;
+
+#[cfg(feature="esp32")]
+use esp32_hal as hal;
+#[cfg(feature="esp32s2")]
+use esp32s2_hal as hal;
+#[cfg(feature="esp32s3")]
+use esp32s3_hal as hal;
+#[cfg(feature="esp32c3")]
+use esp32c3_hal as hal;
+
+use hal::{
+    clock::{ ClockControl, CpuClock },
+    // gdma::Gdma,
+    i2c,
+    pac::Peripherals,
+    prelude::*,
+    spi,
+    timer::TimerGroup,
+    Rng,
+    Rtc,
+    IO,
+    Delay,
+};
+
+// systimer was introduced in ESP32-S2, it's not available for ESP32
+#[cfg(feature="system_timer")]
+use hal::systimer::{SystemTimer};
+
+// use panic_halt as _;
+use esp_backtrace as _;
+
+#[cfg(feature="xtensa-lx-rt")]
+use xtensa_lx_rt::entry;
+#[cfg(feature="riscv-rt")]
+use riscv_rt::entry;
+
+use embedded_graphics::{pixelcolor::Rgb565};
+// use esp32s2_hal::Rng;
+
+#[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
+use ili9341::{DisplaySize240x320, Ili9341, Orientation};
+
+use spooky_core::{spritebuf::SpriteBuf, engine::Engine};
+
+use embedded_hal::digital::v2::OutputPin;
+use embedded_graphics_framebuf::{FrameBuf};
+
+pub struct Universe<D> {
+    pub engine: Engine<D>,
+}
+
+
+impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D> {
+    pub fn new(seed: Option<[u8; 32]>, engine:Engine<D>) -> Universe<D> {
+        Universe {
+            engine,
+        }
+    }
+
+    pub fn initialize(&mut self) {
+        self.engine.initialize();
+    }
+
+    pub fn move_up(&mut self) {
+        self.engine.move_up();
+    }
+
+    pub fn move_down(&mut self) {
+        self.engine.move_down();
+    }
+
+    pub fn move_left(&mut self) {
+        self.engine.move_left();
+    }
+
+    pub fn move_right(&mut self) {
+        self.engine.move_right();
+    }
+
+    pub fn render_frame(&mut self) -> &D {
+
+        self.engine.tick();
+        self.engine.draw()
+
+    }
+
+}
+
+
+#[entry]
+fn main() -> ! {
+    let peripherals = Peripherals::take().unwrap();
+
+    #[cfg(any(feature = "esp32"))]
+    let mut system = peripherals.DPORT.split();
+    #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
+    let mut system = peripherals.SYSTEM.split();
+    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
+
+    // Disable the RTC and TIMG watchdog timers
+    let mut rtc = Rtc::new(peripherals.RTC_CNTL);
+    let timer_group0 = TimerGroup::new(peripherals.TIMG0, &clocks);
+    let mut wdt0 = timer_group0.wdt;
+    let timer_group1 = TimerGroup::new(peripherals.TIMG1, &clocks);
+    let mut wdt1 = timer_group1.wdt;
+
+    #[cfg(feature="esp32c3")]
+    rtc.swd.disable();
+    #[cfg(feature="xtensa-lx-rt")]
+    rtc.rwdt.disable();
+
+    wdt0.disable();
+    wdt1.disable();
+
+    let mut delay = Delay::new(&clocks);
+    // self.delay = Some(delay);
+
+    println!("About to initialize the SPI LED driver");
+    let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
+
+
+    let button_k1 = io.pins.gpio5.into_pull_up_input(); // REC
+    let button_k2 = io.pins.gpio4.into_pull_up_input(); // MODE
+    let button_k3 = io.pins.gpio2.into_pull_up_input(); // PLAY
+    let button_k4 = io.pins.gpio14.into_pull_up_input(); // SET
+    let button_k5 = io.pins.gpio3.into_pull_up_input(); // VOL-
+    let button_k6 = io.pins.gpio1.into_pull_up_input(); // VOL+
+
+    let mut backlight = io.pins.gpio6.into_push_pull_output();
+
+    let spi = spi::Spi::new(
+        peripherals.SPI2,
+        io.pins.gpio15,  // SCLK
+        io.pins.gpio9,   // MOSI
+        io.pins.gpio8,   // MISO
+        io.pins.gpio11,   // CS
+        60u32.MHz(),
+        spi::SpiMode::Mode0,
+        &mut system.peripheral_clock_control,
+        &clocks);
+
+    backlight.set_high().unwrap();
+
+    let reset = io.pins.gpio16.into_push_pull_output();
+
+    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio13.into_push_pull_output());
+
+    #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
+    let mut delay = Delay::new(&clocks);
+
+    let mut display = mipidsi::Builder::ili9341_rgb565(di)
+        .with_display_size(320, 240)
+        .with_color_order(ColorOrder::Bgr)
+        .with_orientation(Orientation::new().rotate(Rotation::Deg90))
+        .init(&mut delay, Some(reset))
+        .unwrap();
+
+    Text::new(
+        "Initializing...",
+        Point::new(80, 110),
+        MonoTextStyle::new(&FONT_8X13, RgbColor::BLACK),
+    )
+    .draw(&mut display)
+    .unwrap();
+
+
+    let mut rng = Rng::new(peripherals.RNG);
+    let mut seed_buffer = [0u8;32];
+    rng.read(&mut seed_buffer).unwrap();
+    let mut data = [Rgb565::BLACK ; 320*240];
+    let fbuf = FrameBuf::new(&mut data, 320, 240);
+    let spritebuf = SpriteBuf::new(fbuf);
+    let engine = Engine::new(spritebuf, Some(seed_buffer));
+
+    let mut universe = Universe::new(Some(seed_buffer), engine);
+    universe.initialize();
+
+    loop {
+
+        // Not implemented - requires https://github.com/espressif/esp-bsp/blob/master/esp32_s2_kaluga_kit/include/bsp/esp32_s2_kaluga_kit.h#L299
+        // let button_down = button_k2.is_low().unwrap();
+        // let button_up = button_k1.is_low().unwrap();
+        // let button_left = button_k3.is_low().unwrap();
+        // let button_right = button_k4.is_low().unwrap();
+        // let button_teleport = button_k5.is_low().unwrap();
+        // let button_dynamite = button_k6.is_low().unwrap();
+
+        // if button_teleport {
+        //     universe.engine.teleport();
+        // } else if button_dynamite {
+        //     universe.engine.place_dynamite();
+        // } else if button_down {
+        //     universe.engine.move_down();
+        // } else if button_up {
+        //     universe.move_up();
+        // } else if button_left {
+        //     universe.move_left();
+        // } if button_right {
+        //     universe.move_right();
+        // }
+
+        display.draw_iter(universe.render_frame().into_iter()).unwrap();
+        // delay.delay_ms(300u32);
+    }
+}
