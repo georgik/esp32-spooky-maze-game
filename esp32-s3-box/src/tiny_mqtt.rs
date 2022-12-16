@@ -1,18 +1,11 @@
-// Source: https://github.com/bjoernQ/esp32-rust-nostd-temperature-logger/blob/main/src/tiny_mqtt.rs
+use embedded_io::blocking::{Read, Write};
 use esp_println::println;
-use esp_wifi::{
-    compat::queue::SimpleQueue,
-    wifi_interface::{timestamp, WifiError},
-};
+use esp_wifi::{compat::queue::SimpleQueue, wifi_interface::WifiError};
 use mqttrust::{
     encoding::v4::{decode_slice, encode_slice, Connect, Pid, Protocol},
     Mqtt, MqttError, Packet, Publish, QoS, Subscribe, SubscribeTopic,
 };
-use smoltcp::{
-    iface::SocketHandle,
-    socket::{Socket, TcpSocket},
-    wire::Ipv4Address,
-};
+use smoltcp::wire::Ipv4Address;
 
 #[derive(Debug)]
 pub enum TinyMqttError {
@@ -39,6 +32,7 @@ impl From<WifiError> for TinyMqttError {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct PacketBuffer {
     bytes: [u8; 1024],
 }
@@ -58,7 +52,7 @@ impl PacketBuffer {
 
 pub struct TinyMqtt<'a> {
     client_id: &'a str,
-    interface: esp_wifi::wifi_interface::Wifi<'a>,
+    socket: esp_wifi::wifi_interface::Socket<'a, 'a>,
     queue: core::cell::RefCell<SimpleQueue<(usize, [u8; 1024]), 10>>,
     recv_buffer: [u8; 1024],
     recv_index: usize,
@@ -67,32 +61,18 @@ pub struct TinyMqtt<'a> {
     last_sent_millis: u64,
     current_millis_fn: fn() -> u64,
     receive_callback: Option<&'a dyn Fn(&str, &[u8])>,
-    mqtt_socket_handle: SocketHandle,
-    local_port: u16,
 }
 
 impl<'a> TinyMqtt<'a> {
     pub fn new(
         client_id: &'a str,
-        mut interface: esp_wifi::wifi_interface::Wifi<'a>,
+        socket: esp_wifi::wifi_interface::Socket<'a, 'a>,
         current_millis_fn: fn() -> u64,
         receive_callback: Option<&'a dyn Fn(&str, &[u8])>,
     ) -> TinyMqtt<'a> {
-        let mut mqtt_socket_handle: Option<SocketHandle> = None;
-
-        for (handle, socket) in interface.network_interface().sockets_mut() {
-            match socket {
-                Socket::Tcp(_) => {
-                    mqtt_socket_handle = Some(handle);
-                    break;
-                }
-                _ => {}
-            }
-        }
-
         let res = TinyMqtt {
             client_id,
-            interface,
+            socket,
             queue: core::cell::RefCell::new(SimpleQueue::new()),
             recv_buffer: [0u8; 1024],
             recv_index: 0,
@@ -101,8 +81,6 @@ impl<'a> TinyMqtt<'a> {
             last_sent_millis: 0,
             current_millis_fn,
             receive_callback,
-            mqtt_socket_handle: mqtt_socket_handle.unwrap(),
-            local_port: 41000,
         };
 
         res
@@ -118,62 +96,25 @@ impl<'a> TinyMqtt<'a> {
     ) -> Result<(), TinyMqttError> {
         self.timeout_secs = keep_alive_secs;
 
-        {
-            let (sock, cx) = self
-                .interface
-                .network_interface()
-                .get_socket_and_context::<TcpSocket>(self.mqtt_socket_handle);
-            let remote_endpoint = (addr, port);
-            sock.connect(cx, remote_endpoint, self.local_port)?;
-            self.local_port += 1;
-            if self.local_port == 65535 {
-                self.local_port = 41000;
-            }
-        }
-
-        loop {
-            let sock = self
-                .interface
-                .network_interface()
-                .get_socket::<TcpSocket>(self.mqtt_socket_handle);
-            if sock.can_send() {
-                break;
-            }
-            self.work();
-        }
+        self.socket.open(addr, port).unwrap();
 
         let connect = Packet::Connect(Connect {
             protocol: Protocol::MQTT311,
             keep_alive: keep_alive_secs,
-            client_id: self.client_id(),
+            client_id: "", //self.client_id(),
             clean_session: true,
             last_will: None,
             username,
             password,
         });
-
         self.send(connect)?;
-
-        // wait for CONACK
-        loop {
-            self.poll_internal(false)?;
-            if let Some(data) = self.recv_queue.borrow_mut().dequeue() {
-                if let Packet::Connack(_) = data.parsed() {
-                    break;
-                }
-            }
-        }
-
         self.last_sent_millis = (self.current_millis_fn)();
 
         Ok(())
     }
 
     pub fn disconnect(&mut self) -> Result<(), TinyMqttError> {
-        self.interface
-            .network_interface()
-            .get_socket::<TcpSocket>(self.mqtt_socket_handle)
-            .abort();
+        self.socket.disconnect();
         Ok(())
     }
 
@@ -254,42 +195,28 @@ impl<'a> TinyMqtt<'a> {
 
     fn receive_internal(&mut self) -> Result<(), TinyMqttError> {
         loop {
-            self.work();
-
             let mut buffer = [0u8; 1024];
-            let socket = self
-                .interface
-                .network_interface()
-                .get_socket::<TcpSocket>(self.mqtt_socket_handle);
+            let len = self.socket.read(&mut buffer).unwrap();
+            if len > 0 {
+                println!("got {} bytes: {:02x?}", len, &buffer[..len]);
+            }
 
-            match socket.recv_slice(&mut buffer) {
-                Ok(len) => {
-                    if len > 0 {
-                        println!("got {} bytes: {:02x?}", len, &buffer[..len]);
-                    }
+            self.recv_buffer[self.recv_index..][..len].copy_from_slice(&buffer[..len]);
+            self.recv_index += len;
 
-                    self.recv_buffer[self.recv_index..][..len].copy_from_slice(&buffer[..len]);
-                    self.recv_index += len;
+            let data = self.recv_buffer[..len].as_ref();
+            let packet = decode_slice(data);
 
-                    let data = self.recv_buffer[..len].as_ref();
-                    let packet = decode_slice(data);
+            if let Ok(Some(packet)) = packet {
+                println!("{:?}", packet);
+                self.recv_index = 0;
+                self.recv_queue
+                    .borrow_mut()
+                    .enqueue(PacketBuffer::new(packet));
+            }
 
-                    if let Ok(Some(packet)) = packet {
-                        println!("{:?}", packet);
-                        self.recv_index = 0;
-                        self.recv_queue
-                            .borrow_mut()
-                            .enqueue(PacketBuffer::new(packet));
-                    }
-
-                    if len == 0 {
-                        return Ok(());
-                    }
-                }
-                Err(e) => {
-                    println!("recv error {:?}", e);
-                    return Err(e.into());
-                }
+            if len == 0 {
+                return Ok(());
             }
         }
     }
@@ -299,30 +226,13 @@ impl<'a> TinyMqtt<'a> {
             let dq = self.queue.borrow_mut().dequeue();
             match dq {
                 Some((len, buffer)) => loop {
-                    self.work();
-
                     println!("try sending a buffer, len = {}", len);
-
-                    let socket = self
-                        .interface
-                        .network_interface()
-                        .get_socket::<TcpSocket>(self.mqtt_socket_handle);
-
-                    if socket.send_slice(&buffer[..len]).is_ok() {
+                    if self.socket.write(&buffer[..len]).is_ok() {
                         println!("fine");
                         return Ok(());
                     }
                 },
                 None => return Ok(()),
-            }
-        }
-    }
-
-    fn work(&mut self) {
-        loop {
-            self.interface.poll_dhcp().ok();
-            if let Ok(false) = self.interface.network_interface().poll(timestamp()) {
-                break;
             }
         }
     }

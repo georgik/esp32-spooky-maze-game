@@ -449,7 +449,14 @@ fn main() -> ! {
        }
    }
    let mut pkt_num = 10;
-    let mut mqtt = TinyMqtt::new(MQTT_USER, wifi_interface, current_millis, None);
+
+   let mut rx_buffer = [0u8; 1536];
+   let mut tx_buffer = [0u8; 1536];
+   let mut socket = network.get_socket(&mut rx_buffer, &mut tx_buffer);
+   socket
+       .open(Ipv4Address::new(52, 54, 163, 195), 1883) // io.adafruit.com
+       .unwrap();
+   let mut mqtt = TinyMqtt::new("esp32", socket, esp_wifi::current_millis, None);
     let mut last_sent_millis = 0;
     let mut first_msg_sent = false;
 
@@ -458,7 +465,7 @@ fn main() -> ! {
         8883,
         10,
         Some(MQTT_USER),
-        Some(MQTT_PASS),
+        Some(MQTT_PASS.as_bytes()),
     ).unwrap();
     let topic_name = "spooky/feeds/temperature";
 
@@ -466,7 +473,7 @@ fn main() -> ! {
                     .publish_with_pid(
                         Some(Pid::try_from(pkt_num).unwrap()),
                         &topic_name,
-                        "msg",
+                        "msg".as_bytes(),
                         mqttrust::QoS::AtLeastOnce,
                     );
     mqtt.disconnect().ok();
