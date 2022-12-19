@@ -39,13 +39,13 @@ const rust = import('./pkg')
 
 
     window.addEventListener("devicemotion", (event) => {
-        
+
         if (event.accelerationIncludingGravity.y > tiltThreshold) {
             motionRequestVertical = motionDirection.down;
         } else if (event.accelerationIncludingGravity.y < -tiltThreshold) {
             motionRequestVertical = motionDirection.up;
         }
-        
+
         if (event.accelerationIncludingGravity.x < -tiltThreshold) {
             motionRequestHorizontal = motionDirection.right;
         } else if (event.accelerationIncludingGravity.x > tiltThreshold) {
@@ -65,7 +65,13 @@ const rust = import('./pkg')
         }
     });
 
-    universe.initialize();
+    try {
+        universe.initialize();
+        document.getElementById('html-console').innerHTML = "Game is running";
+    } catch (err) {
+        document.getElementById('html-console').innerHTML = err.message;
+    }
+
     var oldTimestamp = 0;
     function renderFrame(timestamp) {
         if (timestamp - oldTimestamp > 200) {
@@ -75,7 +81,7 @@ const rust = import('./pkg')
             } else if (motionRequestVertical == motionDirection.down) {  // down
                 universe.move_down();
             }
-            
+
             if (motionRequestHorizontal == motionDirection.left) {  // left
                 universe.move_left();
             } else if (motionRequestHorizontal == motionDirection.right) {  // right
@@ -90,7 +96,6 @@ const rust = import('./pkg')
         requestAnimationFrame(renderFrame);
     }
     requestAnimationFrame(renderFrame);
-    document.getElementById('html-console').innerHTML = "Game is running";
   })
   .catch(console.error);
 
