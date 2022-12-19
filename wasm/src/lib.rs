@@ -33,8 +33,8 @@ impl Universe {
             engine: {
                 let document = web_sys::window().unwrap().document().unwrap();
                 let output_settings = OutputSettingsBuilder::new()
-                    .scale(1)
-                    .pixel_spacing(1)
+                    .scale(2)
+                    // .pixel_spacing(1)
                     .build();
                 let display = WebSimulatorDisplay::new(
                         (320, 240),
