@@ -1,7 +1,8 @@
 {
     "scripts": {
       "build": "webpack",
-      "serve": "webpack serve --host 0.0.0.0 --port 8443 --https"
+      "serve": "webpack serve --host 0.0.0.0 --port 8443 --https",
+      "pwa": "webpack serve --host 0.0.0.0 --port 8080"
     },
     "devDependencies": {
       "@wasm-tool/wasm-pack-plugin": "1.5.0",
