@@ -1,8 +1,22 @@
 var keyUp;
+
+const motionDirection = {
+    none: 0,
+    up: 1,
+    down: 2,
+    left: 3,
+    right: 4
+};
+
+const tiltThreshold = 2;
+
 const rust = import('./pkg')
   .then(m => {
     let universe = m.Universe.new();
-    var motion_request = 0;
+    var motionRequestHorizontal = motionDirection.none;
+    var motionRequestVertical = motionDirection.none;
+
+    document.getElementById('html-console').innerHTML = "Initialize";
 
     document.getElementById('button-up').addEventListener('click', () => {
         universe.move_up();
@@ -23,19 +37,19 @@ const rust = import('./pkg')
         universe.place_dynamite();
     });
 
+
     window.addEventListener("devicemotion", (event) => {
-        if (event.accelerationIncludingGravity.y > 5) {
-            motion_request = 1;
-            console.log("up");
-        } else if (event.accelerationIncludingGravity.y < -5) {
-            motion_request = 2;
-            console.log("down");
-        } else if (event.accelerationIncludingGravity.x < -5) {
-            motion_request = 3;
-            console.log("left");
-        } else if (event.accelerationIncludingGravity.x > 5) {
-            motion_request = 4;
-            console.log("right");
+        
+        if (event.accelerationIncludingGravity.y > tiltThreshold) {
+            motionRequestVertical = motionDirection.down;
+        } else if (event.accelerationIncludingGravity.y < -tiltThreshold) {
+            motionRequestVertical = motionDirection.up;
+        }
+        
+        if (event.accelerationIncludingGravity.x < -tiltThreshold) {
+            motionRequestHorizontal = motionDirection.right;
+        } else if (event.accelerationIncludingGravity.x > tiltThreshold) {
+            motionRequestHorizontal = motionDirection.left;
         }
     }, true);
 
@@ -56,16 +70,19 @@ const rust = import('./pkg')
     function renderFrame(timestamp) {
         if (timestamp - oldTimestamp > 200) {
 
-            if (motion_request == 1) {  // up
+            if (motionRequestVertical == motionDirection.up) {  // up
                 universe.move_up();
-            } else if (motion_request == 2) {  // down
+            } else if (motionRequestVertical == motionDirection.down) {  // down
                 universe.move_down();
-            } else if (motion_request == 3) {  // left
+            }
+            
+            if (motionRequestHorizontal == motionDirection.left) {  // left
                 universe.move_left();
-            } else if (motion_request == 4) {  // right
+            } else if (motionRequestHorizontal == motionDirection.right) {  // right
                 universe.move_right();
             }
-            motion_request = 0;
+            motionRequestVertical = motionDirection.none;
+            motionRequestHorizontal = motionDirection.none;
 
             universe.render_frame();
             oldTimestamp = timestamp;
@@ -73,6 +90,7 @@ const rust = import('./pkg')
         requestAnimationFrame(renderFrame);
     }
     requestAnimationFrame(renderFrame);
+    document.getElementById('html-console').innerHTML = "Game is running";
   })
   .catch(console.error);
 
