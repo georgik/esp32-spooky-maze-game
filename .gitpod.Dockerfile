@@ -26,7 +26,7 @@ WORKDIR /home/${CONTAINER_USER}
 # Install Rust toolchain, extra crates and esp-idf
 ENV PATH=${PATH}:/home/${CONTAINER_USER}/.cargo/bin:/home/${CONTAINER_USER}/opt/bin
 ADD --chown=${CONTAINER_USER}:${CONTAINER_GROUP} \
-    https://github.com/esp-rs/espup/releases/latest/download/espup-aarch64-unknown-linux-gnu \
+    https://github.com/esp-rs/espup/releases/latest/download/espup-x86_64-unknown-linux-gnu \
     /home/${CONTAINER_USER}/${INSTALL_RUST_TOOLCHAIN}
 RUN chmod a+x ${INSTALL_RUST_TOOLCHAIN} \
     && ./${INSTALL_RUST_TOOLCHAIN} install \
