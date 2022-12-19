@@ -15,16 +15,16 @@ workbox.setConfig({
 workbox.core.setCacheNameDetails({
   // set the default cache name prefix. each domain should be unique to stop clashes
   // this is used for runtime and precaching only
-  prefix: 'govuk-cache'
+  prefix: 'spooky-cache'
 });
 
 // Using cache first strategy since the JS files are fingerprinted and this
 // filename will change once a new version is created
 workbox.routing.registerRoute(
   // match only with assets on the assets domain
-  new RegExp('https://assets.publishing.service.gov.uk/.*\.js$'),
+  new RegExp('https://georgik.rocks/.*\.js$'),
   workbox.strategies.cacheFirst({
-    cacheName: 'govuk-js-cache',
+    cacheName: 'spooky-js-cache',
     plugins: [
       new workbox.expiration.Plugin({
         // 28 days cache before expiration
@@ -40,9 +40,9 @@ workbox.routing.registerRoute(
 // filename will change once a new version is created
 workbox.routing.registerRoute(
   // match only with assets on the assets domain
-  new RegExp('https://assets.publishing.service.gov.uk/.*\.css$'),
+  new RegExp('https://georgik.rocks/.*\.css$'),
   workbox.strategies.cacheFirst({
-    cacheName: 'govuk-css-cache',
+    cacheName: 'spooky-css-cache',
     plugins: [
       new workbox.expiration.Plugin({
         // 28 days cache before expiration
@@ -58,9 +58,9 @@ workbox.routing.registerRoute(
 // filename will change once a new version is created
 workbox.routing.registerRoute(
   // match only with assets on the assets domain
-  new RegExp('https://assets.publishing.service.gov.uk/.*\.woff2$'),
+  new RegExp('https://georgik.rocks/.*\.woff2$'),
   workbox.strategies.cacheFirst({
-    cacheName: 'govuk-font-cache',
+    cacheName: 'spooky-font-cache',
     plugins: [
       new workbox.expiration.Plugin({
         // 28 days cache before expiration
