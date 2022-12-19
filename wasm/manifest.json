@@ -1,7 +1,7 @@
 {
     "name":"ESP32 Spooky Maze game",
     "short_name":"SPO",
-    "start_url":"/",
+    "start_url":"https://georgik.rocks/wp-content/html5/spooky/",
     "display":"standalone",
     "background_color":"#5900b3",
     "theme_color":"black",
