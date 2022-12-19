@@ -1,7 +1,16 @@
 <html>
 
 <head>
+  <meta charset="utf-8">
   <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+  <meta name="viewport"
+        content="width=device-width,
+                 initial-scale=1">
+  <meta name="apple-mobile-web-app-status-bar"
+        content="#aa7700">
+  <meta name="theme-color"
+        content="black">
+  <link rel="manifest" href="manifest.json">
 </head>
 
 <body
@@ -19,10 +28,20 @@
     <input type="button" id="button-teleport" value="Teleport" />
     <input type="button" id="button-dynamite" value="Dynamite" />
   </div>
+  <div id="html-console"></div>
 </body>
 
+<!-- PWA specific code -->
 <script type="text/javascript">
-
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(function(registration) {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      })
+      .catch(function(err) {
+        console.log('ServiceWorker registration failed: ', err);
+      });
+  }
 </script>
 
 </html>

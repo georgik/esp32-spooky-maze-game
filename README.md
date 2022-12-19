@@ -15,7 +15,9 @@ npm install
 npm run serve
 ```
 
-Open in web browser: http://localhost:8080
+Open in web browser: https://localhost:8443.
+
+Note: https is required for access to accelerometer data - https://w3c.github.io/deviceorientation/#security-and-privacy . It's possible to run the app without accelerometer on http.
 
 ### Build for ESP32-S3-BOX with ILI9486
 

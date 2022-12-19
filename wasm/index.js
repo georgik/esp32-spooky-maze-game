@@ -1,7 +1,23 @@
 var keyUp;
+
+const motionDirection = {
+    none: 0,
+    up: 1,
+    down: 2,
+    left: 3,
+    right: 4
+};
+
+const tiltThreshold = 2;
+
 const rust = import('./pkg')
   .then(m => {
     let universe = m.Universe.new();
+    var motionRequestHorizontal = motionDirection.none;
+    var motionRequestVertical = motionDirection.none;
+
+    document.getElementById('html-console').innerHTML = "Initialize";
+
     document.getElementById('button-up').addEventListener('click', () => {
         universe.move_up();
     });
@@ -21,6 +37,22 @@ const rust = import('./pkg')
         universe.place_dynamite();
     });
 
+
+    window.addEventListener("devicemotion", (event) => {
+
+        if (event.accelerationIncludingGravity.y > tiltThreshold) {
+            motionRequestVertical = motionDirection.down;
+        } else if (event.accelerationIncludingGravity.y < -tiltThreshold) {
+            motionRequestVertical = motionDirection.up;
+        }
+
+        if (event.accelerationIncludingGravity.x < -tiltThreshold) {
+            motionRequestHorizontal = motionDirection.right;
+        } else if (event.accelerationIncludingGravity.x > tiltThreshold) {
+            motionRequestHorizontal = motionDirection.left;
+        }
+    }, true);
+
     document.addEventListener('keydown', (event) => {
         if ((event.key === "Up") || (event.key == "ArrowUp")) {
             universe.move_up();
@@ -33,10 +65,31 @@ const rust = import('./pkg')
         }
     });
 
-    universe.initialize();
+    try {
+        universe.initialize();
+        document.getElementById('html-console').innerHTML = "Game is running";
+    } catch (err) {
+        document.getElementById('html-console').innerHTML = err.message;
+    }
+
     var oldTimestamp = 0;
     function renderFrame(timestamp) {
         if (timestamp - oldTimestamp > 200) {
+
+            if (motionRequestVertical == motionDirection.up) {  // up
+                universe.move_up();
+            } else if (motionRequestVertical == motionDirection.down) {  // down
+                universe.move_down();
+            }
+
+            if (motionRequestHorizontal == motionDirection.left) {  // left
+                universe.move_left();
+            } else if (motionRequestHorizontal == motionDirection.right) {  // right
+                universe.move_right();
+            }
+            motionRequestVertical = motionDirection.none;
+            motionRequestHorizontal = motionDirection.none;
+
             universe.render_frame();
             oldTimestamp = timestamp;
         }
