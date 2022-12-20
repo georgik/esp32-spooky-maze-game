@@ -42,7 +42,7 @@ use hal::{
 #[cfg(feature = "system_timer")]
 use hal::systimer::SystemTimer;
 
-use mipidsi::hal::{ Orientation, Rotation };
+use mipidsi::{ Orientation };
 
 // use panic_halt as _;
 use esp_backtrace as _;
@@ -168,7 +168,7 @@ fn main() -> ! {
         peripherals.SPI2,
         io.pins.gpio6,
         io.pins.gpio7,
-        io.pins.gpio12,
+        io.pins.gpio0,
         io.pins.gpio20,
         60u32.MHz(),
         spi::SpiMode::Mode0,
@@ -189,9 +189,10 @@ fn main() -> ! {
 
     // #[cfg(any(feature = "esp32s3_box"))]
     let mut display = mipidsi::Builder::ili9341_rgb565(di)
-    .with_display_size(320 as u16, 240 as u16)
+    .with_display_size(240 as u16, 320 as u16)
     // .with_framebuffer_size(240 as u16, 320 as u16)
-    // .with_orientation(mipidsi::Orientation::Landscape(true))
+    .with_orientation(mipidsi::Orientation::Landscape(true))
+    .with_color_order(mipidsi::ColorOrder::Rgb)
     .init(&mut delay, Some(reset))
     .unwrap();
 

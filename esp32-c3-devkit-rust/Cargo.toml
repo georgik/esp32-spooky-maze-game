@@ -23,7 +23,7 @@ display-interface = "0.4"
 display-interface-spi = "0.4"
 icm42670 = { git = "https://github.com/jessebraham/icm42670/" }
 # ili9341 = { version = "0.5", git = "https://github.com/yuri91/ili9341-rs", rev = "32ca78087c481e04863e094cffde62517fd079b4" }
-mipidsi = { git = "https://github.com/rfuest/mipidsi.git", branch = "display-driver-hal" }
+mipidsi = { git = "https://github.com/almindor/mipidsi.git" }
 panic-halt = "0.2"
 rand = { version = "0.8.5", default-features = false }
 rand_chacha = { version = "0.3.1", default-features = false }
