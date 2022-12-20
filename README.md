@@ -33,6 +33,16 @@ cd esp32-s3-box
 cargo espflash --release --monitor
 ```
 
+### Build for ESP32-C3-DeviKit-RUST with ILI9341
+
+Control: IMU
+- tilt board to move character
+
+```
+cd esp32-c3-devkit-rust
+cargo espflash --release --monitor
+```
+
 #### Features
 
 - Embedded Graphics
@@ -63,7 +73,6 @@ cd desktop
 cargo run
 ```
 
-
 ### Build for ESP32-S3-USB-OTG with ST7789
 
 ![Spooky on ESP32-S3-USB-OTG](assets/screenshot/esp32-spooky-s3-usb-otg.jpg)
@@ -75,7 +84,7 @@ Control: buttons
 
 ```
 cd esp32-s3-usb-otg
-esp32-s3-usb-otg
+cargo espflash --release --monitor
 ```
 
 ### Build for ESP32-S2-USB-OTG with ST7789
@@ -87,7 +96,7 @@ Control: buttons
 
 ```
 cd esp32-s2-usb-otg
-esp32-s2-usb-otg
+cargo espflash --release --monitor
 ```
 
 ### Build for M5CORE-FIRE with ESP32 and ILI9341
@@ -161,16 +170,6 @@ See tag v0.1.0.
 
 ```
 cargo espflash --release --target xtensa-esp32s2-none-elf --features esp32s2_ili9341 --monitor
-```
-
-### Build for ESP32-C3 with ILI9341
-
-See tag v0.1.0.
-
-It's necessary to override default toolchain specified in `rust-toolchain.toml`. One option is to pass `+nightly` to command line.
-
-```
-cargo +nightly espflash --release --target riscv32imac-unknown-none-elf --features esp32c3_ili9341 --monitor
 ```
 
 ## Development
