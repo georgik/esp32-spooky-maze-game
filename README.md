@@ -134,6 +134,17 @@ cd m5core-fire
 ./run-wokwi.sh
 ```
 
+#### Build M5CORE-FIRE and run Wokwi in local VS Code
+
+Preview: install VS Code Wokwi plugin (private beta available on request)
+
+```
+cd m5core-fire
+cargo build --release --no-default-features --features "wokwi"
+```
+
+Press F1, select Wokwi: Start simulation
+
 ### Build for ESP32-S2-Kaluga v1.3
 
 HW: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/hw-reference/esp32/get-started-wrover-kit.html
