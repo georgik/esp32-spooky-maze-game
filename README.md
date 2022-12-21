@@ -115,7 +115,7 @@ cargo espflash --release --monitor
 
 #### Build M5CORE-FIRE using GitPod.io and run with Wokwi
 
-- Open in (GitPod.io)[https://gitpod.io/github.com/georgik/esp32-spooky-maze-game]
+- Open in [GitPod.io](https://gitpod.io/github.com/georgik/esp32-spooky-maze-game)
 
 ```
 cd m5core-fire
@@ -126,7 +126,7 @@ cd m5core-fire
 
 #### Build M5CORE-FIRE using Codespaces and run with Wokwi
 
-- Navigate to (GitHub repository)[https://github.com/georgik/esp32-spooky-maze-game]
+- Navigate to [GitHub repository](https://github.com/georgik/esp32-spooky-maze-game)
 - Click Open, select Codespaces tab, click Create Codespace
 
 ```
