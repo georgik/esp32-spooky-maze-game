@@ -1,10 +1,10 @@
 {
     "name":"ESP32 Spooky Maze game",
-    "short_name":"SPO",
+    "short_name":"Spooky Maze",
     "start_url":"https://georgik.rocks/wp-content/html5/spooky/",
     "display":"standalone",
     "background_color":"#5900b3",
-    "theme_color":"black",
+    "theme_color":"#000000",
     "scope": ".",
     "description":"This is PWA version of Rust application for ESP32.",
     "icons":[
