@@ -59,7 +59,7 @@ use embedded_graphics::{pixelcolor::Rgb565};
 #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
 use ili9341::{DisplaySize240x320, Ili9341, Orientation};
 
-use spooky_core::{spritebuf::SpriteBuf, engine::Engine};
+use spooky_core::{spritebuf::SpriteBuf, engine::Engine, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite }};
 
 use embedded_hal::digital::v2::OutputPin;
 use embedded_graphics_framebuf::{FrameBuf};
@@ -78,22 +78,31 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D>
 
     pub fn initialize(&mut self) {
         self.engine.initialize();
+        self.engine.start();
     }
 
     pub fn move_up(&mut self) {
-        self.engine.move_up();
+        self.engine.action(Up);
     }
 
     pub fn move_down(&mut self) {
-        self.engine.move_down();
+        self.engine.action(Down);
     }
 
     pub fn move_left(&mut self) {
-        self.engine.move_left();
+        self.engine.action(Left);
     }
 
     pub fn move_right(&mut self) {
-        self.engine.move_right();
+        self.engine.action(Right);
+    }
+
+    pub fn teleport(&mut self) {
+        self.engine.action(Teleport);
+    }
+
+    pub fn place_dynamite(&mut self) {
+        self.engine.action(PlaceDynamite);
     }
 
     pub fn render_frame(&mut self) -> &D {
@@ -262,11 +271,11 @@ fn main() -> ! {
         let button_menu = button_menu_pin.is_low().unwrap();
 
         if button_up && button_down {
-            universe.engine.teleport();
+            universe.teleport();
         } else if button_menu && button_ok {
-            universe.engine.place_dynamite();
+            universe.place_dynamite();
         } else if button_down {
-            universe.engine.move_down();
+            universe.move_down();
         } else if button_up {
             universe.move_up();
         } else if button_menu {

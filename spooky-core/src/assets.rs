@@ -18,6 +18,7 @@ pub struct Assets<'a> {
     pub npc: Option<Bmp<'a, Rgb565>>,
     pub teleport: Option<Bmp<'a, Rgb565>>,
     pub walker: Option<Bmp<'a, Rgb565>>,
+    pub smiley: Option<Bmp<'a, Rgb565>>,
 }
 
 impl Assets<'static> {
@@ -36,6 +37,7 @@ impl Assets<'static> {
             npc: None,
             teleport: None,
             walker: None,
+            smiley: None,
         }
     }
 
@@ -53,5 +55,6 @@ impl Assets<'static> {
         self.npc = Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../assets/img/npc.bmp")).unwrap());
         self.teleport = Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../assets/img/teleport.bmp")).unwrap());
         self.walker = Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../assets/img/walker.bmp")).unwrap());
+        self.smiley = Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../assets/img/smiley.bmp")).unwrap());
     }
 }

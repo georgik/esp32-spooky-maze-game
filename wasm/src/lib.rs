@@ -11,7 +11,7 @@ use embedded_graphics_web_simulator::{
 use wasm_bindgen::prelude::*;
 use web_sys::{console};
 
-use spooky_core::{ engine::Engine };
+use spooky_core::{ engine::Engine, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite } };
 
 #[wasm_bindgen]
 pub struct Universe {
@@ -50,31 +50,32 @@ impl Universe {
     }
 
     pub fn move_up(&mut self) {
-        self.engine.move_up();
+        self.engine.action(Up);
     }
 
     pub fn move_down(&mut self) {
-        self.engine.move_down();
+        self.engine.action(Down);
     }
 
     pub fn move_left(&mut self) {
-        self.engine.move_left();
+        self.engine.action(Left);
     }
 
     pub fn move_right(&mut self) {
-        self.engine.move_right();
+        self.engine.action(Right);
     }
 
     pub fn teleport(&mut self) {
-        self.engine.teleport();
+        self.engine.action(Teleport);
     }
 
     pub fn place_dynamite(&mut self) {
-        self.engine.place_dynamite();
+        self.engine.action(PlaceDynamite);
     }
 
     pub fn initialize(&mut self) {
         self.engine.initialize();
+        self.engine.start();
     }
 
     pub fn render_frame(&mut self) {

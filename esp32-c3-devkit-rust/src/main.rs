@@ -55,7 +55,7 @@ use xtensa_lx_rt::entry;
 use embedded_graphics::pixelcolor::Rgb565;
 // use esp32s2_hal::Rng;
 
-use spooky_core::{engine::Engine, spritebuf::SpriteBuf};
+use spooky_core::{engine::Engine, spritebuf::SpriteBuf, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite }};
 
 #[cfg(any(feature = "imu_controls"))]
 use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
@@ -67,10 +67,7 @@ use embedded_hal::digital::v2::OutputPin;
 
 pub struct Universe<I, D> {
     pub engine: Engine<D>,
-    // #[cfg(any(feature = "imu_controls"))]
     icm: I,
-    // icm: Option<Icm42670<shared_bus::I2cProxy<shared_bus::NullMutex<i2c::I2C<I2C0>>>>>
-    // delay: Some(Delay),
 }
 
 impl<I: Accelerometer, D: embedded_graphics::draw_target::DrawTarget<Color = Rgb565>>
@@ -79,14 +76,13 @@ impl<I: Accelerometer, D: embedded_graphics::draw_target::DrawTarget<Color = Rgb
     pub fn new(icm: I, seed: Option<[u8; 32]>, engine: Engine<D>) -> Universe<I, D> {
         Universe {
             engine,
-            // #[cfg(any(feature = "imu_controls"))]
             icm,
-            // delay: None,
         }
     }
 
     pub fn initialize(&mut self) {
         self.engine.initialize();
+        self.engine.start();
     }
 
     pub fn render_frame(&mut self) -> &D {
@@ -96,27 +92,27 @@ impl<I: Accelerometer, D: embedded_graphics::draw_target::DrawTarget<Color = Rgb
             let accel_norm = self.icm.accel_norm().unwrap();
 
             if accel_norm.y > accel_threshold {
-                self.engine.move_left();
+                self.engine.action(Left);
             }
 
             if accel_norm.y < -accel_threshold {
-                self.engine.move_right();
+                self.engine.action(Right);
             }
 
             if accel_norm.x > accel_threshold {
-                self.engine.move_down();
+                self.engine.action(Down);
             }
 
             if accel_norm.x < -accel_threshold {
-                self.engine.move_up();
+                self.engine.action(Up);
             }
 
             // Quickly move up to teleport
             // Quickly move down to place dynamite
             if accel_norm.z < -1.2 {
-                self.engine.teleport();
+                self.engine.action(Teleport);
             } else if accel_norm.z > 1.5 {
-                self.engine.place_dynamite();
+                self.engine.action(PlaceDynamite);
             }
         }
 

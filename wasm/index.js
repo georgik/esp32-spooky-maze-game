@@ -54,6 +54,7 @@ const rust = import('./pkg')
     }, true);
 
     document.addEventListener('keydown', (event) => {
+        var isKnownKey = true;
         if ((event.key === "Up") || (event.key == "ArrowUp")) {
             universe.move_up();
         } else if ((event.key === "Down") || (event.key === "ArrowDown")) {
@@ -62,6 +63,16 @@ const rust = import('./pkg')
             universe.move_left();
         } else if ((event.key === "Right") || (event.key === "ArrowRight")) {
             universe.move_right();
+        } else if ((event.key === " ") || (event.key === "d")) {
+            universe.place_dynamite();
+        } else if ((event.key === "t") || (event.key === "Enter")){
+            universe.teleport();
+        } else {
+            isKnownKey = false;
+        }
+
+        if (isKnownKey) {
+            event.preventDefault();
         }
     });
 

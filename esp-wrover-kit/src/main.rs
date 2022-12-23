@@ -14,12 +14,6 @@ use embedded_graphics::{
 
 #[cfg(feature = "esp32")]
 use esp32_hal as hal;
-#[cfg(feature = "esp32c3")]
-use esp32c3_hal as hal;
-#[cfg(feature = "esp32s2")]
-use esp32s2_hal as hal;
-#[cfg(feature = "esp32s3")]
-use esp32s3_hal as hal;
 
 use hal::{
     clock::{ClockControl, CpuClock},
@@ -40,7 +34,7 @@ use xtensa_lx_rt::entry;
 
 use embedded_graphics::pixelcolor::Rgb565;
 
-use spooky_core::{engine::Engine, spritebuf::SpriteBuf};
+use spooky_core::{engine::Engine, spritebuf::SpriteBuf, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite }};
 
 #[cfg(any(feature = "imu_controls"))]
 use shared_bus::BusManagerSimple;
@@ -59,30 +53,31 @@ impl<D: embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe<D> 
 
     pub fn initialize(&mut self) {
         self.engine.initialize();
+        self.engine.start();
     }
 
     pub fn move_up(&mut self) {
-        self.engine.move_up();
+        self.engine.action(Up);
     }
 
     pub fn move_down(&mut self) {
-        self.engine.move_down();
+        self.engine.action(Down);
     }
 
     pub fn move_left(&mut self) {
-        self.engine.move_left();
+        self.engine.action(Left);
     }
 
     pub fn move_right(&mut self) {
-        self.engine.move_right();
+        self.engine.action(Right);
     }
 
     pub fn teleport(&mut self) {
-        self.engine.teleport();
+        self.engine.action(Teleport);
     }
 
     pub fn place_dynamite(&mut self) {
-        self.engine.place_dynamite();
+        self.engine.action(PlaceDynamite);
     }
 
     pub fn render_frame(&mut self) -> &D {

@@ -136,7 +136,7 @@ impl Maze {
         }
     }
 
-    fn get_rand(&mut self) -> i32 {
+    pub fn get_rand(&mut self) -> i32 {
         self.rng.gen_range(0..255)
     }
 
@@ -252,8 +252,6 @@ impl Maze {
                 self.coins[index].y = -1;
                 if self.coin_counter > 0 {
                     self.coin_counter -= 1;
-                } else {
-                    self.generate_coins();
                 }
             }
         }
