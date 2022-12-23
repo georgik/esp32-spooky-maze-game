@@ -60,10 +60,7 @@ use riscv_rt::entry;
 use embedded_graphics::{pixelcolor::Rgb565};
 // use esp32s2_hal::Rng;
 
-#[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
-use ili9341::{DisplaySize240x320, Ili9341, Orientation};
-
-use spooky_core::{spritebuf::SpriteBuf, engine::Engine};
+use spooky_core::{spritebuf::SpriteBuf, engine::Engine, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite }};
 
 use embedded_hal::digital::v2::OutputPin;
 use embedded_graphics_framebuf::{FrameBuf};
@@ -82,22 +79,23 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D>
 
     pub fn initialize(&mut self) {
         self.engine.initialize();
+        self.engine.start();
     }
 
     pub fn move_up(&mut self) {
-        self.engine.move_up();
+        self.engine.action(Up);
     }
 
     pub fn move_down(&mut self) {
-        self.engine.move_down();
+        self.engine.action(Down);
     }
 
     pub fn move_left(&mut self) {
-        self.engine.move_left();
+        self.engine.action(Left);
     }
 
     pub fn move_right(&mut self) {
-        self.engine.move_right();
+        self.engine.action(Right);
     }
 
     pub fn render_frame(&mut self) -> &D {
@@ -205,13 +203,13 @@ fn main() -> ! {
         let button_value: u16 = nb::block!(adc1.read(&mut button_ladder_pin)).unwrap();
         // Based on https://github.com/espressif/esp-bsp/blob/master/esp32_s2_kaluga_kit/include/bsp/esp32_s2_kaluga_kit.h#L299
         if button_value > 4000 && button_value < 5000 {
-            universe.engine.move_right();
+            universe.move_right();
         } else if button_value >= 5000 && button_value < 6000 {
-            universe.engine.move_left();
+            universe.move_left();
         } else if button_value >= 6000 && button_value < 7000 {
-            universe.engine.move_down();
+            universe.move_down();
         } else if button_value >= 7000 && button_value < 8180 {
-            universe.engine.move_up();
+            universe.move_up();
         }
 
         display.draw_iter(universe.render_frame().into_iter()).unwrap();
