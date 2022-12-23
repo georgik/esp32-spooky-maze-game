@@ -16,6 +16,23 @@ use crate::{assets::Assets, maze::Maze};
 use heapless::String;
 use tinybmp::Bmp;
 
+pub enum GameState {
+    Start,
+    Playing,
+    GameOver,
+    Outro,
+}
+
+pub enum Action {
+    None,
+    Up,
+    Down,
+    Left,
+    Right,
+    Teleport,
+    PlaceDynamite,
+}
+
 pub struct Engine<D> {
     pub start_time: u64,
     pub ghost_x: i32,
@@ -31,6 +48,8 @@ pub struct Engine<D> {
     teleport_counter: u32,
     walker_counter: u32,
     dynamite_counter: u32,
+    game_state: GameState,
+    outro_counter: u32,
 }
 
 
@@ -52,6 +71,8 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
             teleport_counter: 100,
             walker_counter: 0,
             dynamite_counter: 1,
+            game_state: GameState::Start,
+            outro_counter: 0,
         }
     }
 
@@ -63,6 +84,9 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         match self.maze.get_coin_at(x, y) {
             Some(coin) => {
                 self.maze.remove_coin(coin);
+                if self.maze.coin_counter == 0 {
+                    self.game_state = GameState::Outro;
+                }
             },
             None => {}
         }
@@ -121,7 +145,31 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         }
     }
 
-    pub fn move_right(&mut self) {
+    pub fn action(&mut self, action: Action) {
+        match self.game_state {
+            GameState::Playing => {
+                match action {
+                    Action::None => {}
+                    Action::Up => self.move_up(),
+                    Action::Down => self.move_down(),
+                    Action::Left => self.move_left(),
+                    Action::Right => self.move_right(),
+                    Action::Teleport => self.teleport(),
+                    Action::PlaceDynamite => self.place_dynamite(),
+                }
+            },
+            GameState::Outro => {
+                if self.outro_counter > 30 {
+                    self.game_state = GameState::Start;
+                    self.outro_counter = 0;
+                    self.start();
+                }
+            },
+            _ => {}
+        }
+    }
+
+    fn move_right(&mut self) {
         let new_camera_x = self.camera_x + self.step_size_x as i32;
         if self.is_walkable(new_camera_x + self.ghost_x, self.camera_y + self.ghost_y) {
             self.camera_x = new_camera_x;
@@ -129,7 +177,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         }
     }
 
-    pub fn move_left(&mut self) {
+    fn move_left(&mut self) {
         let new_camera_x = self.camera_x - self.step_size_x as i32;
         if self.is_walkable(new_camera_x + self.ghost_x, self.camera_y + self.ghost_y) {
             self.camera_x = new_camera_x;
@@ -137,7 +185,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         }
     }
 
-    pub fn move_up(&mut self) {
+    fn move_up(&mut self) {
         let new_camera_y = self.camera_y - self.step_size_y as i32;
         if self.is_walkable(self.camera_x + self.ghost_x, new_camera_y + self.ghost_y) {
             self.camera_y = new_camera_y;
@@ -145,7 +193,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         }
     }
 
-    pub fn move_down(&mut self) {
+    fn move_down(&mut self) {
         let new_camera_y = self.camera_y + self.step_size_y as i32;
         if self.is_walkable(self.camera_x + self.ghost_x, new_camera_y + self.ghost_y) {
             self.camera_y = new_camera_y;
@@ -153,14 +201,14 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         }
     }
 
-    pub fn teleport(&mut self) {
+    fn teleport(&mut self) {
         if self.teleport_counter == 100 {
             self.relocate_avatar();
             self.teleport_counter = 0;
         }
     }
 
-    pub fn place_dynamite(&mut self) {
+    fn place_dynamite(&mut self) {
         if self.dynamite_counter == 0 {
             return;
         }
@@ -213,30 +261,43 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
 
 
     pub fn tick(&mut self) {
-        self.animation_step += 1;
-        if self.animation_step > 1 {
-            self.animation_step = 0;
-        }
+        match self.game_state {
+            GameState::Playing => {
 
-        // Recharge teleport
-        if self.teleport_counter < 100 {
-            self.teleport_counter += 1;
-        }
+                self.animation_step += 1;
+                if self.animation_step > 1 {
+                    self.animation_step = 0;
+                }
 
-        // Decrement remaining time when Walker is active
-        if self.walker_counter > 0 {
-            self.walker_counter -= 1;
-        }
+                // Recharge teleport
+                if self.teleport_counter < 100 {
+                    self.teleport_counter += 1;
+                }
 
-        self.maze.move_npcs();
-        self.check_npc_collision();
+                // Decrement remaining time when Walker is active
+                if self.walker_counter > 0 {
+                    self.walker_counter -= 1;
+                }
+
+                self.maze.move_npcs();
+                self.check_npc_collision();
+            },
+            GameState::Outro => {
+                if self.outro_counter < 1000 {
+                    self.outro_counter += 1;
+                }
+            },
+            _ => {}
+        }
     }
 
     pub fn initialize(&mut self) {
         let mut assets = Assets::new();
         assets.load();
         self.assets = Some(assets);
+    }
 
+    pub fn start(&mut self) {
         self.maze.generate_maze(32, 32);
         self.relocate_avatar();
         self.maze.generate_coins();
@@ -244,7 +305,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         self.maze.generate_walkers();
         self.maze.generate_dynamites();
         self.draw_maze(self.camera_x,self.camera_y);
-
+        self.game_state = GameState::Playing;
     }
 
     fn draw_status_number(&mut self, value: u32, x: i32, y: i32) {
@@ -253,7 +314,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
             .draw(&mut self.display);
     }
 
-    pub fn draw(&mut self) -> &mut D {
+    pub fn draw_main_scene(&mut self) -> &mut D {
         self.draw_maze(self.camera_x,self.camera_y);
 
 
@@ -372,6 +433,29 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         self.draw_status_number(self.dynamite_counter, 24, 83);
 
         &mut self.display
+    }
+
+    pub fn draw_outro_scene(&mut self) -> &mut D {
+        let assets = self.assets.as_ref().unwrap();
+        let bmp:Bmp<Rgb565> = assets.smiley.unwrap();
+        let (x,y) = (self.maze.get_rand() + self.maze.get_rand() % 70, self.maze.get_rand() % 240);
+        let outro = Image::new(&bmp, Point::new(x, y));
+        outro.draw(&mut self.display);
+        &mut self.display
+    }
+
+    pub fn draw(&mut self) -> &mut D {
+        match self.game_state {
+            GameState::Playing => {
+                self.draw_main_scene()
+            },
+            GameState::Outro => {
+                self.draw_outro_scene()
+            },
+            _ => {
+                &mut self.display
+            }
+        }
     }
 
 
