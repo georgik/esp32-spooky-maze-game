@@ -13,7 +13,7 @@ use embedded_graphics_framebuf::{FrameBuf};
 
 use std::time::Duration;
 
-use spooky_core::{ spritebuf::SpriteBuf, engine::Engine };
+use spooky_core::{ spritebuf::SpriteBuf, engine::Engine, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite } };
 
 pub struct Universe<D> {
     engine: Engine<D>,
@@ -34,38 +34,37 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D>
     }
 
     pub fn move_up(&mut self) {
-        self.engine.move_up();
+        self.engine.action(Up);
     }
 
     pub fn move_down(&mut self) {
-        self.engine.move_down();
+        self.engine.action(Down);
     }
 
     pub fn move_left(&mut self) {
-        self.engine.move_left();
+        self.engine.action(Left);
     }
 
     pub fn move_right(&mut self) {
-        self.engine.move_right();
+        self.engine.action(Right);
     }
 
     pub fn teleport(&mut self) {
-        self.engine.teleport();
+        self.engine.action(Teleport);
     }
 
     pub fn initialize(&mut self) {
         self.engine.initialize();
+        self.engine.start();
     }
 
     pub fn place_dynamite(&mut self) {
-        self.engine.place_dynamite();
+        self.engine.action(PlaceDynamite);
     }
 
     pub fn render_frame(&mut self) -> &D {
         self.engine.tick();
         self.engine.draw()
-        // display.flush().unwrap();
-
     }
 }
 
