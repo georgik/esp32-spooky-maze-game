@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar"
         content="#aa7700">
   <meta name="theme-color"
-        content="black">
+        content="#000000">
   <link rel="manifest" href="manifest.json">
 </head>
 
@@ -34,7 +34,7 @@
 <!-- PWA specific code -->
 <script type="text/javascript">
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
+    navigator.serviceWorker.register('service-worker.js')
       .then(function(registration) {
         console.log('ServiceWorker registration successful with scope: ', registration.scope);
       })
