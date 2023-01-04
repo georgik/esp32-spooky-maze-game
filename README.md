@@ -5,6 +5,10 @@ The ghost can find artifact "Walker" which allows him to pass throght the wall f
 The ghost can use dynamite to clear wall in the vicinity. The ghost can use also Teleport spell to move to random place in the maze.
 The Teleport spell requires some time to recharge. There are some not friendly spirits running around the maze, when collision occurs the ghost is teleported and loses five coins which are then send randomly back to the maze.
 
+### Creating similar custom ESP32 app from a template
+
+If you'd like to build similar app with multiple targets follow `cargo generate` instructions - https://github.com/georgik/esp32-rust-multi-target-template#generate-new-project .
+
 ## Build and flash
 
 ### Build WASM version
