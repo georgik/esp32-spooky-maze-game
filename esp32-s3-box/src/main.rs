@@ -15,12 +15,6 @@ use embedded_graphics::{
 
 use esp_println::println;
 
-#[cfg(feature = "esp32")]
-use esp32_hal as hal;
-#[cfg(feature = "esp32c3")]
-use esp32c3_hal as hal;
-#[cfg(feature = "esp32s2")]
-use esp32s2_hal as hal;
 #[cfg(feature = "esp32s3")]
 use esp32s3_hal as hal;
 
@@ -37,6 +31,8 @@ use hal::{
     Rtc,
     IO,
 };
+
+use tt21100::{TT21100};
 
 // systimer was introduced in ESP32-S2, it's not available for ESP32
 #[cfg(feature = "system_timer")]
@@ -126,8 +122,6 @@ fn main() -> ! {
 
     let peripherals = Peripherals::take().unwrap();
 
-    #[cfg(any(feature = "esp32"))]
-    let mut system = peripherals.DPORT.split();
     #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
     let mut system = peripherals.SYSTEM.split();
     let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
@@ -139,8 +133,6 @@ fn main() -> ! {
     let timer_group1 = TimerGroup::new(peripherals.TIMG1, &clocks);
     let mut wdt1 = timer_group1.wdt;
 
-    #[cfg(feature = "esp32c3")]
-    rtc.swd.disable();
     #[cfg(feature = "xtensa-lx-rt")]
     rtc.rwdt.disable();
 
@@ -223,6 +215,10 @@ fn main() -> ! {
     let bus = BusManagerSimple::new(i2c);
     #[cfg(any(feature = "imu_controls"))]
     let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
+
+    // https://github.com/espressif/esp-bsp/blob/master/esp-box/include/bsp/esp-box.h
+    let tt_irq = IRQ::new(io.pins.gpio3);
+    let tt = TT21100::new(bus.acquire_i2c(),tt_irq ).unwrap();
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
