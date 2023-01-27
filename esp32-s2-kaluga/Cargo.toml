@@ -7,7 +7,7 @@ license = "MIT"
 
 [target.xtensa-esp32s2-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.3.0"
-esp32s2-hal = "0.4.0"
+esp32s2-hal = "0.5.0"
 esp-backtrace = { version = "0.4.0", features = [
     "esp32s2",
     "panic-handler",

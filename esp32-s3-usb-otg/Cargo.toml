@@ -8,7 +8,7 @@ license = "MIT"
 [target.xtensa-esp32s3-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.3.0"
 # esp32s3-hal = { package = "esp32s3-hal", git = "https://github.com/esp-rs/esp-hal.git" }
-esp32s3-hal = "0.4.0"
+esp32s3-hal = "0.5.0"
 esp-backtrace = { version = "0.4.0" , features = [
     "esp32s3",
     "panic-handler",

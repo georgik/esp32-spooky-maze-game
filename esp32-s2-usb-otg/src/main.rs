@@ -28,7 +28,7 @@ use hal::{
     clock::{ ClockControl, CpuClock },
     // gdma::Gdma,
     i2c,
-    pac::Peripherals,
+    peripherals::Peripherals,
     prelude::*,
     spi,
     timer::TimerGroup,
@@ -111,7 +111,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D>
 
 #[entry]
 fn main() -> ! {
-    let peripherals = Peripherals::take().unwrap();
+    let peripherals = Peripherals::take();
 
     #[cfg(any(feature = "esp32"))]
     let mut system = peripherals.DPORT.split();
