@@ -11,6 +11,7 @@ use embedded_graphics::{
     text::Text,
     Drawable,
 };
+use esp_println::println;
 
 #[cfg(feature = "esp32")]
 use esp32_hal as hal;
@@ -67,31 +68,31 @@ impl<D: embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe<D> 
 
     pub fn initialize(&mut self) {
         self.engine.initialize();
-        self.engine.start()
+        self.engine.start();
     }
 
-    pub fn move_up(&mut self) {
-        self.engine.action(Up);
+    pub fn move_up(&mut self) -> bool {
+        self.engine.action(Up)
     }
 
-    pub fn move_down(&mut self) {
-        self.engine.action(Down);
+    pub fn move_down(&mut self) -> bool {
+        self.engine.action(Down)
     }
 
-    pub fn move_left(&mut self) {
-        self.engine.action(Left);
+    pub fn move_left(&mut self) -> bool {
+        self.engine.action(Left)
     }
 
-    pub fn move_right(&mut self) {
-        self.engine.action(Right);
+    pub fn move_right(&mut self) -> bool {
+        self.engine.action(Right)
     }
 
-    pub fn teleport(&mut self) {
+    pub fn teleport(&mut self) -> bool {
         self.engine.action(Teleport)
     }
 
-    pub fn place_dynamite(&mut self) {
-        self.engine.action(PlaceDynamite);
+    pub fn place_dynamite(&mut self) -> bool {
+        self.engine.action(PlaceDynamite)
     }
 
     pub fn render_frame(&mut self) -> &D {
@@ -217,15 +218,20 @@ fn main() -> ! {
     let mut universe = Universe::new(Some(seed_buffer), engine);
     universe.initialize();
 
+    let mut screen_saver_counter = 0;
+    let mut screen_saver = false;
+
     loop {
         #[cfg(feature = "m5stack_core2")]
         {
             if button_c.is_low().unwrap() {
                 universe.teleport();
+                screen_saver_counter = 0;
             }
 
             if button_b.is_low().unwrap() {
                 universe.place_dynamite();
+                screen_saver_counter = 0;
             }
 
         }
@@ -248,28 +254,48 @@ fn main() -> ! {
             let measurement: ImuMeasurements<[f32; 3]> = icm.all().unwrap();
 
             if measurement.accel[0] > accel_threshold {
-                universe.move_left();
+                if universe.move_left() {
+                    screen_saver_counter = 0;
+                }
             }
 
             if measurement.accel[0] < -accel_threshold {
-                universe.move_right();
+                if universe.move_right() {
+                    screen_saver_counter = 0;
+                }
             }
 
             if measurement.accel[1] > accel_threshold {
-                universe.move_down();
+                if universe.move_down() {
+                    screen_saver_counter = 0;
+                }
             }
 
             if measurement.accel[1] < -accel_threshold {
-                universe.move_up();
+                if universe.move_up() {
+                    screen_saver_counter = 0;
+                }
             }
 
             // Quickly move up to teleport
             // Quickly move down to place dynamite
-            if measurement.accel[2] < -10.2 {
-                universe.teleport();
-            } else if measurement.accel[2] > 20.5 {
-                universe.place_dynamite();
-            }
+            // if measurement.accel[2] < -10.2 {
+            //     universe.teleport();
+            // } else if measurement.accel[2] > 20.5 {
+            //     universe.place_dynamite();
+            // }
+        }
+
+        println!("{}", screen_saver_counter);
+        if screen_saver_counter > 10 {
+            backlight.set_low().unwrap();
+            screen_saver = true;
+        } else if screen_saver_counter == 0 {
+            backlight.set_high().unwrap();
+            screen_saver = false;
+            screen_saver_counter += 1;
+        } else {
+            screen_saver_counter += 1;
         }
 
         #[cfg(feature = "mpu6050")]

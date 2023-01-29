@@ -145,17 +145,17 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         }
     }
 
-    pub fn action(&mut self, action: Action) {
+    pub fn action(&mut self, action: Action) -> bool{
         match self.game_state {
             GameState::Playing => {
                 match action {
-                    Action::None => {}
-                    Action::Up => self.move_up(),
-                    Action::Down => self.move_down(),
-                    Action::Left => self.move_left(),
-                    Action::Right => self.move_right(),
-                    Action::Teleport => self.teleport(),
-                    Action::PlaceDynamite => self.place_dynamite(),
+                    Action::None => return false,
+                    Action::Up => return self.move_up(),
+                    Action::Down => return self.move_down(),
+                    Action::Left => return self.move_left(),
+                    Action::Right => return self.move_right(),
+                    Action::Teleport => return self.teleport(),
+                    Action::PlaceDynamite => return self.place_dynamite(),
                 }
             },
             GameState::Outro => {
@@ -163,58 +163,71 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
                     self.game_state = GameState::Start;
                     self.outro_counter = 0;
                     self.start();
+                    return true
                 }
+                false
             },
-            _ => {}
+            _ => { return false }
         }
     }
 
-    fn move_right(&mut self) {
+    fn move_right(&mut self) -> bool {
         let new_camera_x = self.camera_x + self.step_size_x as i32;
         if self.is_walkable(new_camera_x + self.ghost_x, self.camera_y + self.ghost_y) {
             self.camera_x = new_camera_x;
             self.check_object_collisions();
+            return true;
         }
+        false
     }
 
-    fn move_left(&mut self) {
+    fn move_left(&mut self) -> bool {
         let new_camera_x = self.camera_x - self.step_size_x as i32;
         if self.is_walkable(new_camera_x + self.ghost_x, self.camera_y + self.ghost_y) {
             self.camera_x = new_camera_x;
             self.check_object_collisions();
+            return true;
         }
+        false
     }
 
-    fn move_up(&mut self) {
+    fn move_up(&mut self) -> bool {
         let new_camera_y = self.camera_y - self.step_size_y as i32;
         if self.is_walkable(self.camera_x + self.ghost_x, new_camera_y + self.ghost_y) {
             self.camera_y = new_camera_y;
             self.check_object_collisions();
+            return true;
         }
+        false
     }
 
-    fn move_down(&mut self) {
+    fn move_down(&mut self) -> bool {
         let new_camera_y = self.camera_y + self.step_size_y as i32;
         if self.is_walkable(self.camera_x + self.ghost_x, new_camera_y + self.ghost_y) {
             self.camera_y = new_camera_y;
             self.check_object_collisions();
+            return true;
         }
+        false
     }
 
-    fn teleport(&mut self) {
+    fn teleport(&mut self) -> bool {
         if self.teleport_counter == 100 {
             self.relocate_avatar();
             self.teleport_counter = 0;
+            return true;
         }
+        false
     }
 
-    fn place_dynamite(&mut self) {
+    fn place_dynamite(&mut self) -> bool{
         if self.dynamite_counter == 0 {
-            return;
+            return false;
         }
 
         self.maze.place_dynamite(self.camera_x + self.ghost_x, self.camera_y + self.ghost_y);
         self.dynamite_counter -= 1;
+        true
     }
 
     pub fn draw_maze(&mut self, camera_x: i32, camera_y: i32) {
