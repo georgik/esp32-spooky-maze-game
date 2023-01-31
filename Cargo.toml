@@ -12,7 +12,8 @@ members = [
     "esp32-s2-usb-otg",
     "esp32-s3-usb-otg",
     "esp32-s3-box",
-    "m5core-fire",
+    "m5stack-core2",
+    "m5stack-fire",
     "spooky-core",
     "wasm"
 ]
