@@ -1,5 +1,5 @@
 [package]
-name = "spooky_wrover_kit"
+name = "spooky-wrover-kit"
 version = "0.1.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"

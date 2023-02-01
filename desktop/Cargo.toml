@@ -1,5 +1,5 @@
 [package]
-name = "desktop"
+name = "spooky-desktop"
 version = "0.1.0"
 authors = ["Juraj Michalek <juraj.michalek@espressif.com>", "Samuel Benko <samuel.benko@espressif.com>"]
 edition = "2021"

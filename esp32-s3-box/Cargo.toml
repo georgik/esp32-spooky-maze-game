@@ -1,5 +1,5 @@
 [package]
-name = "spooky"
+name = "spooky-s3-box"
 version = "0.1.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
