@@ -27,7 +27,7 @@ use hal::{
     spi,
     timer::TimerGroup,
     Delay,
-    Rng,
+    // Rng,
     Rtc,
     IO,
 };
@@ -41,13 +41,7 @@ use mipidsi::{ Orientation };
 // use panic_halt as _;
 use esp_backtrace as _;
 
-#[cfg(feature = "riscv-rt")]
-use riscv_rt::entry;
-#[cfg(feature = "xtensa-lx-rt")]
-use xtensa_lx_rt::entry;
-
 use embedded_graphics::pixelcolor::Rgb565;
-// use esp32s2_hal::Rng;
 
 use spooky_core::{engine::Engine, spritebuf::SpriteBuf, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite }};
 
@@ -119,11 +113,11 @@ impl<I: Accelerometer, D: embedded_graphics::draw_target::DrawTarget<Color = Rgb
 fn main() -> ! {
     let peripherals = Peripherals::take();
 
-    let mut system = peripherals.SYSTEM.split();
+    let mut system = peripherals.PCR.split();
     let mut clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
 
     // Disable the RTC and TIMG watchdog timers
-    let mut rtc = Rtc::new(peripherals.RTC_CNTL);
+    let mut rtc = Rtc::new(peripherals.LP_CLKRST);
     let timer_group0 = TimerGroup::new(peripherals.TIMG0, &clocks);
     let mut wdt0 = timer_group0.wdt;
     let timer_group1 = TimerGroup::new(peripherals.TIMG1, &clocks);
@@ -142,10 +136,10 @@ fn main() -> ! {
 
     let spi = spi::Spi::new(
         peripherals.SPI2,
-        io.pins.gpio6,
-        io.pins.gpio7,
-        io.pins.gpio0,
-        io.pins.gpio20,
+        io.pins.gpio6, // SCLK
+        io.pins.gpio7, // MOSO
+        io.pins.gpio0, // MISO
+        io.pins.gpio20, // CS
         60u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
@@ -198,9 +192,9 @@ fn main() -> ! {
     #[cfg(any(feature = "imu_controls"))]
     let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
 
-    let mut rng = Rng::new(peripherals.RNG);
+    // let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
-    rng.read(&mut seed_buffer).unwrap();
+    // rng.read(&mut seed_buffer).unwrap();
     let mut data = [Rgb565::BLACK; 320 * 240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);
     let spritebuf = SpriteBuf::new(fbuf);
