@@ -118,7 +118,7 @@ impl<I: Accelerometer, D: embedded_graphics::draw_target::DrawTarget<Color = Rgb
     }
 }
 
-#[entry]
+#[xtensa_lx_rt::entry]
 fn main() -> ! {
     const HEAP_SIZE: usize = 65535 * 4;
     static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
@@ -190,7 +190,7 @@ fn main() -> ! {
     let mut display = mipidsi::Builder::ili9342c_rgb565(di)
         .with_display_size(320, 240)
         .with_orientation(mipidsi::Orientation::PortraitInverted(false))
-        .with_color_order(mipidsi::ColorOrder::Rgb)
+        .with_color_order(mipidsi::ColorOrder::Bgr)
         .init(&mut delay, Some(reset))
         .unwrap();
 
