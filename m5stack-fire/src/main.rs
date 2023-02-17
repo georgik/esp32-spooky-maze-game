@@ -24,7 +24,7 @@ use esp32s3_hal as hal;
 use hal::{
     clock::{ClockControl, CpuClock},
     i2c,
-    pac::Peripherals,
+    peripherals::Peripherals,
     prelude::*,
     spi,
     timer::TimerGroup,
@@ -102,7 +102,7 @@ impl<D: embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe<D> 
 
 #[entry]
 fn main() -> ! {
-    let peripherals = Peripherals::take().unwrap();
+    let peripherals = Peripherals::take();
 
     #[cfg(any(feature = "esp32"))]
     let mut system = peripherals.DPORT.split();
@@ -150,7 +150,7 @@ fn main() -> ! {
     let reset = io.pins.gpio33.into_push_pull_output();
     let di = SPIInterfaceNoCS::new(spi, io.pins.gpio27.into_push_pull_output());
 
-    #[cfg(feature = "m5stack_core2")]
+    #[cfg(feature = "m5stack_fire")]
     let mut display = mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(320, 240)
         .init(&mut delay, Some(reset))
@@ -176,9 +176,9 @@ fn main() -> ! {
     let button_b = io.pins.gpio34.into_pull_up_input();
     #[cfg(feature = "wokwi")]
     let button_c = io.pins.gpio35.into_pull_up_input();
-    #[cfg(feature = "m5stack_core2")]
+    #[cfg(feature = "m5stack_fire")]
     let button_b = io.pins.gpio38.into_pull_up_input();
-    #[cfg(feature = "m5stack_core2")]
+    #[cfg(feature = "m5stack_fire")]
     let button_c = io.pins.gpio37.into_pull_up_input();
 
     #[cfg(any(feature = "imu_controls"))]
@@ -218,7 +218,7 @@ fn main() -> ! {
     universe.initialize();
 
     loop {
-        #[cfg(feature = "m5stack_core2")]
+        #[cfg(feature = "m5stack_fire")]
         {
             if button_c.is_low().unwrap() {
                 universe.teleport();

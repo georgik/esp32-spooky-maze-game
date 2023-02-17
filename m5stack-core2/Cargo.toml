@@ -1,31 +1,31 @@
 [package]
-name = "spooky-s2-kaluga"
+name = "spooky-m5stack-core2"
 version = "0.1.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
 
-[target.xtensa-esp32s2-none-elf.dependencies]
+[target.xtensa-esp32-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.4.0"
-esp32s2-hal = "0.5.0"
+esp32-hal = "0.8.0"
 esp-backtrace = { version = "0.5.0", features = [
-    "esp32s2",
+    "esp32",
     "panic-handler",
     "print-uart",
 ] }
-xtensa-lx-rt = { version = "0.15.0", features = ["esp32s2"], optional = true }
-esp-println = { version = "0.3.1", features = ["esp32s2"] }
+xtensa-lx-rt = { version = "0.15.0", features = ["esp32"], optional = true }
 
 [dependencies]
-esp-alloc = "0.1.0"
 embedded-graphics = "0.7"
 embedded-hal = "0.2"
 display-interface = "0.4"
 display-interface-spi = "0.4"
+mpu9250 = { version = "0.24.1", default-features = false, features = [
+    "i2c",
+], optional = true }
+mpu6050 = { version = "0.1.6", optional = true }
 mipidsi = { git = "https://github.com/rfuest/mipidsi.git", branch = "display-driver-hal" }
 panic-halt = "0.2"
-rand = { version = "0.8.5", default-features = false }
-rand_chacha = { version = "0.3.1", default-features = false }
 shared-bus = { version = "0.2.4" }
 spooky-core = { path = "../spooky-core", default-features = false, features = [
     "static_maze",
@@ -34,19 +34,20 @@ heapless = { version = "0.7.14", default-features = false }
 embedded-graphics-framebuf = "0.2.0"
 
 [features]
-default = ["rt", "esp32s2_kaluga" ]
-rt = ["xtensa-lx-rt"]
-
+default = ["m5stack_core2"]
 system_timer = []
 
 button_controls = []
 imu_controls = []
-
-static_maze = []
 
 esp32 = []
 esp32s2 = ["system_timer"]
 esp32s3 = []
 esp32c3 = ["system_timer"]
 
-esp32s2_kaluga = ["xtensa-lx-rt", "esp32s2" ]
+mpu6050 = ["imu_controls", "dep:mpu6050"]
+mpu9250 = ["imu_controls", "dep:mpu9250"]
+
+wokwi = [ "xtensa-lx-rt", "esp32", "esp32-hal/eh1", "mpu6050" ]
+
+m5stack_core2 = ["xtensa-lx-rt", "esp32", "esp32-hal/eh1", ]
