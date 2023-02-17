@@ -22,7 +22,7 @@ use hal::{
     clock::{ClockControl, CpuClock},
     // gdma::Gdma,
     i2c,
-    pac::Peripherals,
+    peripherals::Peripherals,
     prelude::*,
     spi,
     timer::TimerGroup,
@@ -117,7 +117,7 @@ impl<I: Accelerometer, D: embedded_graphics::draw_target::DrawTarget<Color = Rgb
 
 #[entry]
 fn main() -> ! {
-    let peripherals = Peripherals::take().unwrap();
+    let peripherals = Peripherals::take();
 
     let mut system = peripherals.SYSTEM.split();
     let mut clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();

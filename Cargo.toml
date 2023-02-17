@@ -6,7 +6,7 @@ resolver = "2"
 members = [
     "desktop",
     "esp-wrover-kit",
-    "esp32-c3-devkit-rust",
+#    "esp32-c3-devkit-rust",
     "esp32-c6-devkit",
     "esp32-s2-kaluga",
     "esp32-s2-usb-otg",
