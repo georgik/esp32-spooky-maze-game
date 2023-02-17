@@ -15,14 +15,8 @@ use embedded_graphics::{
 
 use esp_println::println;
 
-#[cfg(feature = "esp32")]
-use esp32_hal as hal;
-#[cfg(feature = "esp32c3")]
-use esp32c3_hal as hal;
-#[cfg(feature = "esp32s2")]
-use esp32s2_hal as hal;
-#[cfg(feature = "esp32s3")]
-use esp32s3_hal as hal;
+#[cfg(feature = "esp32c6")]
+use esp32c6_hal as hal;
 
 use hal::{
     clock::{ClockControl, CpuClock},
@@ -33,7 +27,7 @@ use hal::{
     spi,
     timer::TimerGroup,
     Delay,
-    Rng,
+    // Rng,
     Rtc,
     IO,
 };
@@ -42,17 +36,14 @@ use hal::{
 #[cfg(feature = "system_timer")]
 use hal::systimer::SystemTimer;
 
+use mipidsi::{ Orientation };
+
 // use panic_halt as _;
 use esp_backtrace as _;
 
-#[cfg(feature = "riscv-rt")]
-use riscv_rt::entry;
-#[cfg(feature = "xtensa-lx-rt")]
-use xtensa_lx_rt::entry;
-
 use embedded_graphics::pixelcolor::Rgb565;
 
-use spooky_core::{engine::Engine, spritebuf::SpriteBuf, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite } };
+use spooky_core::{engine::Engine, spritebuf::SpriteBuf, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite }};
 
 #[cfg(any(feature = "imu_controls"))]
 use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
@@ -62,18 +53,16 @@ use shared_bus::BusManagerSimple;
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
 
-pub struct Universe<I, D> {
+pub struct Universe<D> {
     pub engine: Engine<D>,
-    icm: I,
 }
 
-impl<I: Accelerometer, D: embedded_graphics::draw_target::DrawTarget<Color = Rgb565>>
-    Universe<I, D>
+impl<D: embedded_graphics::draw_target::DrawTarget<Color = Rgb565>>
+    Universe<D>
 {
-    pub fn new(icm: I, seed: Option<[u8; 32]>, engine: Engine<D>) -> Universe<I, D> {
+    pub fn new(seed: Option<[u8; 32]>, engine: Engine<D>) -> Universe<D> {
         Universe {
             engine,
-            icm,
         }
     }
 
@@ -118,81 +107,59 @@ impl<I: Accelerometer, D: embedded_graphics::draw_target::DrawTarget<Color = Rgb
     }
 }
 
-#[xtensa_lx_rt::entry]
+#[entry]
 fn main() -> ! {
-    const HEAP_SIZE: usize = 65535 * 4;
-    static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
-    unsafe { ALLOCATOR.init(HEAP.as_mut_ptr(), HEAP_SIZE) }
-
     let peripherals = Peripherals::take();
 
-    #[cfg(any(feature = "esp32"))]
-    let mut system = peripherals.DPORT.split();
-    #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
-    let mut system = peripherals.SYSTEM.split();
-    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
+    let mut system = peripherals.PCR.split();
+    let mut clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
 
     // Disable the RTC and TIMG watchdog timers
-    let mut rtc = Rtc::new(peripherals.RTC_CNTL);
+    let mut rtc = Rtc::new(peripherals.LP_CLKRST);
     let timer_group0 = TimerGroup::new(peripherals.TIMG0, &clocks);
     let mut wdt0 = timer_group0.wdt;
     let timer_group1 = TimerGroup::new(peripherals.TIMG1, &clocks);
     let mut wdt1 = timer_group1.wdt;
 
-    #[cfg(feature = "esp32c3")]
     rtc.swd.disable();
-    #[cfg(feature = "xtensa-lx-rt")]
     rtc.rwdt.disable();
 
     wdt0.disable();
     wdt1.disable();
 
     let mut delay = Delay::new(&clocks);
-    // self.delay = Some(delay);
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
+    // let mut backlight = io.pins.gpio0.into_push_pull_output();
 
-
-    #[cfg(any(feature = "esp32s3_box"))]
-    let sclk = io.pins.gpio7;
-    #[cfg(any(feature = "esp32s3_box"))]
-    let mosi = io.pins.gpio6;
-
-    #[cfg(any(feature = "esp32s3_box"))]
-    let spi = spi::Spi::new_no_cs_no_miso(
+    let spi = spi::Spi::new(
         peripherals.SPI2,
-        sclk,
-        mosi,
+        io.pins.gpio6, // SCLK
+        io.pins.gpio7, // MOSO
+        io.pins.gpio0, // MISO
+        io.pins.gpio20, // CS
         60u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
-        &clocks,
+        &mut clocks,
     );
 
-    #[cfg(any(feature = "esp32s3_box"))]
-    let mut backlight = io.pins.gpio45.into_push_pull_output();
+    let reset = io.pins.gpio3.into_push_pull_output();
 
-    #[cfg(feature = "esp32")]
-    backlight.set_low().unwrap();
-    #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
-    backlight.set_high().unwrap();
+    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio21.into_push_pull_output());
 
-    #[cfg(any(feature = "esp32s3_box"))]
-    let reset = io.pins.gpio48.into_push_pull_output();
+    let mut delay = Delay::new(&clocks);
 
-    #[cfg(any(feature = "esp32s2", feature = "esp32s3"))]
-    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio4.into_push_pull_output());
+    let mut display = mipidsi::Builder::ili9341_rgb565(di)
+    .with_display_size(240 as u16, 320 as u16)
+    // .with_framebuffer_size(240 as u16, 320 as u16)
+    .with_orientation(mipidsi::Orientation::Landscape(true))
+    .with_color_order(mipidsi::ColorOrder::Rgb)
+    .init(&mut delay, Some(reset))
+    .unwrap();
 
-    //https://github.com/espressif/esp-box/blob/master/components/bsp/src/boards/esp32_s3_box.c
-
-    #[cfg(any(feature = "esp32s3_box"))]
-    let mut display = mipidsi::Builder::ili9342c_rgb565(di)
-        .with_display_size(320, 240)
-        .with_orientation(mipidsi::Orientation::PortraitInverted(false))
-        .with_color_order(mipidsi::ColorOrder::Bgr)
-        .init(&mut delay, Some(reset))
-        .unwrap();
+    println!("Initialzied");
 
     Text::new(
         "Initializing...",
@@ -205,9 +172,9 @@ fn main() -> ! {
     #[cfg(any(feature = "imu_controls"))]
     println!("Initializing IMU");
     #[cfg(any(feature = "imu_controls"))]
-    let sda = io.pins.gpio8;
+    let sda = io.pins.gpio10;
     #[cfg(any(feature = "imu_controls"))]
-    let scl = io.pins.gpio18;
+    let scl = io.pins.gpio8;
 
     #[cfg(any(feature = "imu_controls"))]
     let i2c = i2c::I2C::new(
@@ -224,20 +191,21 @@ fn main() -> ! {
     #[cfg(any(feature = "imu_controls"))]
     let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
 
-    let mut rng = Rng::new(peripherals.RNG);
+    // let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
-    rng.read(&mut seed_buffer).unwrap();
+    // rng.read(&mut seed_buffer).unwrap();
     let mut data = [Rgb565::BLACK; 320 * 240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);
     let spritebuf = SpriteBuf::new(fbuf);
     let engine = Engine::new(spritebuf, Some(seed_buffer));
 
-    let mut universe = Universe::new(icm, Some(seed_buffer), engine);
+    let mut universe = Universe::new( Some(seed_buffer), engine);
     universe.initialize();
 
     loop {
         display
             .draw_iter(universe.render_frame().into_iter())
             .unwrap();
+        // delay.delay_ms(300u32);
     }
 }
