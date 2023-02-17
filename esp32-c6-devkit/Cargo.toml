@@ -44,4 +44,4 @@ imu_controls = []
 
 esp32c6 = ["system_timer"]
 
-esp32c6_ili9341 = [ "riscv-rt", "esp32c6", "esp32c6-hal/eh1", "imu_controls" ]
+esp32c6_ili9341 = [ "riscv-rt", "esp32c6", "esp32c6-hal/eh1" ]

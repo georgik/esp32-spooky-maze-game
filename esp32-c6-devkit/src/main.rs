@@ -53,18 +53,16 @@ use shared_bus::BusManagerSimple;
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
 
-pub struct Universe<I, D> {
+pub struct Universe<D> {
     pub engine: Engine<D>,
-    icm: I,
 }
 
-impl<I: Accelerometer, D: embedded_graphics::draw_target::DrawTarget<Color = Rgb565>>
-    Universe<I, D>
+impl<D: embedded_graphics::draw_target::DrawTarget<Color = Rgb565>>
+    Universe<D>
 {
-    pub fn new(icm: I, seed: Option<[u8; 32]>, engine: Engine<D>) -> Universe<I, D> {
+    pub fn new(seed: Option<[u8; 32]>, engine: Engine<D>) -> Universe<D> {
         Universe {
             engine,
-            icm,
         }
     }
 
@@ -200,7 +198,7 @@ fn main() -> ! {
     let spritebuf = SpriteBuf::new(fbuf);
     let engine = Engine::new(spritebuf, Some(seed_buffer));
 
-    let mut universe = Universe::new(icm, Some(seed_buffer), engine);
+    let mut universe = Universe::new( Some(seed_buffer), engine);
     universe.initialize();
 
     loop {
