@@ -177,6 +177,19 @@ cargo espflash --release --monitor
 
 Note for older version 1.2 - GPIO6 is used to control backlight.
 
+### Build for ESP32-C6-DevKitM-1
+
+HW: https://docs.espressif.com/projects/espressif-esp-dev-kits/en/latest/esp32c6/esp32-c6-devkitc-1/index.html
+
+Important: Requires `espflash 2.x` - install with `cargo install espflash --git https://github.com/esp-rs/espflash.git`
+
+Controls: not implemented
+
+```
+cd esp32-c6-devkit
+cargo espflash flash --release --monitor
+```
+
 ### Build for ESP Wrover Kit
 
 HW: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/hw-reference/esp32/get-started-wrover-kit.html
