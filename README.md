@@ -149,11 +149,14 @@ cargo build --release --no-default-features --features "wokwi"
 
 Press F1, select Wokwi: Start simulation
 
-### Build for M5Stack-Core2 with ESP32 and ILI9341
+### Build for M5Stack-Core2 with ESP32 and ILI9342C
 
 HW: https://shop.m5stack.com/products/m5stack-core2-esp32-iot-development-kit?variant=35960244109476
 
-Control: TBD
+Control: MPU6886
+- tilt the board to move the character
+- move quickly up or press button C to teleport
+- move quickly down or press button B to place dynamite and destroy walls around
 
 ```
 cd m5stack-core2

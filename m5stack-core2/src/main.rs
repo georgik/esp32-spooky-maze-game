@@ -43,6 +43,9 @@ use mpu9250::{ImuMeasurements, Mpu9250};
 #[cfg(feature = "mpu6050")]
 use mpu6050::Mpu6050;
 
+#[cfg(feature = "mpu6886")]
+use mpu6886::Mpu6886;
+
 #[cfg(feature = "xtensa-lx-rt")]
 use xtensa_lx_rt::entry;
 
@@ -129,8 +132,9 @@ fn main() -> ! {
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
+    // M5Stack CORE 2 - https://docs.m5stack.com/en/core/core2
     #[cfg(feature = "esp32")]
-    let mut backlight = io.pins.gpio32.into_push_pull_output();
+    let mut backlight = io.pins.gpio3.into_push_pull_output();
 
     #[cfg(feature = "esp32")]
     let spi = spi::Spi::new(
@@ -151,7 +155,7 @@ fn main() -> ! {
     let di = SPIInterfaceNoCS::new(spi, io.pins.gpio15.into_push_pull_output());
 
     #[cfg(feature = "m5stack_core2")]
-    let mut display = mipidsi::Builder::ili9341_rgb565(di)
+    let mut display = mipidsi::Builder::ili9342c_rgb565(di)
         .with_display_size(320, 240)
         .init(&mut delay, Some(reset))
         .unwrap();
@@ -204,7 +208,11 @@ fn main() -> ! {
 
     #[cfg(any(feature = "mpu6050"))]
     let mut icm = Mpu6050::new(bus.acquire_i2c());
-    #[cfg(any(feature = "mpu6050"))]
+
+    #[cfg(any(feature = "mpu6886"))]
+    let mut icm = Mpu6886::new(bus.acquire_i2c());
+
+    #[cfg(any(feature = "mpu6050", feature = "mpu6886"))]
     icm.init(&mut delay).unwrap();
 
     let mut rng = Rng::new(peripherals.RNG);
@@ -272,9 +280,14 @@ fn main() -> ! {
             }
         }
 
-        #[cfg(feature = "mpu6050")]
+        #[cfg(any(feature = "mpu6050", feature = "mpu6886"))]
         {
+            #[cfg(feature = "mpu6050")]
             let accel_threshold = 1.00;
+
+            #[cfg(feature = "mpu6886")]
+            let accel_threshold = 0.30;
+
             let measurement = icm.get_acc().unwrap();
             // let measurement: ImuMeasurements<[f32; 3]> = icm.all().unwrap();
 
