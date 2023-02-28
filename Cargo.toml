@@ -6,7 +6,6 @@ resolver = "2"
 members = [
     "desktop",
     "esp-wrover-kit",
-    # Temporarily disabled - problems should be resolved with the next version of esp-hal for C3
     "esp32-c3-devkit-rust",
     "esp32-c6-devkit",
     "esp32-s2-kaluga",
