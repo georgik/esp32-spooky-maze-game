@@ -38,6 +38,10 @@ use hal::{
     IO,
 };
 
+
+use esp_wifi::esp_now::{PeerInfo, BROADCAST_ADDRESS};
+use esp_wifi::{current_millis, initialize};
+
 // systimer was introduced in ESP32-S2, it's not available for ESP32
 #[cfg(feature = "system_timer")]
 use hal::systimer::SystemTimer;
@@ -120,9 +124,10 @@ impl<I: Accelerometer, D: embedded_graphics::draw_target::DrawTarget<Color = Rgb
 
 #[xtensa_lx_rt::entry]
 fn main() -> ! {
-    const HEAP_SIZE: usize = 65535 * 4;
-    static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
-    unsafe { ALLOCATOR.init(HEAP.as_mut_ptr(), HEAP_SIZE) }
+    esp_wifi::init_heap();
+    // const HEAP_SIZE: usize = 65535 * 4;
+    // static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
+    // unsafe { ALLOCATOR.init(HEAP.as_mut_ptr(), HEAP_SIZE) }
 
     let peripherals = Peripherals::take();
 
@@ -235,7 +240,29 @@ fn main() -> ! {
     let mut universe = Universe::new(icm, Some(seed_buffer), engine);
     universe.initialize();
 
+    let mut esp_now = esp_wifi::esp_now::esp_now().initialize().unwrap();
+
+    println!("esp-now version {}", esp_now.get_version().unwrap());
+
     loop {
+        let r = esp_now.receive();
+        if let Some(r) = r {
+            println!("Received {:x?}", r);
+
+            if r.info.dst_address == BROADCAST_ADDRESS {
+                if !esp_now.peer_exists(&r.info.src_address).unwrap() {
+                    esp_now
+                        .add_peer(PeerInfo {
+                            peer_address: r.info.src_address,
+                            lmk: None,
+                            channel: None,
+                            encrypt: false,
+                        })
+                        .unwrap();
+                }
+                esp_now.send(&r.info.src_address, b"Hello Peer").unwrap();
+            }
+        }
         display
             .draw_iter(universe.render_frame().into_iter())
             .unwrap();
