@@ -7,16 +7,15 @@ license = "MIT"
 
 [target.riscv32imac-unknown-none-elf.dependencies]
 esp32c6-hal = { version = "*", git = "https://github.com/jessebraham/esp-hal.git", branch = "feature/esp32c6" }
-esp-backtrace = { version = "0.5.0", features = [
+esp-backtrace = { version = "0.6.0", features = [
     "esp32c3",
     "panic-handler",
     "print-uart",
 ] }
-riscv-rt = { version = "0.11", optional = true }
-esp-println = { version = "0.3.1", features = [ "esp32c3" ] }
+esp-println = { version = "0.4.0", features = [ "esp32c3" ] }
 
 [dependencies]
-esp-alloc = "0.1.0"
+esp-alloc = "0.2.0"
 embedded-graphics = "0.7"
 embedded-hal = "0.2"
 display-interface = "0.4"
@@ -44,4 +43,4 @@ imu_controls = []
 
 esp32c6 = ["system_timer"]
 
-esp32c6_ili9341 = [ "riscv-rt", "esp32c6", "esp32c6-hal/eh1" ]
+esp32c6_ili9341 = [ "esp32c6", "esp32c6-hal/eh1" ]
