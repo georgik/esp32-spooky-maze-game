@@ -1,4 +1,5 @@
 [target.'cfg(target_arch = "xtensa")']
+runner = "espflash flash --monitor"
 rustflags = [
   # Tell the `core` library that we have atomics, even though it's not
   # specified in the target definition
