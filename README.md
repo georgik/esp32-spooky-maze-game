@@ -9,6 +9,12 @@ The Teleport spell requires some time to recharge. There are some not friendly s
 
 If you'd like to build similar app with multiple targets follow `cargo generate` instructions - https://github.com/georgik/esp32-rust-multi-target-template#generate-new-project .
 
+## IDE support
+
+### CLion
+
+Recommendation: Open only sub-directory with specific target with specific toolchain in CLion, because only one toolchain is supported for resolving code dependencies. Opening whole workspace works, just some code dependencies might not be resolved. This is also limitation of cargo, which supports only one toolchain per build.
+
 ## Build and flash
 
 ### Build WASM version
