@@ -139,18 +139,24 @@ fn main() -> ! {
 
     // Disable the RTC and TIMG watchdog timers
     let mut rtc = Rtc::new(peripherals.RTC_CNTL);
-    let timer_group0 = TimerGroup::new(peripherals.TIMG0, &clocks);
-    let mut wdt0 = timer_group0.wdt;
-    let timer_group1 = TimerGroup::new(peripherals.TIMG1, &clocks);
-    let mut wdt1 = timer_group1.wdt;
+    // let timer_group0 = TimerGroup::new(peripherals.TIMG0, &clocks);
+    // let mut wdt0 = timer_group0.wdt;
+    // let timer_group1 = TimerGroup::new(peripherals.TIMG1, &clocks);
+    // let mut wdt1 = timer_group1.wdt;
 
     #[cfg(feature = "esp32c3")]
     rtc.swd.disable();
     #[cfg(feature = "xtensa-lx-rt")]
     rtc.rwdt.disable();
 
-    wdt0.disable();
-    wdt1.disable();
+    // wdt0.disable();
+    // wdt1.disable();
+
+    println!("Initializing TimerGroup");
+    use hal::timer::TimerGroup;
+    let timg1 = TimerGroup::new(peripherals.TIMG1, &clocks);
+    initialize(timg1.timer0, Rng::new(peripherals.RNG), &clocks).unwrap();
+
 
     let mut delay = Delay::new(&clocks);
     // self.delay = Some(delay);
@@ -223,15 +229,15 @@ fn main() -> ! {
         &mut system.peripheral_clock_control,
         &clocks,
     );
-
+    println!("Initializing I2C");
     #[cfg(any(feature = "imu_controls"))]
     let bus = BusManagerSimple::new(i2c);
     #[cfg(any(feature = "imu_controls"))]
     let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
 
-    let mut rng = Rng::new(peripherals.RNG);
+    // let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
-    rng.read(&mut seed_buffer).unwrap();
+    // rng.read(&mut seed_buffer).unwrap();
     let mut data = [Rgb565::BLACK; 320 * 240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);
     let spritebuf = SpriteBuf::new(fbuf);
@@ -240,6 +246,7 @@ fn main() -> ! {
     let mut universe = Universe::new(icm, Some(seed_buffer), engine);
     universe.initialize();
 
+    println!("Initializing esp-now");
     let mut esp_now = esp_wifi::esp_now::esp_now().initialize().unwrap();
 
     println!("esp-now version {}", esp_now.get_version().unwrap());
@@ -248,6 +255,22 @@ fn main() -> ! {
         let r = esp_now.receive();
         if let Some(r) = r {
             println!("Received {:x?}", r);
+            let rec_bytes = r.get_data();
+
+            let x_bits = ((rec_bytes[0] as u32) << 24)
+                | ((rec_bytes[1] as u32) << 16)
+                | ((rec_bytes[2] as u32) << 8);
+
+
+            let y_bits = ((rec_bytes[3] as u32) << 24)
+                | ((rec_bytes[4] as u32) << 16)
+                | ((rec_bytes[5] as u32) << 8);
+
+            let z_bits = ((rec_bytes[6] as u32) << 24)
+                | ((rec_bytes[7] as u32) << 16)
+                | ((rec_bytes[8] as u32) << 8);
+
+            println!("Recieved: x:{:x?}, y:{:x?}, z:{:x?} ", f32::from_bits(x_bits), f32::from_bits(y_bits), f32::from_bits(z_bits));
 
             if r.info.dst_address == BROADCAST_ADDRESS {
                 if !esp_now.peer_exists(&r.info.src_address).unwrap() {
@@ -260,7 +283,7 @@ fn main() -> ! {
                         })
                         .unwrap();
                 }
-                esp_now.send(&r.info.src_address, b"Hello Peer").unwrap();
+                //esp_now.send(&r.info.src_address, b"Hello Peer").unwrap();
             }
         }
         display

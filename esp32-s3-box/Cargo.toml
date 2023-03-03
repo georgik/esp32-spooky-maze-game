@@ -31,7 +31,7 @@ spooky-core = { path = "../spooky-core", default-features = false, features = [
 ] }
 heapless = { version = "0.7.14", default-features = false }
 embedded-graphics-framebuf = "0.2.0"
-esp-wifi = { version = "*", git = "https://github.com/esp-rs/esp-wifi.git" , features = [ "esp32s3", "embedded-svc", "wifi", "esp-now" ], optional = true }
+esp-wifi = { version = "*", git = "https://github.com/esp-rs/esp-wifi.git" , features = [ "esp32s3", "embedded-svc", "wifi", "esp-now", "phy-enable-usb" ], optional = true }
 
 [features]
 default = ["esp32s3_box"]
