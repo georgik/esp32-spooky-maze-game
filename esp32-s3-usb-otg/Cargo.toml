@@ -7,18 +7,18 @@ license = "MIT"
 
 [target.xtensa-esp32s3-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.4.0"
-esp32s3-hal = "0.5.0"
-esp-backtrace = { version = "0.5.0", features = [
+esp32s3-hal = "0.7.0"
+esp-backtrace = { version = "0.6.0", features = [
     "esp32s3",
     "panic-handler",
     "print-uart",
 ] }
 xtensa-lx-rt = { version = "0.15.0", features = ["esp32s3"], optional = true }
-esp-println = { version = "0.3.1", features = [ "esp32s3" ] }
+esp-println = { version = "0.4.0", features = [ "esp32s3" ] }
 
 
 [dependencies]
-esp-alloc = "0.1.0"
+esp-alloc = "0.2.0"
 embedded-graphics = "0.7"
 embedded-hal = "0.2"
 display-interface = "0.4"
