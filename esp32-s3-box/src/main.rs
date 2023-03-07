@@ -148,7 +148,7 @@ fn main() -> ! {
     #[cfg(feature = "esp32c3")]
     rtc.swd.disable();
     // #[cfg(feature = "esp32s3")]
-    // rtc.rwdt.disable();
+    rtc.rwdt.disable();
 
     use hal::{ Cpu };
     use esp_hal_common::rtc_cntl::{get_reset_reason};
