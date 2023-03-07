@@ -19,6 +19,7 @@ esp-println = { version = "0.3.1", features = ["esp32s3"] }
 esp-alloc = "0.2.0"
 embedded-graphics = "0.7"
 embedded-hal = "0.2"
+esp-hal-common = "0.7.1"
 display-interface = "0.4"
 display-interface-spi = "0.4"
 icm42670 = { git = "https://github.com/jessebraham/icm42670/" }

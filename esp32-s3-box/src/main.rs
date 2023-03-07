@@ -65,6 +65,7 @@ use shared_bus::BusManagerSimple;
 
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
+use esp32s3_hal::Cpu;
 
 pub struct Universe<I, D> {
     pub engine: Engine<D>,
@@ -146,9 +147,23 @@ fn main() -> ! {
 
     #[cfg(feature = "esp32c3")]
     rtc.swd.disable();
-    #[cfg(feature = "xtensa-lx-rt")]
-    rtc.rwdt.disable();
+    // #[cfg(feature = "esp32s3")]
+    // rtc.rwdt.disable();
 
+    use hal::{ Cpu };
+    use esp_hal_common::rtc_cntl::{get_reset_reason};
+    // use esp_hal_common::rtc_cntl::rtc::SocResetReason;
+    let reset_reason = get_reset_reason(Cpu::ProCpu).unwrap();
+    println!("Reset reason: {:?}", reset_reason);
+    // match reset_reason {
+    //     SocResetReason::PowerOn => println!("Power-on reset"),
+    //     SocResetReason::ExternalPin => println!("External reset"),
+    //     SocResetReason::Software => println!("Software reset"),
+    //     SocResetReason::Watchdog => println!("Watchdog reset"),
+    //     SocResetReason::Brownout => println!("Brownout reset"),
+    //     SocResetReason::Deepsleep => println!("Deepsleep reset"),
+    //     SocResetReason::Unknown => println!("Unknown reset reason"),
+    // }
     // wdt0.disable();
     // wdt1.disable();
 
