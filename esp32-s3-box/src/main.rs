@@ -122,7 +122,7 @@ impl<I: Accelerometer, D: embedded_graphics::draw_target::DrawTarget<Color = Rgb
     }
 }
 
-#[xtensa_lx_rt::entry]
+#[entry]
 fn main() -> ! {
     esp_wifi::init_heap();
     // const HEAP_SIZE: usize = 65535 * 4;

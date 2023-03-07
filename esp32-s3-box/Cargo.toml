@@ -13,7 +13,6 @@ esp-backtrace = { version = "0.6.0", features = [
     "panic-handler",
     "print-uart",
 ] }
-xtensa-lx-rt = { version = "0.15.0", features = ["esp32s3"], optional = true }
 esp-println = { version = "0.3.1", features = ["esp32s3"] }
 
 [dependencies]
@@ -47,4 +46,4 @@ esp32s3 = []
 esp32c3 = ["system_timer"]
 
 # Enable this feature in case you have an ESP32-S3-BOX board with ILI9342C
-esp32s3_box = [ "xtensa-lx-rt", "esp32s3", "esp32s3-hal/eh1", "imu_controls", "esp-wifi" ]
+esp32s3_box = [ "esp32s3", "esp32s3-hal/eh1", "imu_controls", "esp-wifi" ]
