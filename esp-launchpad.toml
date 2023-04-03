@@ -11,8 +11,7 @@ supported_apps = ["spooky_maze"]
 
 [spooky_maze]
 # ESP32 Chipsets for which you have a supported Firmware App. Define a property for each supported chipset in the given format.
-chipsets = ["ESP32"]
-#chipsets = ["ESP32", "ESP32-S2", "ESP32-C3"]
+chipsets = ["ESP32", "ESP32-S2", "ESP32-C3"]
 # Configure the name of the binary file
 image.esp32 = "spooky-wrover-kit"
 image.esp32-s2 = "SINGLE_BIN_FOR_ESP32-S2.bin"
