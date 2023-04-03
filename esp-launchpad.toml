@@ -6,10 +6,10 @@ firmware_images_url = "https://github.com/georgik/esp32-spooky-maze-game/release
 # Apps that you support and for which the binaries are available to publish. You can have multiple apps as a comma separated list
 # The launch pad UI will automatically show these Apps in the available apps dropdown
 # There should be a config section per listed App
-supported_apps = ["spooky-maze"]
+supported_apps = ["spooky_maze"]
 
 
-[YOUR_FIRMWARE_APP_NAME]
+[spooky_maze]
 # ESP32 Chipsets for which you have a supported Firmware App. Define a property for each supported chipset in the given format.
 chipsets = ["ESP32"]
 #chipsets = ["ESP32", "ESP32-S2", "ESP32-C3"]
