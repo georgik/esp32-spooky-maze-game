@@ -9,6 +9,10 @@ The Teleport spell requires some time to recharge. There are some not friendly s
 
 If you'd like to build similar app with multiple targets follow `cargo generate` instructions - https://github.com/georgik/esp32-rust-multi-target-template#generate-new-project .
 
+## Quick start
+
+Flash the app from web browser using [ESP-Launchpad](https://georgik.rocks/wp-content/html5/esp-launchpad/?flashConfigURL=https://georgik.rocks/wp-content/esp32/esp32-spooky-maze-game/esp-launchpad.toml).
+
 ## IDE support
 
 ### CLion
