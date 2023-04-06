@@ -6,6 +6,7 @@ set -e
 if ! command -v cargo-espflash &> /dev/null
 then
     cargo install cargo-espflash --git
+fi
 
 # Function to build the firmware by entering directory and running cargo-espflash
 function build_firmware {
