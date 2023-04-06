@@ -37,6 +37,9 @@ jobs:
     needs: get_release
     steps:
       - uses: actions/checkout@v3
+      - name: install_dependencies
+        run: |
+          brew install sdl2
       - name: Build macOS binary
         run: |
           cd desktop
