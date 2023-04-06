@@ -6,7 +6,7 @@ edition = "2021"
 license = "MIT"
 
 [target.riscv32imac-unknown-none-elf.dependencies]
-esp32c6-hal = { version = "*", git = "https://github.com/jessebraham/esp-hal.git", branch = "feature/esp32c6" }
+esp32c6-hal = "0.1.0"
 esp-backtrace = { version = "0.6.0", features = [
     "esp32c3",
     "panic-handler",
