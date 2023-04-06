@@ -32,13 +32,22 @@ jobs:
         env:
           response: ${{ steps.get_release.outputs.data }}
 
+  prepare-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Docker image
+        run: |
+          docker build -t spooky-maze-build -f support/ci/Dockerfile .
+
   build:
     runs-on: ubuntu-latest
-    using: 'docker'
-    image: './support/ci/Dockerfile'
+    container: spooky-maze-build
+#    using: 'docker'
+#    image: './support/ci/Dockerfile'
 #      image: espressif/idf-rust:all_1.68.0.0
 #      options: --user root
-    needs: get_release
+    needs: [ get_release, prepare-image ]
     steps:
       - uses: actions/checkout@v3
       - name: Build ESP32 Rust Binaries
