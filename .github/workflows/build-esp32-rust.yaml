@@ -43,8 +43,9 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     container:
-      image: georgikrocks/idf-rust:all_1.68.0.0_github
-      options: --user esp
+      image: espressif/idf-rust:all_1.68.0.0
+#      image: georgikrocks/idf-rust:all_1.68.0.0_github
+#      options: --user root
 #    using: 'docker'
 #    image: './support/ci/Dockerfile'
 #      image: espressif/idf-rust:all_1.68.0.0
@@ -52,11 +53,13 @@ jobs:
 #    needs: [ get_release, prepare-image ]
     needs: get_release
     steps:
-      - uses: actions/checkout@v3
+#      - uses: actions/checkout@v3
       - name: Build ESP32 Rust Binaries
         # Running build in one Docker run, because espflash is not installed in the image by default
         # and the installation takes extra time, blocked by: https://github.com/esp-rs/rust-build/issues/201
         run: |
+          git clone --depth 1 https://github.com/georgik/esp32-spooky-maze-game.git project
+          cd project
           ./support/ci/build-esp32-firmware.sh
 #          docker run --rm --user esp -v ${GITHUB_WORKSPACE}:/project -w /project espressif/idf-rust:all_1.68.0.0 ./support/ci/build-esp32-firmware.sh
       - name: Upload esp-wrover-kit binary
@@ -65,7 +68,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.get_release.outputs.upload_url }}
-          asset_path: ./esp-wrover-kit/spooky-maze-esp-wrover-kit.bin
+          asset_path: ./project/esp-wrover-kit/spooky-maze-esp-wrover-kit.bin
           asset_name: spooky-maze-esp-wrover-kit.bin
           asset_content_type: application/octet-stream
       - name: Upload esp32-s2-kaluga binary
@@ -74,7 +77,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.get_release.outputs.upload_url }}
-          asset_path: ./esp32-s2-kaluga/spooky-maze-esp32-s2-kaluga.bin
+          asset_path: ./project/esp32-s2-kaluga/spooky-maze-esp32-s2-kaluga.bin
           asset_name: spooky-maze-esp32-s2-kaluga.bin
           asset_content_type: application/octet-stream
       - name: Upload esp32-s2-usb-otg binary
@@ -83,7 +86,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.get_release.outputs.upload_url }}
-          asset_path: ./esp32-s2-usb-otg/spooky-maze-esp32-s2-usb-otg.bin
+          asset_path: ./project/esp32-s2-usb-otg/spooky-maze-esp32-s2-usb-otg.bin
           asset_name: spooky-maze-esp32-s2-usb-otg.bin
           asset_content_type: application/octet-stream
       - name: Upload esp32-s3-usb-otg binary
@@ -92,7 +95,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.get_release.outputs.upload_url }}
-          asset_path: ./esp32-s3-usb-otg/spooky-maze-esp32-s3-usb-otg.bin
+          asset_path: ./project/esp32-s3-usb-otg/spooky-maze-esp32-s3-usb-otg.bin
           asset_name: spooky-maze-esp32-s3-usb-otg.bin
           asset_content_type: application/octet-stream
       - name: Upload esp32-s3-box binary
@@ -101,7 +104,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.get_release.outputs.upload_url }}
-          asset_path: ./esp32-s3-box/spooky-maze-esp32-s3-box.bin
+          asset_path: ./project/esp32-s3-box/spooky-maze-esp32-s3-box.bin
           asset_name: spooky-maze-esp32-s3-box.bin
           asset_content_type: application/octet-stream
       - name: Upload m5stack-core2 binary
@@ -110,7 +113,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.get_release.outputs.upload_url }}
-          asset_path: ./m5stack-core2/spooky-maze-m5stack-core2.bin
+          asset_path: ./project/m5stack-core2/spooky-maze-m5stack-core2.bin
           asset_name: spooky-maze-m5stack-core2.bin
           asset_content_type: application/octet-stream
       - name: Upload m5stack-fire binary
@@ -119,6 +122,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.get_release.outputs.upload_url }}
-          asset_path: ./m5stack-fire/spooky-maze-m5stack-fire.bin
+          asset_path: ./project/m5stack-fire/spooky-maze-m5stack-fire.bin
           asset_name: spooky-maze-m5stack-fire.bin
           asset_content_type: application/octet-stream
