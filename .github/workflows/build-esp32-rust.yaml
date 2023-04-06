@@ -1,0 +1,106 @@
+name: Build ESP32 Rust Binaries in Docker image espressif/idf-rust:all_1.68.0.0 and upload to Releases
+
+on:
+  workflow_dispatch:
+    release_version:
+      description: "Upload to specific release"
+      required: true
+      default: '0.3.0'
+
+jobs:
+  get_release:
+    # https://github.com/octokit/request-action
+    name: Get release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.get_upload_url.outputs.url }}
+    steps:
+      - uses: octokit/request-action@v2.x
+        id: get_release
+        with:
+          route: GET /repos/{owner}/{repo}/releases/tags/${{ github.event.inputs.release_tag }}
+          owner: esp-rs
+          repo: rust-build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: get upload url
+        id: get_upload_url
+        run: |
+          url=$(echo "$response" | jq -r '.upload_url')
+          echo "::set-output name=url::$url"
+        env:
+          response: ${{ steps.get_release.outputs.data }}
+
+  build:
+    runs-on: ubuntu-latest
+    needs: get_release
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build ESP32 Rust Binaries
+        # Running build in one Docker run, becase espflash is not installed in the image by default
+        # and the installation takes extra time, blocked by: https://github.com/esp-rs/rust-build/issues/201
+        run: |
+          docker run --rm -v $PWD:/project -w /project espressif/idf-rust:all_1.68.0.0 ./support/ci/build-esp32-firmware.sh
+      - name: Upload esp-wrover-kit binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ needs.get_release.outputs.upload_url }
+            asset_path: ./project/esp-wrover-kit/spooky-maze-esp-wrover-kit.bin
+            asset_name: spooky-maze-esp-wrover-kit.bin
+            asset_content_type: application/octet-stream
+      - name: Upload esp32-s2-kaluga binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ needs.get_release.outputs.upload_url }
+            asset_path: ./project/esp32-s2-kaluga/spooky-maze-esp32-s2-kaluga.bin
+            asset_name: spooky-maze-esp32-s2-kaluga.bin
+            asset_content_type: application/octet-stream
+      - name: Upload esp32-s2-usb-otg binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ needs.get_release.outputs.upload_url }
+            asset_path: ./project/esp32-s2-usb-otg/spooky-maze-esp32-s2-usb-otg.bin
+            asset_name: spooky-maze-esp32-s2-usb-otg.bin
+            asset_content_type: application/octet-stream
+      - name: Upload esp32-s3-usb-otg binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ needs.get_release.outputs.upload_url }
+            asset_path: ./project/esp32-s3-usb-otg/spooky-maze-esp32-s3-usb-otg.bin
+            asset_name: spooky-maze-esp32-s3-usb-otg.bin
+            asset_content_type: application/octet-stream
+      - name: Upload esp32-s3-box binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ needs.get_release.outputs.upload_url }
+            asset_path: ./project/esp32-s3-box/spooky-maze-esp32-s3-box.bin
+            asset_name: spooky-maze-esp32-s3-box.bin
+            asset_content_type: application/octet-stream
+      - name: Upload m5stack-core2 binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ needs.get_release.outputs.upload_url }
+            asset_path: ./project/m5stack-core2/spooky-maze-m5stack-core2.bin
+            asset_name: spooky-maze-m5stack-core2.bin
+            asset_content_type: application/octet-stream
+      - name: Upload m5stack-fire binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ needs.get_release.outputs.upload_url }
+            asset_path: ./project/m5stack-fire/spooky-maze-m5stack-fire.bin
+            asset_name: spooky-maze-m5stack-fire.bin
+            asset_content_type: application/octet-stream
