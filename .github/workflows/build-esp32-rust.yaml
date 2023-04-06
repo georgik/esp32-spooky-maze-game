@@ -33,7 +33,7 @@ jobs:
           response: ${{ steps.get_release.outputs.data }}
 
   build:
-#    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
     container: espressif/idf-rust:all_1.68.0.0
     needs: get_release
     steps:
