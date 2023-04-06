@@ -2,10 +2,11 @@ name: Build ESP32 Rust Binaries in Docker image espressif/idf-rust:all_1.68.0.0 
 
 on:
   workflow_dispatch:
-    release_version:
-      description: "Upload to specific release"
-      required: true
-      default: '0.3.0'
+    inputs:
+      release_version:
+        description: "Upload to specific release"
+        required: true
+        default: '0.3.0'
 
 jobs:
   get_release:
