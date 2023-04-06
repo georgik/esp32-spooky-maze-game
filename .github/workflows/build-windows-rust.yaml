@@ -37,6 +37,9 @@ jobs:
     needs: get_release
     steps:
       - uses: actions/checkout@v3
+      - name: Install SDL2 dependency using vcpkg
+        run: |
+          vcpkg install sdl2:x64-windows
       - name: Build Windows exe
         run: |
           cd desktop
