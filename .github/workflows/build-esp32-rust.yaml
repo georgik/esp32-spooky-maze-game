@@ -21,7 +21,7 @@ jobs:
         with:
           route: GET /repos/{owner}/{repo}/releases/tags/${{ github.event.inputs.release_tag }}
           owner: georgik
-          repo: esp32-rust-spooky-maze
+          repo: esp32-spooky-maze-game
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: get upload url
