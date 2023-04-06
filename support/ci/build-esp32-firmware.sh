@@ -2,10 +2,16 @@
 
 set -e
 
+source ~/export-esp.sh
+
 # Check whether cargo-espflash is installed, if not install it from GitHub
 if ! command -v cargo-espflash &> /dev/null
 then
-    cargo install cargo-espflash --git https://github.com/esp-rs/espflash.git
+    # Compiling cargo-espflash from source takes too long, so we download the binary from GitHub
+    #cargo install cargo-espflash --git https://github.com/esp-rs/espflash.git
+    curl -L https://github.com/esp-rs/espflash/releases/download/v2.0.0-rc.3/cargo-espflash-x86_64-unknown-linux-gnu.zip -o cargo-espflash.zip
+    unzip cargo-espflash.zip
+    mv cargo-espflash ~/.cargo/bin/
 fi
 
 # Function to build the firmware by entering directory and running cargo-espflash
