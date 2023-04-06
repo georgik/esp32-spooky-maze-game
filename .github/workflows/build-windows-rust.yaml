@@ -36,7 +36,7 @@ jobs:
     runs-on: windows-latest
     needs: get_release
     env:
-      LIB: "C:/vcpkg/packages/sdl2_x64-windows/release"
+      LIB: "C:/vcpkg/packages/sdl2_x64-windows/lib"
     steps:
       - uses: actions/checkout@v3
       - name: Install SDL2 dependency using vcpkg
@@ -44,7 +44,7 @@ jobs:
           vcpkg install sdl2:x64-windows
       - name: Check installer library
         shell: powershell
-        run: ls "C:/vcpkg/packages/sdl2_x64-windows/"
+        run: ls "C:/vcpkg/packages/sdl2_x64-windows/lib"
       - name: Build Windows exe
         run: |
           cd desktop
