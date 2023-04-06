@@ -45,13 +45,6 @@ jobs:
     container:
       image: espressif/idf-rust:all_1.68.0.0
       options: --user esp --workdir /home/esp
-#      image: georgikrocks/idf-rust:all_1.68.0.0_github
-#      options: --user root
-#    using: 'docker'
-#    image: './support/ci/Dockerfile'
-#      image: espressif/idf-rust:all_1.68.0.0
-#      options: --user root
-#    needs: [ get_release, prepare-image ]
     needs: get_release
     steps:
 #      - uses: actions/checkout@v3
