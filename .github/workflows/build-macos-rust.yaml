@@ -1,0 +1,51 @@
+name: Build macOS binary from Rust project stored in desktop directory
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Upload to specific release"
+        required: true
+        default: 'v0.3.0'
+
+jobs:
+  get_release:
+    # https://github.com/octokit/request-action
+    name: Get release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.get_upload_url.outputs.url }}
+    steps:
+      - uses: octokit/request-action@v2.x
+        id: get_release
+        with:
+          route: GET /repos/{owner}/{repo}/releases/tags/${{ github.event.inputs.release_tag }}
+          owner: georgik
+          repo: esp32-spooky-maze-game
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: get upload url
+        id: get_upload_url
+        run: |
+          url=$(echo "$response" | jq -r '.upload_url')
+          echo "::set-output name=url::$url"
+        env:
+          response: ${{ steps.get_release.outputs.data }}
+
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build macOS binary
+        run: |
+          cd desktop
+          cargo build --release
+      - name: Upload macOS binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.get_release.outputs.upload_url }}
+          asset_path: ./target/release/spooky-desktop
+          asset_name: spooky-maze-macos
+          asset_content_type: application/octet-stream
