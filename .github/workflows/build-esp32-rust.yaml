@@ -59,6 +59,7 @@ jobs:
         # Running build in one Docker run, because espflash is not installed in the image by default
         # and the installation takes extra time, blocked by: https://github.com/esp-rs/rust-build/issues/201
         run: |
+          export HOME=/home/esp
           cd /home/esp
           pwd
           git clone --depth 1 https://github.com/georgik/esp32-spooky-maze-game.git project
