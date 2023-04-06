@@ -33,7 +33,8 @@ jobs:
           response: ${{ steps.get_release.outputs.data }}
 
   build:
-    runs-on: ubuntu-latest
+#    runs-on: ubuntu-latest
+    container: espressif/idf-rust:all_1.68.0.0
     needs: get_release
     steps:
       - uses: actions/checkout@v2
@@ -41,7 +42,8 @@ jobs:
         # Running build in one Docker run, because espflash is not installed in the image by default
         # and the installation takes extra time, blocked by: https://github.com/esp-rs/rust-build/issues/201
         run: |
-          docker run --rm -v ${GITHUB_WORKSPACE}:/project -w /project espressif/idf-rust:all_1.68.0.0 ./support/ci/build-esp32-firmware.sh
+          ./support/ci/build-esp32-firmware.sh
+#          docker run --rm -v ${GITHUB_WORKSPACE}:/project -w /project espressif/idf-rust:all_1.68.0.0 ./support/ci/build-esp32-firmware.sh
       - name: Upload esp-wrover-kit binary
         uses: actions/upload-release-asset@v1
         env:
