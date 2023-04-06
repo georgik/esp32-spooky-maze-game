@@ -32,22 +32,23 @@ jobs:
         env:
           response: ${{ steps.get_release.outputs.data }}
 
-  prepare-image:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Build Docker image
-        run: |
-          docker build -t spooky-maze-build -f support/ci/Dockerfile .
+#  prepare-image:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v3
+#      - name: Build Docker image
+#        run: |
+#          docker build -t spooky-maze-build -f support/ci/Dockerfile .
 
   build:
     runs-on: ubuntu-latest
-    container: spooky-maze-build
+    container: georgikrocks/idf-rust:all_1.68.0.0_github
 #    using: 'docker'
 #    image: './support/ci/Dockerfile'
 #      image: espressif/idf-rust:all_1.68.0.0
 #      options: --user root
-    needs: [ get_release, prepare-image ]
+#    needs: [ get_release, prepare-image ]
+    needs: get_release
     steps:
       - uses: actions/checkout@v3
       - name: Build ESP32 Rust Binaries
@@ -55,7 +56,7 @@ jobs:
         # and the installation takes extra time, blocked by: https://github.com/esp-rs/rust-build/issues/201
         run: |
           ./support/ci/build-esp32-firmware.sh
-#          docker run --rm -v ${GITHUB_WORKSPACE}:/project -w /project espressif/idf-rust:all_1.68.0.0 ./support/ci/build-esp32-firmware.sh
+#          docker run --rm --user esp -v ${GITHUB_WORKSPACE}:/project -w /project espressif/idf-rust:all_1.68.0.0 ./support/ci/build-esp32-firmware.sh
       - name: Upload esp-wrover-kit binary
         uses: actions/upload-release-asset@v1
         env:
