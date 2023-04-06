@@ -5,7 +5,7 @@ set -e
 # Check whether cargo-espflash is installed, if not install it from GitHub
 if ! command -v cargo-espflash &> /dev/null
 then
-    cargo install cargo-espflash --git
+    cargo install cargo-espflash --git https://github.com/esp-rs/espflash.git
 fi
 
 # Function to build the firmware by entering directory and running cargo-espflash
