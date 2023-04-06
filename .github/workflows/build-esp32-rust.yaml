@@ -41,7 +41,7 @@ jobs:
 #          docker build -t spooky-maze-build -f support/ci/Dockerfile .
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     container:
       image: georgikrocks/idf-rust:all_1.68.0.0_github
       options: --user esp
