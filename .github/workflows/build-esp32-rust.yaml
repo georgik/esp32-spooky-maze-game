@@ -44,6 +44,7 @@ jobs:
     runs-on: ubuntu-20.04
     container:
       image: espressif/idf-rust:all_1.68.0.0
+      options: --user esp
 #      image: georgikrocks/idf-rust:all_1.68.0.0_github
 #      options: --user root
 #    using: 'docker'
