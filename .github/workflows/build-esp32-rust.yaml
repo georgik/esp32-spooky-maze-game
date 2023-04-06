@@ -34,7 +34,9 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    container: espressif/idf-rust:all_1.68.0.0
+    container:
+      image: espressif/idf-rust:all_1.68.0.0
+      options: --user esp
     needs: get_release
     steps:
       - uses: actions/checkout@v3
