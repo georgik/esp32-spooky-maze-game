@@ -9,7 +9,6 @@ on:
         default: 'v0.3.0'
 
 jobs:
-jobs:
   get_release:
     # https://github.com/octokit/request-action
     name: Get release
