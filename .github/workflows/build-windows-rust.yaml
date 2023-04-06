@@ -35,11 +35,16 @@ jobs:
   build:
     runs-on: windows-latest
     needs: get_release
+    env:
+      LIB: "C:/vcpkg/packages/sdl2_x64-windows/x64-windows-rel"
     steps:
       - uses: actions/checkout@v3
       - name: Install SDL2 dependency using vcpkg
         run: |
           vcpkg install sdl2:x64-windows
+      - name: Check installer library
+        shell: powershell
+        run: ls "C:/vcpkg/packages/sdl2_x64-windows/x64-windows-rel"
       - name: Build Windows exe
         run: |
           cd desktop
@@ -50,6 +55,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.get_release.outputs.upload_url }}
-          asset_path: ./target/release/spooky-desktop.exe
+          asset_path: ./desktop/target/release/spooky-desktop.exe
           asset_name: spooky-maze-windows.exe
           asset_content_type: application/octet-stream

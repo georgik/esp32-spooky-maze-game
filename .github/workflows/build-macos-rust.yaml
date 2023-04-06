@@ -43,6 +43,7 @@ jobs:
       - name: Build macOS binary
         run: |
           cd desktop
+          export LIBRARY_PATH="$LIBRARY_PATH:$(brew --prefix)/lib"
           cargo build --release
       - name: Upload macOS binary
         uses: actions/upload-release-asset@v1
@@ -50,6 +51,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.get_release.outputs.upload_url }}
-          asset_path: ./target/release/spooky-desktop
+          asset_path: ./desktop/target/release/spooky-desktop
           asset_name: spooky-maze-macos
           asset_content_type: application/octet-stream
