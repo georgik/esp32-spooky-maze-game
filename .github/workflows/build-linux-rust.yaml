@@ -1,4 +1,4 @@
-name: Build Windows exe from Rust project stored in desktop directory
+name: Build Linux binary from Rust project stored in desktop directory
 
 on:
   workflow_dispatch:
