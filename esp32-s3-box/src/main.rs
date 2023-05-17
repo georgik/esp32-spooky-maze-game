@@ -30,6 +30,7 @@ use hal::{
     i2c,
     peripherals::Peripherals,
     prelude::*,
+    soc,
     spi,
     timer::TimerGroup,
     Delay,
@@ -118,6 +119,15 @@ impl<I: Accelerometer, D: embedded_graphics::draw_target::DrawTarget<Color = Rgb
     }
 }
 
+fn init_psram_heap() {
+    unsafe {
+        ALLOCATOR.init(
+            soc::psram::PSRAM_VADDR_START as *mut u8,
+            soc::psram::PSRAM_BYTES,
+        );
+    }
+}
+
 #[xtensa_lx_rt::entry]
 fn main() -> ! {
     const HEAP_SIZE: usize = 65535 * 4;
@@ -125,6 +135,9 @@ fn main() -> ! {
     unsafe { ALLOCATOR.init(HEAP.as_mut_ptr(), HEAP_SIZE) }
 
     let peripherals = Peripherals::take();
+
+    soc::psram::init_psram(peripherals.PSRAM);
+    init_psram_heap();
 
     #[cfg(any(feature = "esp32"))]
     let mut system = peripherals.DPORT.split();
