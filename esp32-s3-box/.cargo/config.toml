@@ -12,7 +12,10 @@ rustflags = [
   # Enable the atomic codegen option for Xtensa
   "-C", "target-feature=+s32c1i",
   "-C", "link-arg=-Wl,-Tlinkall.x",
-  "-C", "force-frame-pointers"
+  # force-frame-pointers disabled, because LLVM 16 in Rust Xtensa toolchain 1.69.0.1 introduces regression and
+  # compilation was failing with:
+  # Error while trying to spill A5 from class AR: Cannot scavenge register without an emergency spill slot!
+  #"-C", "force-frame-pointers"
 ]
 
 [target.riscv32imac-unknown-none-elf]
