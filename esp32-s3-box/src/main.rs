@@ -130,10 +130,6 @@ fn init_psram_heap() {
 
 #[xtensa_lx_rt::entry]
 fn main() -> ! {
-    const HEAP_SIZE: usize = 65535 * 4;
-    static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
-    unsafe { ALLOCATOR.init(HEAP.as_mut_ptr(), HEAP_SIZE) }
-
     let peripherals = Peripherals::take();
 
     soc::psram::init_psram(peripherals.PSRAM);

@@ -8,7 +8,10 @@ license = "MIT"
 [target.xtensa-esp32s3-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.4.0"
 # PSRAM feature should be part of 0.10.0 release, it's not part of available 0.9.0
-esp32s3-hal = { version = "*", git = "https://github.com/esp-rs/esp-hal.git", features = ["psram_8m"] }
+#esp32s3-hal = { version = "*", git = "https://github.com/esp-rs/esp-hal.git", features = ["psram_8m"] }
+# Problem in main branch with PSRAM, using bjoern's fork
+esp32s3-hal = { version = "*", git = "https://github.com/bjoernQ/esp-hal.git", branch = "esp32s3-move-psram-functions-to-ram", features = ["psram_8m"] }
+# Limitation - esp-hal does not support OCTAL PSRAM used in ESP32-S3-BOX
 esp-backtrace = { version = "0.7.0", features = [
     "esp32s3",
     "panic-handler",
