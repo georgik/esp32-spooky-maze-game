@@ -5,27 +5,13 @@ authors = ["Juraj Michalek <juraj.michalek@espressif.com>", "Samuel Benko <samue
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
-
 [dependencies]
-# esp32s3-hal = "0.2.0"
-# esp-alloc = { version = "0.1.0", features = ["oom-handler"] }
-# esp-backtrace = { version = "0.2.0", features = ["esp32s3", "panic-handler", "print-uart"] }
-# xtensa-lx-rt = { version = "0.13.0", features = ["esp32s3"], optional = true }
-# esp-println = { version = "0.3.1", features = [ "esp32s3" ] }
-embedded-graphics = "0.7"
-# mipidsi = "0.4"
-# display-interface-spi = "0.4"
-embedded-graphics-framebuf = "0.2.0"
-# embedded-graphics-web-simulator = { git = "https://github.com/georgik/embedded-graphics-web-simulator.git", branch = "feature/sprite" }
-# embedded-graphics-web-simulator = "0.3.0"
-# rand = { version = "0.8.5", default-features = false }
+embedded-graphics = "0.8.0"
+embedded-graphics-framebuf = { version = "0.3.0", git = "https://github.com/georgik/embedded-graphics-framebuf.git", branch = "feature/embedded-graphics-0.8" }
+#embedded-graphics-framebuf = "0.2.0"
 getrandom = { version = "0.2.8", features = ["js"] }
 rand_chacha = { version = "0.3.1", default-features = false }
-tinybmp = "0.4.0"
 heapless = { version = "0.7.14", default-features = false }
 spooky-core = { path = "../spooky-core" }
-embedded-graphics-simulator = "0.4.0"
+embedded-graphics-simulator = "0.5.0"
 
-# [features]
-# default = ["rt"]
-# rt = ["xtensa-lx-rt"]
