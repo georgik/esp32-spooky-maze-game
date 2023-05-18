@@ -7,8 +7,8 @@ license = "MIT"
 
 [target.xtensa-esp32-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.4.0"
-esp32-hal = "0.10.0"
-esp-backtrace = { version = "0.6.0", features = [
+hal = { package = "esp32-hal", version = "0.12.0" }
+esp-backtrace = { version = "0.7.0", features = [
     "esp32",
     "panic-handler",
     "print-uart",
@@ -50,6 +50,6 @@ esp32c3 = ["system_timer"]
 mpu6050 = ["imu_controls", "dep:mpu6050"]
 mpu9250 = ["imu_controls", "dep:mpu9250"]
 
-wokwi = [ "xtensa-lx-rt", "esp32", "esp32-hal/eh1", "mpu6050" ]
+wokwi = [ "xtensa-lx-rt", "esp32", "mpu6050" ]
 
-m5stack_fire = ["xtensa-lx-rt", "esp32", "esp32-hal/eh1", "mpu9250" ]
+m5stack_fire = ["xtensa-lx-rt", "esp32", "mpu9250" ]

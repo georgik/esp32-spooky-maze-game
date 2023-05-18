@@ -15,15 +15,6 @@ use embedded_graphics::{
 
 use esp_println::println;
 
-#[cfg(feature = "esp32")]
-use esp32_hal as hal;
-#[cfg(feature = "esp32c3")]
-use esp32c3_hal as hal;
-#[cfg(feature = "esp32s2")]
-use esp32s2_hal as hal;
-#[cfg(feature = "esp32s3")]
-use esp32s3_hal as hal;
-
 use hal::{
     clock::{ClockControl, CpuClock},
     // gdma::Gdma,
@@ -44,11 +35,6 @@ use hal::systimer::SystemTimer;
 
 // use panic_halt as _;
 use esp_backtrace as _;
-
-#[cfg(feature = "riscv-rt")]
-use riscv_rt::entry;
-#[cfg(feature = "xtensa-lx-rt")]
-use xtensa_lx_rt::entry;
 
 use embedded_graphics::pixelcolor::Rgb565;
 
@@ -118,11 +104,11 @@ impl<I: Accelerometer, D: embedded_graphics::draw_target::DrawTarget<Color = Rgb
     }
 }
 
-#[xtensa_lx_rt::entry]
+#[entry]
 fn main() -> ! {
-    const HEAP_SIZE: usize = 65535 * 4;
-    static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
-    unsafe { ALLOCATOR.init(HEAP.as_mut_ptr(), HEAP_SIZE) }
+    // const HEAP_SIZE: usize = 65535 * 4;
+    // static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
+    // unsafe { ALLOCATOR.init(HEAP.as_mut_ptr(), HEAP_SIZE) }
 
     let peripherals = Peripherals::take();
 
@@ -134,21 +120,25 @@ fn main() -> ! {
 
     // Disable the RTC and TIMG watchdog timers
     let mut rtc = Rtc::new(peripherals.RTC_CNTL);
-    let timer_group0 = TimerGroup::new(peripherals.TIMG0, &clocks);
+    let timer_group0 = TimerGroup::new(
+        peripherals.TIMG0,
+        &clocks,
+        &mut system.peripheral_clock_control,
+    );
     let mut wdt0 = timer_group0.wdt;
-    let timer_group1 = TimerGroup::new(peripherals.TIMG1, &clocks);
+    let timer_group1 = TimerGroup::new(
+        peripherals.TIMG1,
+        &clocks,
+        &mut system.peripheral_clock_control,
+    );
     let mut wdt1 = timer_group1.wdt;
 
-    #[cfg(feature = "esp32c3")]
-    rtc.swd.disable();
-    #[cfg(feature = "xtensa-lx-rt")]
     rtc.rwdt.disable();
 
     wdt0.disable();
     wdt1.disable();
 
     let mut delay = Delay::new(&clocks);
-    // self.delay = Some(delay);
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);

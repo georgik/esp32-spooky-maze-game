@@ -1,23 +1,8 @@
 [target.'cfg(target_arch = "xtensa")']
 runner = "espflash flash --monitor"
 rustflags = [
-  # Tell the `core` library that we have atomics, even though it's not
-  # specified in the target definition
-  "--cfg", 'target_has_atomic="8"',
-  "--cfg", 'target_has_atomic="16"',
-  "--cfg", 'target_has_atomic="32"',
-  "--cfg", 'target_has_atomic="ptr"',
-
-  "-C", "link-arg=-nostartfiles",
-  # Enable the atomic codegen option for Xtensa
-  "-C", "target-feature=+s32c1i",
-  "-C", "link-arg=-Wl,-Tlinkall.x",
-  "-C", "force-frame-pointers"
-]
-
-[target.riscv32imac-unknown-none-elf]
-rustflags = [
   "-C", "link-arg=-Tlinkall.x",
+  "-C", "link-arg=-nostartfiles",
 ]
 
 [build]

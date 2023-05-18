@@ -15,15 +15,6 @@ use embedded_graphics::{
 
 use esp_println::println;
 
-#[cfg(feature="esp32")]
-use esp32_hal as hal;
-#[cfg(feature="esp32s2")]
-use esp32s2_hal as hal;
-#[cfg(feature="esp32s3")]
-use esp32s3_hal as hal;
-#[cfg(feature="esp32c3")]
-use esp32c3_hal as hal;
-
 use hal::{
     clock::{ ClockControl, CpuClock },
     // gdma::Gdma,
@@ -121,9 +112,17 @@ fn main() -> ! {
 
     // Disable the RTC and TIMG watchdog timers
     let mut rtc = Rtc::new(peripherals.RTC_CNTL);
-    let timer_group0 = TimerGroup::new(peripherals.TIMG0, &clocks);
+    let timer_group0 = TimerGroup::new(
+        peripherals.TIMG0,
+        &clocks,
+        &mut system.peripheral_clock_control,
+    );
     let mut wdt0 = timer_group0.wdt;
-    let timer_group1 = TimerGroup::new(peripherals.TIMG1, &clocks);
+    let timer_group1 = TimerGroup::new(
+        peripherals.TIMG1,
+        &clocks,
+        &mut system.peripheral_clock_control,
+    );
     let mut wdt1 = timer_group1.wdt;
 
     #[cfg(feature="esp32c3")]
