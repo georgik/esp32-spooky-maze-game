@@ -7,7 +7,7 @@ license = "MIT"
 
 [target.xtensa-esp32s3-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.4.0"
-esp32s3-hal = "0.8.0"
+hal = { package = "esp32s3-hal", version = "0.9.0" }
 esp-backtrace = { version = "0.7.0", features = [
     "esp32s3",
     "panic-handler",
@@ -26,7 +26,11 @@ icm42670 = { git = "https://github.com/jessebraham/icm42670/" }
 mipidsi = "0.6.0"
 panic-halt = "0.2"
 shared-bus = { version = "0.2.4" }
-spooky-core = { path = "../spooky-core" }
+# spooky-core = { path = "../spooky-core" }
+# Insufficient memory on ESP32-S3 with 0.9.0, switched to static maze without alloc
+spooky-core = { path = "../spooky-core", default-features = false, features = [
+    "static_maze",
+] }
 heapless = { version = "0.7.14", default-features = false }
 embedded-graphics-framebuf = "0.2.0"
 
@@ -44,4 +48,4 @@ esp32s3 = []
 esp32c3 = ["system_timer"]
 
 # Enable this feature in case you have an ESP32-S3-BOX board with ILI9342C
-esp32s3_box = [ "xtensa-lx-rt", "esp32s3", "esp32s3-hal/eh1", "imu_controls" ]
+esp32s3_box = [ "esp32s3", "imu_controls" ]
