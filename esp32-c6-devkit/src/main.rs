@@ -15,9 +15,6 @@ use embedded_graphics::{
 
 use esp_println::println;
 
-#[cfg(feature = "esp32c6")]
-use esp32c6_hal as hal;
-
 use hal::{
     clock::{ClockControl, CpuClock},
     // gdma::Gdma,
@@ -116,9 +113,17 @@ fn main() -> ! {
 
     // Disable the RTC and TIMG watchdog timers
     let mut rtc = Rtc::new(peripherals.LP_CLKRST);
-    let timer_group0 = TimerGroup::new(peripherals.TIMG0, &clocks);
+    let timer_group0 = TimerGroup::new(
+        peripherals.TIMG0,
+        &clocks,
+        &mut system.peripheral_clock_control,
+    );
     let mut wdt0 = timer_group0.wdt;
-    let timer_group1 = TimerGroup::new(peripherals.TIMG1, &clocks);
+    let timer_group1 = TimerGroup::new(
+        peripherals.TIMG1,
+        &clocks,
+        &mut system.peripheral_clock_control,
+    );
     let mut wdt1 = timer_group1.wdt;
 
     rtc.swd.disable();
@@ -136,7 +141,7 @@ fn main() -> ! {
     let spi = spi::Spi::new(
         peripherals.SPI2,
         io.pins.gpio6, // SCLK
-        io.pins.gpio7, // MOSO
+        io.pins.gpio7, // MOSI
         io.pins.gpio0, // MISO
         io.pins.gpio20, // CS
         60u32.MHz(),

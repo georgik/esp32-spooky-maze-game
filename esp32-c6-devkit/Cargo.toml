@@ -6,16 +6,12 @@ edition = "2021"
 license = "MIT"
 
 [target.riscv32imac-unknown-none-elf.dependencies]
-esp32c6-hal = "0.1.0"
-esp-backtrace = { version = "0.6.0", features = [
-    "esp32c3",
-    "panic-handler",
-    "print-uart",
-] }
-esp-println = { version = "0.4.0", features = [ "esp32c3" ] }
+hal = { package = "esp32c6-hal", version = "0.2.0" }
+esp-backtrace = { version = "0.7.0", features = ["esp32c6", "panic-handler", "exception-handler", "print-uart"] }
+esp-println = { version = "0.5.0", features = [ "esp32c6" ] }
 
 [dependencies]
-esp-alloc = "0.2.0"
+esp-alloc = "0.3.0"
 embedded-graphics = "0.7"
 embedded-hal = "0.2"
 display-interface = "0.4"
@@ -43,4 +39,4 @@ imu_controls = []
 
 esp32c6 = ["system_timer"]
 
-esp32c6_ili9341 = [ "esp32c6", "esp32c6-hal/eh1" ]
+esp32c6_ili9341 = [ "esp32c6" ]
