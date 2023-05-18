@@ -17,7 +17,7 @@ xtensa-lx-rt = { version = "0.15.0", features = ["esp32s3"], optional = true }
 esp-println = { version = "0.4.0", features = ["esp32s3"] }
 
 [dependencies]
-esp-alloc = "0.2.0"
+esp-alloc = "0.3.0"
 embedded-graphics = "0.7"
 embedded-hal = "0.2"
 display-interface = "0.4"
