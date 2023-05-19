@@ -24,8 +24,6 @@ use hal::{
 // use panic_halt as _;
 use esp_backtrace as _;
 
-use mipidsi::hal::{ Orientation, Rotation };
-
 #[cfg(feature = "xtensa-lx-rt")]
 use xtensa_lx_rt::entry;
 
@@ -140,8 +138,9 @@ fn main() -> ! {
     let di = SPIInterfaceNoCS::new(spi, io.pins.gpio21.into_push_pull_output());
 
     let mut display = mipidsi::Builder::ili9341_rgb565(di)
-        .with_display_size(320, 240)
-        .with_orientation(Orientation::new().rotate(Rotation::Deg90).flip_vertical())
+        .with_display_size(240 as u16, 320 as u16)
+        .with_orientation(mipidsi::Orientation::Landscape(true))
+        .with_color_order(mipidsi::ColorOrder::Bgr)
         .init(&mut delay, Some(reset))
         .unwrap();
 
