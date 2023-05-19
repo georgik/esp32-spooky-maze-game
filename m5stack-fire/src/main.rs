@@ -152,6 +152,7 @@ fn main() -> ! {
     #[cfg(feature = "m5stack_fire")]
     let mut display = mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(320, 240)
+        .with_color_order(mipidsi::ColorOrder::Bgr)
         .init(&mut delay, Some(reset))
         .unwrap();
 
