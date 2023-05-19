@@ -33,8 +33,6 @@ use hal::{
 #[cfg(feature = "system_timer")]
 use hal::systimer::SystemTimer;
 
-use mipidsi::{ Orientation };
-
 // use panic_halt as _;
 use esp_backtrace as _;
 
@@ -164,7 +162,7 @@ fn main() -> ! {
     .init(&mut delay, Some(reset))
     .unwrap();
 
-    println!("Initialzied");
+    println!("Initialzed");
 
     Text::new(
         "Initializing...",
