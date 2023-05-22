@@ -139,7 +139,7 @@ fn main() -> ! {
 
     let mut display = mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(240 as u16, 320 as u16)
-        .with_orientation(mipidsi::Orientation::LandscapeInverted(true))
+        .with_orientation(mipidsi::Orientation::Landscape(false))
         .with_color_order(mipidsi::ColorOrder::Bgr)
         .init(&mut delay, Some(reset))
         .unwrap();
