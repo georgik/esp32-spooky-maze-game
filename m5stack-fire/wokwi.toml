@@ -2,5 +2,5 @@
 
 [wokwi]
 version = 1
-elf = "../target/xtensa-esp32-none-elf/release/spooky_m5"
-firmware = "../target/xtensa-esp32-none-elf/release/spooky_m5"
+elf = "target/xtensa-esp32-none-elf/release/spooky-m5stack-fire"
+firmware = "target/xtensa-esp32-none-elf/release/spooky-m5stack-fire"
