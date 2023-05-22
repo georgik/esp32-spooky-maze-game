@@ -16,9 +16,6 @@ use embedded_graphics::{
     Drawable,
 };
 
-use mipidsi::hal::{ Orientation, Rotation };
-use mipidsi::ColorOrder;
-
 use esp_println::println;
 
 use hal::{
@@ -172,8 +169,8 @@ fn main() -> ! {
 
     let mut display = mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(320, 240)
-        .with_color_order(ColorOrder::Bgr)
-        .with_orientation(Orientation::new().rotate(Rotation::Deg90))
+        .with_orientation(mipidsi::Orientation::Landscape(true))
+        .with_color_order(mipidsi::ColorOrder::Rgb)
         .init(&mut delay, Some(reset))
         .unwrap();
 
