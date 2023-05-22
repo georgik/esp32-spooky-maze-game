@@ -241,6 +241,7 @@ fn main() -> ! {
     let mut display = mipidsi::Builder::st7789(di)
         .with_display_size(240, 240)
         .with_orientation(mipidsi::Orientation::PortraitInverted(false))
+        .with_invert_colors(mipidsi::ColorInversion::Inverted)
         .init(&mut delay, Some(reset)).unwrap();
 
     Text::new(
