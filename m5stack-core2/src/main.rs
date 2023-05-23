@@ -156,6 +156,8 @@ fn main() -> ! {
     #[cfg(feature = "m5stack_core2")]
     let mut display = mipidsi::Builder::ili9342c_rgb565(di)
         .with_display_size(320, 240)
+        .with_color_order(mipidsi::ColorOrder::Bgr)
+        .with_invert_colors(mipidsi::ColorInversion::Inverted)
         .init(&mut delay, Some(reset))
         .unwrap();
 
