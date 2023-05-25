@@ -1,3 +1,5 @@
+use esp_println::println;
+
 
 pub const AXP192_ACIN_VOLTAGE: u8 = 0x56;
 pub const AXP192_VBUS_VOLTAGE: u8 = 0x57;
@@ -66,21 +68,31 @@ pub struct Axp192<I> {
 // Implement Axp192ReadWrite for I2CInterface
 impl<I> Axp192ReadWrite for I2CInterface<I>
 where
-    I: embedded_hal::blocking::i2c::Write,
+    I: embedded_hal::blocking::i2c::Write + embedded_hal::blocking::i2c::WriteRead,
 {
     // Send commands over I2C to AXP192
     fn send_commands(&mut self, cmd: DataFormat<'_>) -> Result<(), Axp192Error> {
+        let mut data_buf = [0];
+        println!("send_commands");
         match cmd {
             DataFormat::U8(data) => {
-                // self.i2c
-                //     .write(self.addr, &[0x34 as u8])
-                //     .map_err(|_| Axp192Error::WriteError);
+                let result = self.i2c
+                    .write_read(self.addr, &[0x12], &mut data_buf)
+                    .map_err(|_| Axp192Error::WriteError);
+                println!("data_buf: {:?}", data_buf);
+
+                // Turn on all default values
+                self.i2c
+                    .write(self.addr, &[0x12, 119])
+                    .map_err(|_| Axp192Error::WriteError).unwrap();
+                result
+
                 // self.i2c
                 //     .read(self.addr, data)
                 //     .map_err(|_| Axp192Error::ReadError);
-                self.i2c
-                    .write(self.addr, data)
-                    .map_err(|_| Axp192Error::WriteError)
+                // self.i2c
+                //     .write(self.addr, data)
+                //     .map_err(|_| Axp192Error::WriteError)
             }
         }
     }
@@ -112,7 +124,7 @@ impl<I> Axp192<I>
         Command::EndOfCommands.send(&mut self.interface)?;
         Ok(())
     }
-    
+
 }
 
 pub struct I2CInterface<I2C> {
@@ -123,7 +135,7 @@ pub struct I2CInterface<I2C> {
 
 impl<I2C> I2CInterface<I2C>
 where
-    I2C: embedded_hal::blocking::i2c::Write,
+    I2C: embedded_hal::blocking::i2c::Write/*+ embedded_hal::blocking::i2c::WriteRead*/,
 {
     /// Create new I2C interface for communication with a display driver
     pub fn new(i2c: I2C, addr: u8, data_byte: u8) -> Self {
@@ -158,165 +170,9 @@ impl I2CPowerManagementInterface {
     where
         I: embedded_hal::blocking::i2c::Write,
     {
-        I2CInterface::new(i2c, address, 0x40)
+        I2CInterface::new(i2c, address, 0x34)
     }
 }
-    // // Initialize the AXP192
-    // pub fn init(&self) -> Result<(), AXP192Error> {
-    //     Ok(())
-    // }
-
-    // fn read_coloumb_counter(&self, buffer: &mut f32) -> Result<(), AXP192Error> {
-    //     // Implement read_coloumb_counter logic here
-    //     unimplemented!()
-    // }
-
-    // fn read_battery_power(&self, buffer: &mut f32) -> Result<(), AXP192Error> {
-    //     // Implement read_battery_power logic here
-    //     unimplemented!()
-    // }
-
-    // fn read_adc(&self, reg: u8, buffer: &mut f32) -> Result<(), AXP192Error> {
-    //     let mut tmp = [0u8; 4];
-    //     let mut sensitivity = 1.0;
-    //     let mut offset = 0.0;
-
-    //     match reg {
-    //         AXP192_ACIN_VOLTAGE | AXP192_VBUS_VOLTAGE => {
-    //             // 1.7mV per LSB
-    //             sensitivity = 1.7 / 1000.0;
-    //         }
-    //         AXP192_ACIN_CURRENT => {
-    //             // 
-    //             sensitivity = 0.625;
-    //         }
-    //         AXP192_VBUS_CURRENT => {
-    //             // 
-    //             sensitivity = 0.375;
-    //         }
-    //         AXP192_TEMP => {
-    //             // 0.1C per LSB
-    //             sensitivity = 0.1;
-    //             offset = 0.0;
-    //         }
-    //         AXP192_TS_INPUT => {
-    //             // 0.8mV per LSB
-    //             sensitivity = 0.8 / 1000.0;
-    //         }
-    //         AXP192_BATTERY_POWER => {
-    //             // 1.1mV per LSB
-    //             sensitivity = 1.1 / 1000.0;
-    //         }
-    //         AXP192_BATTERY_VOLTAGE => {
-    //             // 1.1mV per LSB
-    //             sensitivity = 1.1 / 1000.0;
-    //         }
-    //         AXP192_CHARGE_CURRENT => {
-    //             // 0.5mV per LSB
-    //             sensitivity = 0.5 / 1000.0;
-    //         }
-    //         AXP192_DISCHARGE_CURRENT => {
-    //             // 0.5mV per LSB
-    //             sensitivity = 0.5 / 1000.0;
-    //         }
-    //         AXP192_APS_VOLTAGE => {
-    //             // 1.4mV per LSB
-    //             sensitivity = 1.4 / 1000.0;
-    //         }
-    //         _ => {
-    //             return Err(AXP192Error::NotSupported);
-    //         }
-    //     }
-
-    //     self.handle.read(AXP192_ADDRESS, reg, &mut tmp)?;
-
-    //     *buffer = ((tmp[0] as u32) << 24
-    //         | (tmp[1] as u32) << 16
-    //         | (tmp[2] as u32) << 8
-    //         | (tmp[3] as u32) << 0) as f32
-    //         * sensitivity
-    //         + offset;
-
-    //     Ok(())
-
-    // }
-
-
-    // fn read(&self, reg: u8, buffer: &mut f32) -> Result<(), AXP192Error> {
-    //     match reg {
-    //         AXP192_COULOMB_COUNTER => {
-    //             self.read_coloumb_counter(buffer)?;
-    //         }
-    //         AXP192_BATTERY_POWER => {
-    //             self.read_battery_power(buffer)?;
-    //         }
-    //         _ => {
-    //             self.read_adc(reg, buffer)?;
-    //         }
-    //     }
-
-    //     Ok(())
-    // }
-
-    // fn write(&self, reg: u8, buffer: &mut f32) -> Result<(), AXP192Error> {
-    //     // Implement write logic here
-    //     unimplemented!()
-    // }
-
-    // pub fn get_acin_voltage(&self, buffer: &mut f32) -> Result<(), AXP192Error> {
-    //     self.read(AXP192_ACIN_VOLTAGE, buffer)
-    // }
-
-    // pub fn get_vbus_voltage(&self, buffer: &mut f32) -> Result<(), AXP192Error> {
-    //     self.read(AXP192_VBUS_VOLTAGE, buffer)
-    // }
-
-    // pub fn get_acin_current(&self, buffer: &mut f32) -> Result<(), AXP192Error> {
-    //     self.read(AXP192_ACIN_CURRENT, buffer)
-    // }
-
-    // pub fn get_vbus_current(&self, buffer: &mut f32) -> Result<(), AXP192Error> {
-    //     self.read(AXP192_VBUS_CURRENT, buffer)
-    // }
-
-    // pub fn get_temp(&self, buffer: &mut f32) -> Result<(), AXP192Error> {
-    //     self.read(AXP192_TEMP, buffer)
-    // }
-
-    // pub fn get_ts_input(&self, buffer: &mut f32) -> Result<(), AXP192Error> {
-    //     self.read(AXP192_TS_INPUT, buffer)
-    // }
-
-    // pub fn get_battery_power(&self, buffer: &mut f32) -> Result<(), AXP192Error> {
-    //     self.read(AXP192_BATTERY_POWER, buffer)
-    // }
-
-    // pub fn get_battery_voltage(&self, buffer: &mut f32) -> Result<(), AXP192Error> {
-    //     self.read(AXP192_BATTERY_VOLTAGE, buffer)
-    // }
-
-    // pub fn get_charge_current(&self, buffer: &mut f32) -> Result<(), AXP192Error> {
-    //     self.read(AXP192_CHARGE_CURRENT, buffer)
-    // }
-
-    // pub fn get_discharge_current(&self, buffer: &mut f32) -> Result<(), AXP192Error> {
-    //     self.read(AXP192_DISCHARGE_CURRENT, buffer)
-    // }
-
-    // pub fn get_aps_voltage(&self, buffer: &mut f32) -> Result<(), AXP192Error> {
-    //     self.read(AXP192_APS_VOLTAGE, buffer)
-    // }
-
-    // pub fn get_coulomb_counter(&self, buffer: &mut f32) -> Result<(), AXP192Error> {
-    //     self.read(AXP192_COULOMB_COUNTER, buffer)
-    // }
-
-
-// }
-
-
-
-
 
 
 
