@@ -50,6 +50,9 @@ use shared_bus::BusManagerSimple;
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
 
+mod axp192;
+use axp192::{ I2CPowerManagementInterface, Axp192 };
+
 pub struct Universe<D> {
     pub engine: Engine<D>,
 }
@@ -131,6 +134,23 @@ fn main() -> ! {
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
+    // AXP Power Management Unit initialization
+    let axp_sda = io.pins.gpio21;
+    let axp_scl = io.pins.gpio22;
+
+    let i2c_bus = i2c::I2C::new(
+        peripherals.I2C0,
+        axp_sda,
+        axp_scl,
+        400u32.kHz(),
+        &mut system.peripheral_clock_control,
+        &clocks,
+    );
+
+    let axp_interface = I2CPowerManagementInterface::new(i2c_bus);
+    let mut axp = Axp192::new(axp_interface);
+    axp.init().unwrap();
+
     // M5Stack CORE 2 - https://docs.m5stack.com/en/core/core2
     #[cfg(feature = "esp32")]
     let mut backlight = io.pins.gpio3.into_push_pull_output();
@@ -186,20 +206,20 @@ fn main() -> ! {
     // #[cfg(feature = "m5stack_core2")]
     // let button_c = io.pins.gpio37.into_pull_up_input();
 
-    #[cfg(any(feature = "imu_controls"))]
-    let sda = io.pins.gpio21;
-    #[cfg(any(feature = "imu_controls"))]
-    let scl = io.pins.gpio22;
+    // #[cfg(any(feature = "imu_controls"))]
+    // let sda = io.pins.gpio21;
+    // #[cfg(any(feature = "imu_controls"))]
+    // let scl = io.pins.gpio22;
 
-    #[cfg(any(feature = "imu_controls"))]
-    let i2c = i2c::I2C::new(
-        peripherals.I2C0,
-        sda,
-        scl,
-        100u32.kHz(),
-        &mut system.peripheral_clock_control,
-        &clocks,
-    );
+    // #[cfg(any(feature = "imu_controls"))]
+    // let i2c = i2c::I2C::new(
+    //     peripherals.I2C0,
+    //     sda,
+    //     scl,
+    //     100u32.kHz(),
+    //     &mut system.peripheral_clock_control,
+    //     &clocks,
+    // );
 
     #[cfg(any(feature = "imu_controls"))]
     let bus = BusManagerSimple::new(i2c);

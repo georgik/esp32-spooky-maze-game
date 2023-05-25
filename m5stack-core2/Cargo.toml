@@ -52,4 +52,5 @@ mpu9250 = ["imu_controls", "dep:mpu9250"]
 
 wokwi = [ "xtensa-lx-rt", "esp32", "mpu6050" ]
 
-m5stack_core2 = ["xtensa-lx-rt", "esp32", "mpu6886" ]
+# m5stack_core2 = ["xtensa-lx-rt", "esp32", "mpu6886" ]
+m5stack_core2 = ["xtensa-lx-rt", "esp32" ]
