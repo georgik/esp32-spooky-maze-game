@@ -80,6 +80,63 @@ where
                     .write_read(self.addr, &[0x12], &mut data_buf)
                     .map_err(|_| Axp192Error::WriteError);
                 println!("data_buf: {:?}", data_buf);
+                let result = self.i2c
+                .write_read(self.addr, &[0x28], &mut data_buf)
+                .map_err(|_| Axp192Error::WriteError);
+            println!("data_buf2: {:?}", data_buf);
+
+            let result = self.i2c
+            .write_read(self.addr, &[0x25], &mut data_buf)
+            .map_err(|_| Axp192Error::WriteError);
+        println!("data_buf25: {:?}", data_buf);
+
+
+        let result = self.i2c
+        .write_read(self.addr, &[0x26], &mut data_buf)
+        .map_err(|_| Axp192Error::WriteError);
+    println!("data_buf26: {:?}", data_buf);
+
+
+    let result = self.i2c
+    .write_read(self.addr, &[0x27], &mut data_buf)
+    .map_err(|_| Axp192Error::WriteError);
+println!("data_buf27: {:?}", data_buf);
+
+let result = self.i2c
+.write_read(self.addr, &[0x92], &mut data_buf)
+.map_err(|_| Axp192Error::WriteError);
+println!("data_buf92: {:?}", data_buf);
+
+let result = self.i2c
+.write_read(self.addr, &[0x27], &mut data_buf)
+.map_err(|_| Axp192Error::WriteError);
+println!("data_buf93: {:?}", data_buf);
+
+            self.i2c
+            .write(self.addr, &[0x28, 242])
+            .map_err(|_| Axp192Error::WriteError).unwrap();
+
+
+            self.i2c
+            .write(self.addr, &[0x25, 0])
+            .map_err(|_| Axp192Error::WriteError).unwrap();
+
+            self.i2c
+            .write(self.addr, &[0x26, 106])
+            .map_err(|_| Axp192Error::WriteError).unwrap();
+
+            self.i2c
+            .write(self.addr, &[0x27, 104])
+            .map_err(|_| Axp192Error::WriteError).unwrap();
+
+            self.i2c
+            .write(self.addr, &[0x92, 0])
+            .map_err(|_| Axp192Error::WriteError).unwrap();
+
+            self.i2c
+            .write(self.addr, &[0x93, 104])
+            .map_err(|_| Axp192Error::WriteError).unwrap();
+
 
                 // Turn on all default values
                 self.i2c

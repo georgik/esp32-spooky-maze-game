@@ -33,6 +33,7 @@ spooky-core = { path = "../spooky-core", default-features = false, features = [
     "static_maze",
 ] }
 heapless = { version = "0.7.14", default-features = false }
+esp-println = { version = "0.5.0", features = [ "esp32" ] }
 
 [features]
 default = ["m5stack_core2"]
