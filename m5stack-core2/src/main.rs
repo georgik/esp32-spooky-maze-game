@@ -44,13 +44,12 @@ use embedded_graphics::pixelcolor::Rgb565;
 
 use spooky_core::{engine::Engine, spritebuf::SpriteBuf, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite }};
 
-#[cfg(any(feature = "imu_controls"))]
+#[cfg(any(feature = "i2c"))]
 use shared_bus::BusManagerSimple;
 
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
 
-mod axp192;
 use axp192::{ I2CPowerManagementInterface, Axp192 };
 
 pub struct Universe<D> {
@@ -134,20 +133,24 @@ fn main() -> ! {
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
-    // AXP Power Management Unit initialization
-    let axp_sda = io.pins.gpio21;
-    let axp_scl = io.pins.gpio22;
+    // I2C
+    let sda = io.pins.gpio21;
+    let scl = io.pins.gpio22;
 
     let i2c_bus = i2c::I2C::new(
         peripherals.I2C0,
-        axp_sda,
-        axp_scl,
+        sda,
+        scl,
         400u32.kHz(),
         &mut system.peripheral_clock_control,
         &clocks,
     );
 
-    let axp_interface = I2CPowerManagementInterface::new(i2c_bus);
+    #[cfg(any(feature = "i2c"))]
+    let bus = BusManagerSimple::new(i2c_bus);
+
+    // Power management - AXP192
+    let axp_interface = I2CPowerManagementInterface::new(bus.acquire_i2c());
     let mut axp = Axp192::new(axp_interface);
     axp.init().unwrap();
 
@@ -205,24 +208,6 @@ fn main() -> ! {
     // let button_b = io.pins.gpio38.into_pull_up_input();
     // #[cfg(feature = "m5stack_core2")]
     // let button_c = io.pins.gpio37.into_pull_up_input();
-
-    // #[cfg(any(feature = "imu_controls"))]
-    // let sda = io.pins.gpio21;
-    // #[cfg(any(feature = "imu_controls"))]
-    // let scl = io.pins.gpio22;
-
-    // #[cfg(any(feature = "imu_controls"))]
-    // let i2c = i2c::I2C::new(
-    //     peripherals.I2C0,
-    //     sda,
-    //     scl,
-    //     100u32.kHz(),
-    //     &mut system.peripheral_clock_control,
-    //     &clocks,
-    // );
-
-    #[cfg(any(feature = "imu_controls"))]
-    let bus = BusManagerSimple::new(i2c);
 
     #[cfg(any(feature = "mpu9250"))]
     let mut icm = Mpu9250::imu_default(bus.acquire_i2c(), &mut delay).unwrap();
