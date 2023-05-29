@@ -11,7 +11,7 @@ jobs:
 
       - name: Download prebuilt firmware
         run: |
-          mkdir -P esp-wrover-kit/target/xtensa-esp32-none-elf/release/spooky-wrover-kit
+          mkdir -p esp-wrover-kit/target/xtensa-esp32-none-elf/release/spooky-wrover-kit
           cd esp-wrover-kit/target/xtensa-esp32-none-elf/release/spooky-wrover-kit
           curl -L "https://github.com/georgik/esp32-spooky-maze-game/releases/download/v0.3.0/spooky-maze-esp-wrover-kit.bin" -O spooky-wrover-kit
 
