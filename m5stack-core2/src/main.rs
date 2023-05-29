@@ -219,7 +219,11 @@ fn main() -> ! {
     let mut icm = Mpu6886::new(bus.acquire_i2c());
 
     #[cfg(any(feature = "mpu6050", feature = "mpu6886"))]
-    icm.init(&mut delay).unwrap();
+    let is_imu_enabled = match icm.init(&mut delay) {
+        Ok(_) => true,
+        Err(_) => false,
+    };
+
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
@@ -287,7 +291,7 @@ fn main() -> ! {
         }
 
         #[cfg(any(feature = "mpu6050", feature = "mpu6886"))]
-        {
+        if is_imu_enabled {
             #[cfg(feature = "mpu6050")]
             let accel_threshold = 1.00;
 
