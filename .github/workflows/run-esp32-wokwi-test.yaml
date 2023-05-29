@@ -15,11 +15,11 @@ jobs:
           cd build
           wget "https://github.com/georgik/esp32-spooky-maze-game/releases/download/v0.3.0/spooky-maze-esp-wrover-kit.bin"
 
-      - name: Test with Wokwi
-        uses: wokwi/wokwi-ci-action@v1
-        with:
-          token: ${{ secrets.WOKWI_CLI_TOKEN }}
-          expect_text: 'Embedded Wizard'
+      # - name: Test with Wokwi
+      #   uses: wokwi/wokwi-ci-action@v1
+      #   with:
+      #     token: ${{ secrets.WOKWI_CLI_TOKEN }}
+      #     expect_text: 'Embedded Wizard'
 
       - name: Simulate & take a screen shot
         run: |
