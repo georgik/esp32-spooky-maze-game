@@ -144,12 +144,9 @@ fn main() -> ! {
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
 
-    #[cfg(any(feature = "esp32s3_box"))]
     let sclk = io.pins.gpio7;
-    #[cfg(any(feature = "esp32s3_box"))]
     let mosi = io.pins.gpio6;
 
-    #[cfg(any(feature = "esp32s3_box"))]
     let spi = spi::Spi::new_no_cs_no_miso(
         peripherals.SPI2,
         sclk,
@@ -160,15 +157,10 @@ fn main() -> ! {
         &clocks,
     );
 
-    #[cfg(any(feature = "esp32s3_box"))]
     let mut backlight = io.pins.gpio45.into_push_pull_output();
 
-    #[cfg(feature = "esp32")]
-    backlight.set_low().unwrap();
-    #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
     backlight.set_high().unwrap();
 
-    #[cfg(any(feature = "esp32s3_box"))]
     let reset = io.pins.gpio48.into_push_pull_output();
 
     #[cfg(any(feature = "esp32s2", feature = "esp32s3"))]
