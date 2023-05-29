@@ -33,13 +33,18 @@ spooky-core = { path = "../spooky-core", default-features = false, features = [
     "static_maze",
 ] }
 heapless = { version = "0.7.14", default-features = false }
+esp-println = { version = "0.5.0", features = [ "esp32" ] }
+axp192 = { git = "https://github.com/georgik/axp192-rs.git", rev = "80e4fd27dfab", optional = true }
+#axp192 = { path = "../../axp192", optional = true }
 
 [features]
 default = ["m5stack_core2"]
 system_timer = []
 
+i2c = []
+
 button_controls = []
-imu_controls = []
+imu_controls = [ "i2c" ]
 
 esp32 = []
 esp32s2 = ["system_timer"]
@@ -50,6 +55,9 @@ mpu6050 = ["imu_controls", "dep:mpu6050"]
 mpu6886 = ["imu_controls", "dep:mpu6886"]
 mpu9250 = ["imu_controls", "dep:mpu9250"]
 
+axp192 = ["i2c", "dep:axp192"]
+
 wokwi = [ "xtensa-lx-rt", "esp32", "mpu6050" ]
 
-m5stack_core2 = ["xtensa-lx-rt", "esp32", "mpu6886" ]
+m5stack_core2 = ["xtensa-lx-rt", "esp32", "mpu6886", "axp192" ]
+#m5stack_core2 = ["xtensa-lx-rt", "esp32", "axp192" ]

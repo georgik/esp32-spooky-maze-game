@@ -44,11 +44,13 @@ use embedded_graphics::pixelcolor::Rgb565;
 
 use spooky_core::{engine::Engine, spritebuf::SpriteBuf, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite }};
 
-#[cfg(any(feature = "imu_controls"))]
+#[cfg(any(feature = "i2c"))]
 use shared_bus::BusManagerSimple;
 
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
+
+use axp192::{ I2CPowerManagementInterface, Axp192 };
 
 pub struct Universe<D> {
     pub engine: Engine<D>,
@@ -131,6 +133,27 @@ fn main() -> ! {
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
+    // I2C
+    let sda = io.pins.gpio21;
+    let scl = io.pins.gpio22;
+
+    let i2c_bus = i2c::I2C::new(
+        peripherals.I2C0,
+        sda,
+        scl,
+        400u32.kHz(),
+        &mut system.peripheral_clock_control,
+        &clocks,
+    );
+
+    #[cfg(any(feature = "i2c"))]
+    let bus = BusManagerSimple::new(i2c_bus);
+
+    // Power management - AXP192
+    let axp_interface = I2CPowerManagementInterface::new(bus.acquire_i2c());
+    let mut axp = Axp192::new(axp_interface);
+    axp.init().unwrap();
+
     // M5Stack CORE 2 - https://docs.m5stack.com/en/core/core2
     #[cfg(feature = "esp32")]
     let mut backlight = io.pins.gpio3.into_push_pull_output();
@@ -186,24 +209,6 @@ fn main() -> ! {
     // #[cfg(feature = "m5stack_core2")]
     // let button_c = io.pins.gpio37.into_pull_up_input();
 
-    #[cfg(any(feature = "imu_controls"))]
-    let sda = io.pins.gpio21;
-    #[cfg(any(feature = "imu_controls"))]
-    let scl = io.pins.gpio22;
-
-    #[cfg(any(feature = "imu_controls"))]
-    let i2c = i2c::I2C::new(
-        peripherals.I2C0,
-        sda,
-        scl,
-        100u32.kHz(),
-        &mut system.peripheral_clock_control,
-        &clocks,
-    );
-
-    #[cfg(any(feature = "imu_controls"))]
-    let bus = BusManagerSimple::new(i2c);
-
     #[cfg(any(feature = "mpu9250"))]
     let mut icm = Mpu9250::imu_default(bus.acquire_i2c(), &mut delay).unwrap();
 
@@ -214,7 +219,11 @@ fn main() -> ! {
     let mut icm = Mpu6886::new(bus.acquire_i2c());
 
     #[cfg(any(feature = "mpu6050", feature = "mpu6886"))]
-    icm.init(&mut delay).unwrap();
+    let is_imu_enabled = match icm.init(&mut delay) {
+        Ok(_) => true,
+        Err(_) => false,
+    };
+
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
@@ -282,7 +291,7 @@ fn main() -> ! {
         }
 
         #[cfg(any(feature = "mpu6050", feature = "mpu6886"))]
-        {
+        if is_imu_enabled {
             #[cfg(feature = "mpu6050")]
             let accel_threshold = 1.00;
 

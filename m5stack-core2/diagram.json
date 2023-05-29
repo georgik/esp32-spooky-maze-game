@@ -1,0 +1,68 @@
+{
+    "version": 1,
+    "author": "Kirill Mikhailov [playfulFence]",
+    "editor": "wokwi",
+    "parts": [
+      {
+        "type": "wokwi-esp32-devkit-v1",
+        "id": "esp",
+        "top": -494.32,
+        "left": -455.03,
+        "attrs": { "builder": "rust-std-esp32" }
+      },
+      {
+        "type": "wokwi-ili9341",
+        "id": "lcd1",
+        "top": -546.22,
+        "left": -134.92,
+        "rotate": 90,
+        "attrs": {}
+      },
+      { "type": "wokwi-mpu6050", "id": "imu1", "top": -235.29, "left": -316.38, "attrs": {} },
+      {
+        "type": "wokwi-pushbutton",
+        "id": "btn1",
+        "top": -234.07,
+        "left": -490.67,
+        "attrs": { "color": "green" }
+      },
+      {
+        "type": "wokwi-pushbutton",
+        "id": "btn2",
+        "top": -234.73,
+        "left": -402,
+        "attrs": { "color": "red" }
+      },
+      {
+        "type": "wokwi-logic-analyzer",
+        "id": "logic1",
+        "top": -623.92,
+        "left": -286.67,
+        "attrs": {}
+      }
+    ],
+    "connections": [
+      [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+      [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+      [ "esp:3V3", "lcd1:VCC", "green", [] ],
+      [ "esp:GND.1", "lcd1:GND", "black", [] ],
+      [ "esp:D18", "lcd1:SCK", "blue", [] ],
+      [ "esp:D23", "lcd1:MOSI", "orange", [] ],
+      [ "esp:D14", "lcd1:CS", "red", [] ],
+      [ "esp:D27", "lcd1:D/C", "magenta", [] ],
+      [ "esp:D33", "lcd1:RST", "yellow", [] ],
+      [ "lcd1:LED", "esp:3V3", "white", [] ],
+      [ "imu1:VCC", "esp:3V3", "red", [ "v0" ] ],
+      [ "imu1:GND", "esp:GND.2", "black", [ "v0" ] ],
+      [ "imu1:SDA", "esp:D21", "green", [ "v-144.89", "h227.76" ] ],
+      [ "imu1:SCL", "esp:D22", "green", [ "v0" ] ],
+      [ "btn1:1.l", "esp:VIN", "green", [ "h0" ] ],
+      [ "btn1:2.r", "esp:D34", "green", [ "v0" ] ],
+      [ "btn2:1.l", "esp:VIN", "green", [ "h0" ] ],
+      [ "btn2:2.r", "esp:D35", "green", [ "v0" ] ],
+      [ "logic1:D0", "esp:D21", "blue", [ "h0" ] ],
+      [ "logic1:D1", "esp:D22", "red", [ "h0" ] ]
+    ],
+    "serialMonitor": { "display": "terminal" },
+    "dependencies": {}
+  }
