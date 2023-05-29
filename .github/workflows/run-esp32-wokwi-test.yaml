@@ -19,7 +19,7 @@ jobs:
         uses: wokwi/wokwi-ci-action@v1
         with:
           token: ${{ secrets.WOKWI_CLI_TOKEN }}
-          expect_text: 'Loaded app from partition'
+          expect_text: 'Starting main loop'
           path: "esp-wrover-kit"
 
       - name: Simulate & take a screen shot

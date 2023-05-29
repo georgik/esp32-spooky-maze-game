@@ -21,8 +21,9 @@ use hal::{
     Delay, Rng, Rtc, IO,
 };
 
-// use panic_halt as _;
 use esp_backtrace as _;
+
+use esp_println::println;
 
 #[cfg(feature = "xtensa-lx-rt")]
 use xtensa_lx_rt::entry;
@@ -164,6 +165,7 @@ fn main() -> ! {
     let mut universe = Universe::new(Some(seed_buffer), engine);
     universe.initialize();
 
+    println!("Starting main loop");
     loop {
         if button_boot.is_low().unwrap() {
             universe.teleport();
