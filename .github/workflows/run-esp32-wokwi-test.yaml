@@ -25,7 +25,7 @@ jobs:
       - name: Simulate & take a screen shot
         run: |
           mkdir public
-          wokwi-cli --timeout 3000 --timeout-exit-code 0 --screenshot-part "lcd1" --screenshot-time 3000 --screenshot-file "public/screenshot.png" "${GITHUB_WORKSPACE}/esp-wrover-kit"
+          wokwi-cli --timeout 5000 --timeout-exit-code 0 --screenshot-part "lcd1" --screenshot-time 5000 --screenshot-file "public/screenshot.png" "${GITHUB_WORKSPACE}/esp-wrover-kit"
         env:
           WOKWI_CLI_TOKEN: ${{ secrets.WOKWI_CLI_TOKEN }}
 
