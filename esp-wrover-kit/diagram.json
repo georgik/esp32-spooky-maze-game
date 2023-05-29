@@ -1,0 +1,36 @@
+{
+    "version": 1,
+    "author": "Juraj Michálek",
+    "editor": "wokwi",
+    "parts": [
+      {
+        "type": "wokwi-esp32-devkit-v1",
+        "id": "esp",
+        "top": -494.32,
+        "left": -455.03,
+        "attrs": { "builder": "rust-std-esp32" }
+      },
+      {
+        "type": "wokwi-ili9341",
+        "id": "lcd1",
+        "top": -546.22,
+        "left": -134.92,
+        "rotate": 90,
+        "attrs": {}
+      }
+    ],
+    "connections": [
+      [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+      [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+      [ "esp:3V3", "lcd1:VCC", "green", [] ],
+      [ "esp:GND.1", "lcd1:GND", "black", [] ],
+      [ "esp:D19", "lcd1:SCK", "blue", [] ],
+      [ "esp:D23", "lcd1:MOSI", "orange", [] ],
+      [ "esp:D22", "lcd1:CS", "red", [] ],
+      [ "esp:D21", "lcd1:D/C", "magenta", [] ],
+      [ "esp:D18", "lcd1:RST", "yellow", [] ],
+      [ "lcd1:LED", "esp:3V3", "white", [] ]
+    ],
+    "serialMonitor": { "display": "terminal" },
+    "dependencies": {}
+  }

@@ -158,47 +158,21 @@ fn main() -> ! {
     #[cfg(feature = "esp32c3")]
     let mut backlight = io.pins.gpio0.into_push_pull_output();
 
-    #[cfg(feature = "esp32")]
-    let spi = spi::Spi::new(
-        peripherals.SPI2,
-        io.pins.gpio19,
-        io.pins.gpio23,
-        io.pins.gpio25,
-        io.pins.gpio22,
-        100u32.MHz(),
-        spi::SpiMode::Mode0,
-        &mut system.peripheral_clock_control,
-        &mut clocks);
 
     #[cfg(any(feature = "esp32s2", feature = "esp32s3_usb_otg"))]
     let spi = spi::Spi::new(
         peripherals.SPI3,
-        io.pins.gpio6,
-        io.pins.gpio7,
-        io.pins.gpio12,
-        io.pins.gpio5,
+        io.pins.gpio6, // SCK
+        io.pins.gpio7, // MOSI
+        io.pins.gpio12, // MISO
+        io.pins.gpio5, // CS
         60u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
         &clocks);
 
-    #[cfg(feature = "esp32")]
-    backlight.set_low().unwrap();
     #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
     backlight.set_high().unwrap();
-
-
-    #[cfg(feature = "esp32c3")]
-    let spi = spi::Spi::new(
-        peripherals.SPI2,
-        io.pins.gpio6,
-        io.pins.gpio7,
-        io.pins.gpio12,
-        io.pins.gpio20,
-        100u32.MHz(),
-        spi::SpiMode::Mode0,
-        &mut system.peripheral_clock_control,
-        &mut clocks);
 
     #[cfg(any(feature = "esp32", feature = "esp32s2", feature = "esp32s3_usb_otg"))]
     let reset = io.pins.gpio18.into_push_pull_output();

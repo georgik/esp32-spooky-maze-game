@@ -1,0 +1,76 @@
+name: Simulate with Wokwi + Screen Shot
+
+on:
+  workflow_dispatch:
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download prebuilt firmware
+        run: |
+          mkdir build
+          cd build
+          wget "https://github.com/georgik/esp32-spooky-maze-game/releases/download/v0.3.0/spooky-maze-esp-wrover-kit.bin"
+
+      - name: Test with Wokwi
+        uses: wokwi/wokwi-ci-action@v1
+        with:
+          token: ${{ secrets.WOKWI_CLI_TOKEN }}
+          expect_text: 'Embedded Wizard'
+
+      - name: Simulate & take a screen shot
+        run: |
+          mkdir public
+          wokwi-cli --timeout 2500 --timeout-exit-code 0 --screenshot-part "lcd1" --screenshot-time 2500 --screenshot-file "public/screenshot.png" "${GITHUB_WORKSPACE}"
+        env:
+          WOKWI_CLI_TOKEN: ${{ secrets.WOKWI_CLI_TOKEN }}
+
+      - name: Rotate screen shot
+        run: convert public/screenshot.png -rotate 90 public/screenshot.png
+
+      - name: Publish screen shot as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: screenshot
+          path: public/screenshot.png
+
+      - name: Create an index.html file to preview screen shot
+        run:
+          echo "<html><body><img src='screenshot.png'></body></html>" > public/index.html
+
+      - name: Upload screen shot to GitHub pages
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: 'public'
+
+  deploy:
+    needs: simulate
+
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+    permissions:
+      pages: write
+      id-token: write
+
+    # Deploy to the github-pages environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    # Specify runner + deployment step
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
+
+      - name: Display screen shot in action summary
+        run: |
+          PAGE_URL=${{ steps.deployment.outputs.page_url }}
+          CACHE_BUSTER=$(date +%s)
+          cat << EOF >> $GITHUB_STEP_SUMMARY
+          # LCD screen shot (simulated with Wokwi)
+          ![LCD Screen shot](${PAGE_URL}screenshot.png?cache_buster=$CACHE_BUSTER)
+          EOF

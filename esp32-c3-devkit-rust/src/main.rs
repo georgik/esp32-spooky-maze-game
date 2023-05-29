@@ -161,10 +161,10 @@ fn main() -> ! {
     #[cfg(feature = "esp32c3")]
     let spi = spi::Spi::new(
         peripherals.SPI2,
-        io.pins.gpio6,
-        io.pins.gpio7,
-        io.pins.gpio0,
-        io.pins.gpio20,
+        io.pins.gpio6, // SCLK
+        io.pins.gpio7, // MOSI
+        io.pins.gpio0, // MISO
+        io.pins.gpio20, // CS
         60u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
