@@ -1,0 +1,55 @@
+[package]
+name = "spooky-m5stack-core3"
+version = "0.1.0"
+authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
+edition = "2021"
+license = "MIT"
+
+[target.xtensa-esp32s3-none-elf.dependencies]
+xtensa-atomic-emulation-trap = "0.4.0"
+hal = { package = "esp32s3-hal", version = "0.9.0" }
+esp-backtrace = { version = "0.7.0", features = [
+    "esp32s3",
+    "panic-handler",
+    "print-uart",
+] }
+xtensa-lx-rt = { version = "0.15.0", features = ["esp32s3"], optional = true }
+esp-println = { version = "0.5.0", features = ["esp32s3"] }
+
+[dependencies]
+esp-alloc = "0.3.0"
+embedded-graphics = "0.8.0"
+embedded-graphics-framebuf = { version = "0.3.0", git = "https://github.com/georgik/embedded-graphics-framebuf.git", branch = "feature/embedded-graphics-0.8" }
+embedded-hal = "0.2"
+display-interface = "0.4"
+display-interface-spi = "0.4"
+icm42670 = { git = "https://github.com/jessebraham/icm42670/" }
+mipidsi = { version = "0.7", git = "https://github.com/georgik/mipidsi.git", branch = "bugfix/ili-init" }
+panic-halt = "0.2"
+shared-bus = { version = "0.2.4" }
+# spooky-core = { path = "../spooky-core" }
+# Insufficient memory on ESP32-S3 with 0.9.0, switched to static maze without alloc
+spooky-core = { path = "../spooky-core", default-features = false, features = [
+    "static_maze",
+] }
+axp192 = { git = "https://github.com/georgik/axp192-rs.git", rev = "80e4fd27dfab", optional = true }
+heapless = { version = "0.7.14", default-features = false }
+
+[features]
+default = ["m5stack_core3"]
+
+i2c = []
+
+system_timer = []
+
+button_controls = []
+imu_controls = []
+
+esp32 = []
+esp32s2 = ["system_timer"]
+esp32s3 = []
+esp32c3 = ["system_timer"]
+
+axp192 = ["i2c", "dep:axp192"]
+
+m5stack_core3 = [ "esp32s3", "imu_controls", "axp192" ]
