@@ -1,5 +1,5 @@
 [package]
-name = "spooky_esp32c6"
+name = "spooky-esp32-c6"
 version = "0.1.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"

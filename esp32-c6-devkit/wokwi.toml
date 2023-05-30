@@ -1,0 +1,6 @@
+
+
+[wokwi]
+version = 1
+elf = "target/riscv32imac-unknown-none-elf/release/spooky-esp32-c6"
+firmware = "target/riscv32imac-unknown-none-elf/release/spooky-esp32-c6"
