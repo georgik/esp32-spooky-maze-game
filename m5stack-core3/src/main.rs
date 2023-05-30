@@ -2,6 +2,8 @@
 #![no_main]
 #![feature(default_alloc_error_handler)]
 
+// M5Stack Core3 - https://shop.m5stack.com/products/m5stack-cores3-esp32s3-lotdevelopment-kit
+
 #[global_allocator]
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
@@ -167,26 +169,9 @@ fn main() -> ! {
     let sclk = io.pins.gpio7;
     let mosi = io.pins.gpio6;
 
-    let spi = spi::Spi::new_no_cs_no_miso(
-        peripherals.SPI2,
-        sclk,
-        mosi,
-        60u32.MHz(),
-        spi::SpiMode::Mode0,
-        &mut system.peripheral_clock_control,
-        &clocks,
-    );
+    let reset = io.pins.gpio15.into_push_pull_output();
 
-    let mut backlight = io.pins.gpio45.into_push_pull_output();
-
-    backlight.set_high().unwrap();
-
-    let reset = io.pins.gpio48.into_push_pull_output();
-
-    #[cfg(any(feature = "esp32s2", feature = "esp32s3"))]
     let di = SPIInterfaceNoCS::new(spi, io.pins.gpio4.into_push_pull_output());
-
-    //https://github.com/espressif/esp-box/blob/master/components/bsp/src/boards/esp32_s3_box.c
 
     let mut display = mipidsi::Builder::ili9342c_rgb565(di)
         .with_display_size(320, 240)
