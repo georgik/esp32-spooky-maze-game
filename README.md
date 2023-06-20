@@ -21,6 +21,13 @@ Recommendation: Open only sub-directory with specific target with specific toolc
 
 ## Build and flash
 
+Install `espflash` which is required to flash and monitor the app on Embedded Device:
+
+```
+cargo install espflash
+cargo install cargo-espflash
+```
+
 ### Build WASM version
 
 ```
@@ -44,7 +51,7 @@ Control: IMU
 
 ```
 cd esp32-s3-box
-cargo espflash --release --monitor
+cargo run --release --monitor
 ```
 
 ### Build for ESP32-C3-DeviKit-RUST with ILI9341
@@ -54,7 +61,7 @@ Control: IMU
 
 ```
 cd esp32-c3-devkit-rust
-cargo espflash --release --monitor
+cargo run --release --monitor
 ```
 
 #### Features
@@ -98,7 +105,7 @@ Control: buttons
 
 ```
 cd esp32-s3-usb-otg
-cargo espflash --release --monitor
+cargo run --release --monitor
 ```
 
 ### Build for ESP32-S2-USB-OTG with ST7789
@@ -110,7 +117,7 @@ Control: buttons
 
 ```
 cd esp32-s2-usb-otg
-cargo espflash --release --monitor
+cargo run --release --monitor
 ```
 
 ### Build for M5Stack-FIRE with ESP32 and ILI9341
@@ -124,7 +131,7 @@ Control: MPU-9250, buttons
 
 ```
 cd m5stack-fire
-cargo espflash --release --monitor
+cargo run --release --monitor
 ```
 
 #### Build M5Stack-FIRE using GitPod.io and run with Wokwi
@@ -170,7 +177,7 @@ Control: MPU6886
 
 ```
 cd m5stack-core2
-cargo espflash --release --monitor
+cargo run --release --monitor
 ```
 
 ### Build for ESP32-S2-Kaluga v1.3
@@ -185,7 +192,7 @@ Control: buttons (partialy implemented based on of https://github.com/espressif/
 
 ```
 cd esp32-s2-kaluga
-cargo espflash --release --monitor
+cargo run --release --monitor
 ```
 
 Note for older version 1.2 - GPIO6 is used to control backlight.
@@ -213,7 +220,7 @@ Control: limited, only one button available
 
 ```
 cd esp-wrover-kit
-cargo espflash --release --monitor
+cargo run --release --monitor
 ```
 
 ### Build for ESP32-S2 with ILI9341
@@ -221,7 +228,7 @@ cargo espflash --release --monitor
 See tag v0.1.0.
 
 ```
-cargo espflash --release --target xtensa-esp32s2-none-elf --features esp32s2_ili9341 --monitor
+cargo run --release --target xtensa-esp32s2-none-elf --features esp32s2_ili9341 --monitor
 ```
 
 ## Development
