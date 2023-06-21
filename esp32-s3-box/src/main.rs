@@ -159,7 +159,10 @@ fn main() -> ! {
 
     let mut backlight = io.pins.gpio45.into_push_pull_output();
 
-    backlight.set_high().unwrap();
+    // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
+    // If delay is 250ms, picture will be fuzzy.
+    // If there is no delay, display is blank
+    delay.delay_ms(500u32);
 
     let reset = io.pins.gpio48.into_push_pull_output();
 
@@ -183,6 +186,8 @@ fn main() -> ! {
     )
     .draw(&mut display)
     .unwrap();
+
+    backlight.set_high().unwrap();
 
     #[cfg(any(feature = "imu_controls"))]
     println!("Initializing IMU");
