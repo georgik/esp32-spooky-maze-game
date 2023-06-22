@@ -7,7 +7,7 @@ license = "MIT"
 
 [target.xtensa-esp32s3-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.4.0"
-hal = { package = "esp32s3-hal", version = "0.9.0" }
+hal = { package = "esp32s3-hal", rev = "55169346f266a66a70a97", git = "https://github.com/esp-rs/esp-hal.git", features = ["opsram_8m"] }
 esp-backtrace = { version = "0.7.0", features = [
     "esp32s3",
     "panic-handler",
@@ -29,9 +29,7 @@ panic-halt = "0.2"
 shared-bus = { version = "0.2.4" }
 # spooky-core = { path = "../spooky-core" }
 # Insufficient memory on ESP32-S3 with 0.9.0, switched to static maze without alloc
-spooky-core = { path = "../spooky-core", default-features = false, features = [
-    "static_maze",
-] }
+spooky-core = { path = "../spooky-core" }
 heapless = { version = "0.7.14", default-features = false }
 
 [features]
