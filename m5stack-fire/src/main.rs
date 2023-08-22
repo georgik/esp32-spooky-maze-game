@@ -129,7 +129,7 @@ fn main() -> ! {
 
     #[cfg(feature = "esp32")]
     let spi = spi::Spi::new(
-        peripherals.SPI3, // Real HW working with SPI2, but Wokwi seems to work only with SPI3
+        peripherals.SPI3,
         io.pins.gpio18,   // SCLK
         io.pins.gpio23,   // MOSI
         io.pins.gpio19,   // MISO
