@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![feature(default_alloc_error_handler)]
 
 // https://docs.makerfactory.io/m5stack/core/fire/
 
@@ -24,9 +23,6 @@ use hal::{
 
 // use panic_halt as _;
 use esp_backtrace as _;
-
-#[cfg(feature = "wokwi")]
-use mipidsi::hal::{ Orientation, Rotation };
 
 #[cfg(feature = "mpu9250")]
 use mpu9250::{ImuMeasurements, Mpu9250};
@@ -159,7 +155,8 @@ fn main() -> ! {
     #[cfg(feature = "wokwi")]
     let mut display = mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(320, 240)
-        .with_orientation(Orientation::new().rotate(Rotation::Deg90).flip_vertical())
+        .with_orientation(mipidsi::Orientation::Landscape(false))
+        .with_color_order(mipidsi::ColorOrder::Bgr)
         .init(&mut delay, Some(reset))
         .unwrap();
 
