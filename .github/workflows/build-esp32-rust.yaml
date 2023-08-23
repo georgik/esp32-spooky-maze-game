@@ -56,6 +56,7 @@ jobs:
             VERSION=$(grep '^version =' Cargo.toml | cut -d '"' -f2)
             CHIP=$(grep 'hal = { package =' Cargo.toml | cut -d '"' -f2 | cut -d '-' -f1)
 
+            # Blocked by: https://github.com/esp-rs/rust-build/issues/229
             cargo espflash save-image --chip ${CHIP} --release --merge spooky-maze-${FIRMWARE_DIR}.bin
 
             asset_path="/home/esp/project/${FIRMWARE_DIR}/spooky-maze-${FIRMWARE_DIR}.bin"
