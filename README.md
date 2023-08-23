@@ -108,18 +108,6 @@ cd esp32-s3-usb-otg
 cargo run --release --monitor
 ```
 
-### Build for ESP32-S2-USB-OTG with ST7789
-
-Control: buttons
-- press button to move the character
-- press up & down to teleport
-- press ok & menu to place dynamite
-
-```
-cd esp32-s2-usb-otg
-cargo run --release --monitor
-```
-
 ### Build for M5Stack-FIRE with ESP32 and ILI9341
 
 HW: https://docs.makerfactory.io/m5stack/core/fire/
