@@ -40,12 +40,16 @@ jobs:
     steps:
       - name: Clone repository with specific branch
         run: |
+          export HOME=/home/esp
+          cd /home/esp
+          pwd
           git clone --depth 1 --branch ${{ github.ref }} https://github.com/georgik/esp32-spooky-maze-game.git project
-          cd project
       - name: Build and ipload binaries
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          export HOME=/home/esp
+          cd /home/esp
           # Upload loop for each binary
           for FIRMWARE_DIR in esp-wrover-kit esp32-s2-kaluga esp32-s3-usb-otg esp32-s3-box m5stack-core2 m5stack-fire; do
             pushd project/$FIRMWARE_DIR
