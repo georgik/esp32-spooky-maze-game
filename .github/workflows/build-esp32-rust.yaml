@@ -1,4 +1,4 @@
-name: Build ESP32 Rust Binaries in Docker image espressif/idf-rust:all_1.68.0.0 and upload to Releases
+name: Build ESP32 Rust Binaries in Docker image espressif/idf-rust:all_1.71.0.1 and upload to Releases
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
       release_tag:
         description: "Upload to specific release"
         required: true
-        default: 'v0.3.0'
+        default: 'v0.4.0'
 
 jobs:
   get_release:
@@ -43,7 +43,7 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     container:
-      image: espressif/idf-rust:all_1.68.0.0
+      image: espressif/idf-rust:all_1.71.0.1
       options: --user esp --workdir /home/esp
     needs: get_release
     steps:
@@ -76,15 +76,6 @@ jobs:
           upload_url: ${{ needs.get_release.outputs.upload_url }}
           asset_path: /home/esp/project/esp32-s2-kaluga/spooky-maze-esp32-s2-kaluga.bin
           asset_name: spooky-maze-esp32-s2-kaluga.bin
-          asset_content_type: application/octet-stream
-      - name: Upload esp32-s2-usb-otg binary
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.get_release.outputs.upload_url }}
-          asset_path: /home/esp/project/esp32-s2-usb-otg/spooky-maze-esp32-s2-usb-otg.bin
-          asset_name: spooky-maze-esp32-s2-usb-otg.bin
           asset_content_type: application/octet-stream
       - name: Upload esp32-s3-usb-otg binary
         uses: actions/upload-release-asset@v1
