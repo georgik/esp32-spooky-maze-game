@@ -43,8 +43,7 @@ jobs:
           export HOME=/home/esp
           cd /home/esp
           pwd
-          BRANCH_NAME=${GITHUB_REF##*/}
-          git clone --depth 1 --branch $BRANCH_NAME https://github.com/georgik/esp32-spooky-maze-game.git project
+          git clone --depth 1 --branch ${{ github.ref_name }} https://github.com/georgik/esp32-spooky-maze-game.git project
       - name: Build and ipload binaries
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
