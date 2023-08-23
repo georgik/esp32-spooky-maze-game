@@ -44,7 +44,7 @@ jobs:
           cd /home/esp
           pwd
           git clone --depth 1 --branch ${{ github.ref_name }} https://github.com/georgik/esp32-spooky-maze-game.git project
-      - name: Build and ipload binaries
+      - name: Build and upload binaries
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -52,7 +52,7 @@ jobs:
           cd /home/esp
           # Upload loop for each binary
           for FIRMWARE_DIR in esp-wrover-kit esp32-s2-kaluga esp32-s3-usb-otg esp32-s3-box m5stack-core2 m5stack-fire; do
-            pushd project/$FIRMWARE_DIR
+            cd project/$FIRMWARE_DIR
             VERSION=$(grep '^version =' Cargo.toml | cut -d '"' -f2)
             CHIP=$(grep 'hal = { package =' Cargo.toml | cut -d '"' -f2 | cut -d '-' -f1)
 
@@ -66,5 +66,5 @@ jobs:
               --header "Content-Type: application/octet-stream" \
               --data-binary "@$asset_path" \
               --url "${{ needs.get_release.outputs.upload_url }}?name=${asset_name}"
-            popd
+            cd -
           done
