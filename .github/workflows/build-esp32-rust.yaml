@@ -1,4 +1,4 @@
-name: Build ESP32 Rust Binaries and Upload to Releases
+name: Build ESP32 Rust Binaries in Docker image espressif/idf-rust:all_1.71.0.1 and upload to Releases
 
 on:
   workflow_dispatch:
@@ -38,19 +38,29 @@ jobs:
       options: --user esp --workdir /home/esp
     needs: get_release
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Build and Upload ESP32 Rust Binaries
+      - name: Clone repository with specific branch
         run: |
-          export HOME=/home/esp
-          for dir in esp-wrover-kit esp32-s2-kaluga esp32-s3-usb-otg esp32-s3-box m5stack-core2 m5stack-fire; do
-            cd $dir
-            VERSION=$(grep -oP 'version\s*=\s*"\K[^"]+' Cargo.toml)
-            CHIP=$(grep -oP 'hal\s*=\s*\{\s*package\s*=\s*"\K[^"]+' Cargo.toml | sed 's/-hal//')
-            BIN_NAME="spooky-maze-${dir}-${VERSION}.bin"
-            cargo espflash save-image --chip ${CHIP} --release --merge ${BIN_NAME}
-            asset_path="/home/esp/project/${dir}/${BIN_NAME}"
-            curl --fail -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/octet-stream" --data-binary @$asset_path "${{ needs.get_release.outputs.upload_url }}?name=${BIN_NAME}"
-            cd ..
+          git clone --depth 1 --branch ${{ github.ref }} https://github.com/georgik/esp32-spooky-maze-game.git project
+          cd project
+      - name: Build and ipload binaries
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Upload loop for each binary
+          for FIRMWARE_DIR in esp-wrover-kit esp32-s2-kaluga esp32-s3-usb-otg esp32-s3-box m5stack-core2 m5stack-fire; do
+            pushd project/$FIRMWARE_DIR
+            VERSION=$(grep '^version =' Cargo.toml | cut -d '"' -f2)
+            CHIP=$(grep 'hal = { package =' Cargo.toml | cut -d '"' -f2 | cut -d '-' -f1)
+
+            cargo espflash save-image --chip ${CHIP} --release --merge spooky-maze-${FIRMWARE_DIR}.bin
+
+            asset_path="/home/esp/project/${FIRMWARE_DIR}/spooky-maze-${FIRMWARE_DIR}.bin"
+            asset_name="spooky-maze-${FIRMWARE_DIR}-${{ github.event.inputs.release_tag }}.bin"
+            curl \
+              --request POST \
+              --header "authorization: Bearer $GITHUB_TOKEN" \
+              --header "Content-Type: application/octet-stream" \
+              --data-binary "@$asset_path" \
+              --url "${{ needs.get_release.outputs.upload_url }}?name=${asset_name}"
+            popd
           done
