@@ -1,12 +1,12 @@
 [package]
 name = "spooky-esp32-c3"
-version = "0.1.0"
+version = "0.4.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
 
 [target.riscv32imac-unknown-none-elf.dependencies]
-hal = { package = "esp32c3-hal", version = "0.9.0" }
+hal = { package = "esp32c3-hal", version = "0.11.0" }
 esp-backtrace = { version = "0.7.0", features = [
     "esp32c3",
     "panic-handler",
@@ -22,10 +22,10 @@ embedded-hal = "0.2"
 display-interface = "0.4"
 display-interface-spi = "0.4"
 icm42670 = { git = "https://github.com/jessebraham/icm42670/" }
-mipidsi = { version = "0.7", git = "https://github.com/georgik/mipidsi.git", branch = "bugfix/ili-init" }
+mipidsi = "0.7.1"
 panic-halt = "0.2"
-shared-bus = { version = "0.2.4" }
-spooky-core = { path = "../spooky-core", default-features = false, features = [ "static_maze"]}
+shared-bus = { version = "0.3.0" }
+spooky-core = { path = "../spooky-core", default-features = false, features = ["static_maze"]}
 heapless = { version = "0.7.14", default-features = false }
 
 [features]

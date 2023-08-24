@@ -24,14 +24,10 @@ function build_firmware {
 }
 
 build_firmware esp-wrover-kit esp32
+build_firmware esp32-c3-devkit-rust esp32c3
+build_firmware esp32-c6-devkit esp32c6
 build_firmware esp32-s2-kaluga esp32s2
-build_firmware esp32-s2-usb-otg esp32s2
 build_firmware esp32-s3-usb-otg esp32s3
 build_firmware esp32-s3-box esp32s3
 build_firmware m5stack-core2 esp32
 build_firmware m5stack-fire esp32
-
-# Following builds are blocked by https://github.com/esp-rs/rust-build/issues/202
-#build_firmware esp32-c3-devkit-rust esp32c3
-#build_firmware esp32-c6-devkit esp32c6
-

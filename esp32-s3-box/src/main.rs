@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![feature(default_alloc_error_handler)]
 
 #[global_allocator]
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
@@ -21,7 +20,7 @@ use hal::{
     i2c,
     peripherals::Peripherals,
     prelude::*,
-    soc,
+    psram,
     spi,
     timer::TimerGroup,
     Delay,
@@ -107,10 +106,7 @@ impl<I: Accelerometer, D: embedded_graphics::draw_target::DrawTarget<Color = Rgb
 
 fn init_psram_heap() {
     unsafe {
-        ALLOCATOR.init(
-            soc::psram::psram_vaddr_start() as *mut u8,
-            soc::psram::PSRAM_BYTES,
-        );
+        ALLOCATOR.init(psram::psram_vaddr_start() as *mut u8, psram::PSRAM_BYTES);
     }
 }
 
@@ -118,7 +114,7 @@ fn init_psram_heap() {
 fn main() -> ! {
     let peripherals = Peripherals::take();
 
-    soc::psram::init_psram(peripherals.PSRAM);
+    psram::init_psram(peripherals.PSRAM);
     init_psram_heap();
 
     #[cfg(any(feature = "esp32"))]

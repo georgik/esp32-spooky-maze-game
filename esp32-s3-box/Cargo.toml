@@ -1,13 +1,13 @@
 [package]
 name = "spooky-s3-box"
-version = "0.1.0"
+version = "0.4.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
 
 [target.xtensa-esp32s3-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.4.0"
-hal = { package = "esp32s3-hal", rev = "55169346f266a66a70a97", git = "https://github.com/esp-rs/esp-hal.git", features = ["opsram_8m"] }
+hal = { package = "esp32s3-hal", version = "0.11.0" , features = ["opsram_8m"] }
 esp-backtrace = { version = "0.7.0", features = [
     "esp32s3",
     "panic-handler",
@@ -24,9 +24,9 @@ embedded-hal = "0.2"
 display-interface = "0.4"
 display-interface-spi = "0.4"
 icm42670 = { git = "https://github.com/jessebraham/icm42670/" }
-mipidsi = { version = "0.7", git = "https://github.com/georgik/mipidsi.git", branch = "bugfix/ili-init" }
+mipidsi = "0.7.1"
 panic-halt = "0.2"
-shared-bus = { version = "0.2.4" }
+shared-bus = { version = "0.3.0" }
 # spooky-core = { path = "../spooky-core" }
 # Insufficient memory on ESP32-S3 with 0.9.0, switched to static maze without alloc
 spooky-core = { path = "../spooky-core" }

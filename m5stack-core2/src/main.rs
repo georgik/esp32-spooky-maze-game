@@ -25,9 +25,6 @@ use hal::{
 // use panic_halt as _;
 use esp_backtrace as _;
 
-#[cfg(feature = "wokwi")]
-use mipidsi::hal::{ Orientation, Rotation };
-
 #[cfg(feature = "mpu9250")]
 use mpu9250::{ImuMeasurements, Mpu9250};
 
@@ -50,6 +47,7 @@ use shared_bus::BusManagerSimple;
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
 
+#[cfg(any(feature = "axp192"))]
 use axp192::{ I2CPowerManagementInterface, Axp192 };
 
 pub struct Universe<D> {
@@ -150,9 +148,12 @@ fn main() -> ! {
     let bus = BusManagerSimple::new(i2c_bus);
 
     // Power management - AXP192
-    let axp_interface = I2CPowerManagementInterface::new(bus.acquire_i2c());
-    let mut axp = Axp192::new(axp_interface);
-    axp.init().unwrap();
+    #[cfg(any(feature = "axp192"))]
+    {
+        let axp_interface = I2CPowerManagementInterface::new(bus.acquire_i2c());
+        let mut axp = Axp192::new(axp_interface);
+        axp.init().unwrap();
+    }
 
     // M5Stack CORE 2 - https://docs.m5stack.com/en/core/core2
     #[cfg(feature = "esp32")]
@@ -160,7 +161,7 @@ fn main() -> ! {
 
     #[cfg(feature = "esp32")]
     let spi = spi::Spi::new(
-        peripherals.SPI3, // Real HW working with SPI2, but Wokwi seems to work only with SPI3
+        peripherals.SPI3,
         io.pins.gpio18,   // SCLK
         io.pins.gpio23,   // MOSI
         io.pins.gpio38,   // MISO
@@ -187,7 +188,8 @@ fn main() -> ! {
     #[cfg(feature = "wokwi")]
     let mut display = mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(320, 240)
-        .with_orientation(Orientation::new().rotate(Rotation::Deg90).flip_vertical())
+        .with_orientation(mipidsi::Orientation::Landscape(false))
+        .with_color_order(mipidsi::ColorOrder::Bgr)
         .init(&mut delay, Some(reset))
         .unwrap();
 

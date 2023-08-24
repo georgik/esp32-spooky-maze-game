@@ -32,13 +32,6 @@
         "top": -234.73,
         "left": -402,
         "attrs": { "color": "red" }
-      },
-      {
-        "type": "wokwi-logic-analyzer",
-        "id": "logic1",
-        "top": -623.92,
-        "left": -286.67,
-        "attrs": {}
       }
     ],
     "connections": [
@@ -48,9 +41,9 @@
       [ "esp:GND.1", "lcd1:GND", "black", [] ],
       [ "esp:D18", "lcd1:SCK", "blue", [] ],
       [ "esp:D23", "lcd1:MOSI", "orange", [] ],
-      [ "esp:D14", "lcd1:CS", "red", [] ],
-      [ "esp:D27", "lcd1:D/C", "magenta", [] ],
-      [ "esp:D33", "lcd1:RST", "yellow", [] ],
+      [ "esp:D5", "lcd1:CS", "red", [] ],
+      [ "esp:D15", "lcd1:D/C", "magenta", [] ],
+      [ "esp:D4", "lcd1:RST", "yellow", [] ],
       [ "lcd1:LED", "esp:3V3", "white", [] ],
       [ "imu1:VCC", "esp:3V3", "red", [ "v0" ] ],
       [ "imu1:GND", "esp:GND.2", "black", [ "v0" ] ],
@@ -59,9 +52,7 @@
       [ "btn1:1.l", "esp:VIN", "green", [ "h0" ] ],
       [ "btn1:2.r", "esp:D34", "green", [ "v0" ] ],
       [ "btn2:1.l", "esp:VIN", "green", [ "h0" ] ],
-      [ "btn2:2.r", "esp:D35", "green", [ "v0" ] ],
-      [ "logic1:D0", "esp:D21", "blue", [ "h0" ] ],
-      [ "logic1:D1", "esp:D22", "red", [ "h0" ] ]
+      [ "btn2:2.r", "esp:D35", "green", [ "v0" ] ]
     ],
     "serialMonitor": { "display": "terminal" },
     "dependencies": {}
