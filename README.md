@@ -9,9 +9,14 @@ The Teleport spell requires some time to recharge. There are some not friendly s
 
 If you'd like to build similar app with multiple targets follow `cargo generate` instructions - https://github.com/georgik/esp32-rust-multi-target-template#generate-new-project .
 
-## Quick start
+## Flashing binary from Releases
 
-Flash the app from web browser using [ESP-Launchpad](https://georgik.rocks/wp-content/html5/esp-launchpad/?flashConfigURL=https://georgik.rocks/wp-content/esp32/esp32-spooky-maze-game/esp-launchpad.toml).
+Binaries are available in [GitHub Releases](https://github.com/georgik/esp32-spooky-maze-game/releases).
+
+Binaries can be flashed by:
+  - GUI [esp-helm](https://github.com/georgik/esp-helm)
+  - CLI [espflash](https://github.com/esp-rs/espflash) `espflash write-bin 0x0 spooky-maze-esp-wrover-kit.bin`
+  - Web browser (experimental) [ESP-Launchpad](https://georgik.rocks/wp-content/html5/esp-launchpad/?flashConfigURL=https://georgik.rocks/wp-content/esp32/esp32-spooky-maze-game/esp-launchpad.toml).
 
 ## IDE support
 
@@ -27,6 +32,21 @@ Install `espflash` which is required to flash and monitor the app on Embedded De
 cargo install espflash
 cargo install cargo-espflash
 ```
+
+Enter the directory with project and build it:
+
+```
+cd esp-wrover-kit
+cargo build --release
+```
+
+### Build binaries for all targets
+
+The script builds all possible targets: support/ci/build-esp32-firmware.sh
+
+## Wokwi simulation in VS Code
+
+Open subdirectory with target in VS Code with installed Wokwi Extension. Select `Wokwi: Start Simulator`.
 
 ### Build WASM version
 
