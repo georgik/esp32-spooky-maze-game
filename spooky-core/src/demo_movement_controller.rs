@@ -1,5 +1,5 @@
 use crate::engine::Action;
-use crate::universe::MovementController;
+use crate::movement_controller::MovementController;
 use rand::prelude::*;
 use rand_chacha::ChaChaRng;
 
@@ -23,6 +23,10 @@ impl DemoMovementController {
 }
 
 impl MovementController for DemoMovementController {
+
+    fn set_active(&mut self, _index:usize) {
+    }
+
     fn get_movement(&self) -> Action {
         self.last_action
     }
