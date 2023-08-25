@@ -23,6 +23,7 @@ pub enum GameState {
     Outro,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Action {
     None,
     Up,

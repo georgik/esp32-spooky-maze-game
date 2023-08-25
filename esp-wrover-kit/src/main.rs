@@ -22,7 +22,7 @@ use hal::{
 use esp_backtrace as _;
 use esp_println::println;
 use embedded_graphics::pixelcolor::Rgb565;
-use spooky_core::{engine::Engine, universe::Universe, spritebuf::SpriteBuf};
+use spooky_core::{engine::Engine, universe::Universe, spritebuf::SpriteBuf, demo_movement_controller::DemoMovementController};
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
 
@@ -106,8 +106,13 @@ fn main() -> ! {
     let mut data = [Rgb565::BLACK; 320 * 240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);
     let spritebuf = SpriteBuf::new(fbuf);
+
+    println!("Creating universe");
     let engine = Engine::new(spritebuf, Some(seed_buffer));
-    let mut universe = Universe::new_without_movement_controller(engine);
+    let movement_controller = DemoMovementController::new(seed_buffer);
+    let mut universe = Universe::new_with_movement_controller(engine, movement_controller);
+
+    // let mut universe = Universe::new_without_movement_controller(engine);
     universe.initialize();
 
     println!("Starting main loop");

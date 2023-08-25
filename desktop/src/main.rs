@@ -1,7 +1,3 @@
-
-// #![no_std]
-// #![no_main]
-
 use embedded_graphics::{
     pixelcolor::Rgb565,
     prelude::*,
@@ -9,66 +5,17 @@ use embedded_graphics::{
 use embedded_graphics_simulator::{
     sdl2::Keycode, SimulatorDisplay, SimulatorEvent, Window, OutputSettingsBuilder,
 };
-use embedded_graphics_framebuf::{FrameBuf};
-
+use embedded_graphics_framebuf::FrameBuf;
+use spooky_core::{ spritebuf::SpriteBuf, engine::Engine, universe::Universe, demo_movement_controller::DemoMovementController };
+mod keyboard_movement_controller;
+use keyboard_movement_controller::KeyboardMovementController;
 use std::time::Duration;
-
-use spooky_core::{ spritebuf::SpriteBuf, engine::Engine, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite } };
-
-pub struct Universe<D> {
-    engine: Engine<D>,
-}
 
 fn get_seed_buffer() -> Option<[u8; 32]> {
     let mut seed_buffer = [0u8; 32];
     getrandom::getrandom(&mut seed_buffer).unwrap();
     Some(seed_buffer)
 }
-
-impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D> {
-
-    pub fn new(engine:Engine<D>) -> Universe<D> {
-        Universe {
-            engine
-        }
-    }
-
-    pub fn move_up(&mut self) {
-        self.engine.action(Up);
-    }
-
-    pub fn move_down(&mut self) {
-        self.engine.action(Down);
-    }
-
-    pub fn move_left(&mut self) {
-        self.engine.action(Left);
-    }
-
-    pub fn move_right(&mut self) {
-        self.engine.action(Right);
-    }
-
-    pub fn teleport(&mut self) {
-        self.engine.action(Teleport);
-    }
-
-    pub fn initialize(&mut self) {
-        self.engine.initialize();
-        self.engine.start();
-    }
-
-    pub fn place_dynamite(&mut self) {
-        self.engine.action(PlaceDynamite);
-    }
-
-    pub fn render_frame(&mut self) -> &D {
-        self.engine.tick();
-        self.engine.draw()
-    }
-}
-
-
 
 fn main() -> Result<(), core::convert::Infallible> {
     let output_settings = OutputSettingsBuilder::new().scale(2).build();
@@ -78,38 +25,31 @@ fn main() -> Result<(), core::convert::Infallible> {
     let fbuf = FrameBuf::new(&mut data, 320, 240);
     let spritebuf = SpriteBuf::new(fbuf);
 
+    // let mut movement_controller = KeyboardMovementController::new();
+    let mut movement_controller = DemoMovementController::new(get_seed_buffer().unwrap());
     let engine = Engine::new(spritebuf, get_seed_buffer());
 
-    let mut universe = Universe::new(engine);
+    let mut universe = Universe::new_with_movement_controller(engine, movement_controller);
     universe.initialize();
     let mut display = SimulatorDisplay::new(Size::new(320, 200));
-
 
     display.draw_iter(universe.render_frame().into_iter()).unwrap();
     window.update(&display);
 
-    // window.update(universe.render_frame());
     'running: loop {
-        // window.update(&display);
-
         for event in window.events() {
             match event {
                 SimulatorEvent::Quit => break 'running,
-                SimulatorEvent::KeyDown { keycode, .. } => {
-                    match keycode {
-                        Keycode::Left | Keycode::A => universe.move_left(),
-                        Keycode::Right | Keycode::D => universe.move_right(),
-                        Keycode::Up | Keycode::W => universe.move_up(),
-                        Keycode::Down | Keycode::S => universe.move_down(),
-                        Keycode::Return => universe.teleport(),
-                        Keycode::Space => universe.place_dynamite(),
-                        _ => {},
-                    };
-                }
-                // SimulatorEvent::MouseButtonUp { point, .. } => {
-                //     move_circle(&mut display, position, point)?;
-                //     position = point;
-                // }
+                // SimulatorEvent::KeyDown { keycode, .. } => {
+                //     if let Some(controller) = universe.get_movement_controller_mut() {
+                //         controller.handle_key(keycode);
+                //     }
+                // },
+                // SimulatorEvent::KeyUp { .. } => {
+                //     if let Some(controller) = universe.get_movement_controller_mut() {
+                //         controller.stop_movement();
+                //     }
+                // },
                 _ => {}
             }
         }
@@ -120,4 +60,3 @@ fn main() -> Result<(), core::convert::Infallible> {
 
     Ok(())
 }
-

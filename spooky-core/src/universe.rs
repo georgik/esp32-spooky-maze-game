@@ -5,11 +5,16 @@ use embedded_graphics::{
 };
 
 pub trait MovementController {
+    fn tick(&mut self);
     fn get_movement(&self) -> crate::engine::Action;
 }
 
 pub struct NoMovementController;
 impl MovementController for NoMovementController {
+
+    fn tick(&mut self) {
+    }
+
     fn get_movement(&self) -> crate::engine::Action {
         Action::None
     }
@@ -43,13 +48,18 @@ where
         }
     }
 
+    pub fn get_movement_controller_mut(&mut self) -> Option<&mut M> {
+        self.movement_controller.as_mut()
+    }
+
     pub fn initialize(&mut self) {
         self.engine.initialize();
         self.engine.start();
     }
 
     pub fn render_frame(&mut self) -> &D {
-        if let Some(controller) = &self.movement_controller {
+        if let Some(controller) = &mut self.movement_controller {
+            controller.tick();
             let movement = controller.get_movement();
             match movement {
                 Action::Up => self.engine.action(Action::Up),
