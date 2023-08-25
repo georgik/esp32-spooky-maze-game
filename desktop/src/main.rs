@@ -1,6 +1,6 @@
 use embedded_graphics::{
     pixelcolor::Rgb565,
-    prelude::*,
+    prelude::*, mono_font::{MonoTextStyle, ascii::FONT_8X13}, text::Text,
 };
 use embedded_graphics_simulator::{
     sdl2::Keycode, SimulatorDisplay, SimulatorEvent, Window, OutputSettingsBuilder,
@@ -59,11 +59,16 @@ fn main() -> Result<(), core::convert::Infallible> {
 
                     if is_demo {
                         universe.set_active(1);
+                        is_demo = false;
                     }
 
                     let keyboard_controller = universe.get_movement_controller_mut();
-                    keyboard_controller.handle_key(keycode); // Call handle_key method
+                    keyboard_controller.handle_key(keycode);
                 },
+                SimulatorEvent::KeyUp { keycode, keymod, repeat } => {
+                    let keyboard_controller = universe.get_movement_controller_mut();
+                    keyboard_controller.stop_movement();
+                 },
                 _ => {}
             }
         }
@@ -71,9 +76,21 @@ fn main() -> Result<(), core::convert::Infallible> {
         // Check for user inactivity and switch back to demo mode if necessary
         if last_user_activity.elapsed() > user_inactivity_timeout {
             universe.set_active(0);
+            is_demo = true;
         }
 
         display.draw_iter(universe.render_frame().into_iter()).unwrap();
+
+        if is_demo {
+            Text::new(
+                "Demo. Presss any key...",
+                Point::new(80, 80),
+                MonoTextStyle::new(&FONT_8X13, RgbColor::WHITE),
+            )
+            .draw(&mut display)
+            .unwrap();
+        }
+
         window.update(&display);
         std::thread::sleep(Duration::from_millis(50));
     }

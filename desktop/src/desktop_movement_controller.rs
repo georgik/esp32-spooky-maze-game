@@ -20,6 +20,9 @@ impl DesktopMovementControllerBuilder {
         self.keyboard_movement_controller.handle_key(keycode);
     }
 
+    pub fn stop_movement(&mut self) {
+        self.keyboard_movement_controller.stop_movement();
+    }
 }
 
 impl MovementController for DesktopMovementControllerBuilder {
