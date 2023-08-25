@@ -1,13 +1,7 @@
-use embedded_graphics_simulator::sdl2;
 use spooky_core::movement_controller::MovementController;
 use crate::keyboard_movement_controller::KeyboardMovementController;
 use spooky_core::demo_movement_controller::DemoMovementController;
 use embedded_graphics_simulator::sdl2::Keycode;
-
-pub enum DesktopMovementController {
-    Demo(DemoMovementController),
-    Keyboard(KeyboardMovementController),
-}
 
 pub struct DesktopMovementControllerBuilder {
     pub demo_movement_controller: DemoMovementController,

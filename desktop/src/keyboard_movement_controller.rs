@@ -32,7 +32,7 @@ impl KeyboardMovementController {
 
 impl MovementController for KeyboardMovementController {
 
-    fn set_active(&mut self, index:usize) {
+    fn set_active(&mut self, _index:usize) {
     }
 
     fn get_movement(&self) -> Action {

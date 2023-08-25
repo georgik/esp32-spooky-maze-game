@@ -3,14 +3,14 @@ use embedded_graphics::{
     prelude::*, mono_font::{MonoTextStyle, ascii::FONT_8X13}, text::Text,
 };
 use embedded_graphics_simulator::{
-    sdl2::Keycode, SimulatorDisplay, SimulatorEvent, Window, OutputSettingsBuilder,
+    SimulatorDisplay, SimulatorEvent, Window, OutputSettingsBuilder,
 };
 use embedded_graphics_framebuf::FrameBuf;
 use spooky_core::{spritebuf::SpriteBuf, engine::Engine, universe::Universe};
 use std::time::{Duration, Instant};
 
 mod desktop_movement_controller;
-use desktop_movement_controller::{DesktopMovementController, DesktopMovementControllerBuilder};
+use desktop_movement_controller::DesktopMovementControllerBuilder;
 
 mod keyboard_movement_controller;
 use keyboard_movement_controller::KeyboardMovementController;
