@@ -237,21 +237,21 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
 
                 if x < 0 || y < 0 || x > (self.maze.width-1) as i32 || y > (self.maze.height-1) as i32 {
                     let tile = Image::new(empty, position);
-                    tile.draw(&mut self.display);
+                    let _ = tile.draw(&mut self.display);
                 } else {
                     let tile_index = self.maze.data[(x+y*(self.maze.width as i32)) as usize];
                     match tile_index {
                         0 => {
                             let tile = Image::new(ground, position);
-                            tile.draw(&mut self.display);
+                            let _ = tile.draw(&mut self.display);
                         },
                         1 => {
                             let tile = Image::new(wall, position);
-                            tile.draw(&mut self.display);
+                            let _ = tile.draw(&mut self.display);
                         },
                         _ => {
                             let tile = Image::new(scorched, position);
-                            tile.draw(&mut self.display);
+                            let _ = tile.draw(&mut self.display);
                         }
                     }
                 }
@@ -310,7 +310,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
 
     fn draw_status_number(&mut self, value: u32, x: i32, y: i32) {
         let value_message: String<5> = String::from(value);
-        Text::new(&value_message, Point::new(x, y), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
+        let _ = Text::new(&value_message, Point::new(x, y), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
             .draw(&mut self.display);
     }
 
@@ -333,7 +333,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
                     if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
                         let position = Point::new(draw_x, draw_y);
                         let tile = Image::new(&coin_bmp, position);
-                        tile.draw(&mut self.display);
+                        let _ = tile.draw(&mut self.display);
                     }
                 }
 
@@ -349,7 +349,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
                     if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
                         let position = Point::new(draw_x, draw_y);
                         let tile = Image::new(&npc_bmp, position);
-                        tile.draw(&mut self.display);
+                        let _ = tile.draw(&mut self.display);
                     }
                 }
 
@@ -365,7 +365,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
                     if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
                         let position = Point::new(draw_x, draw_y);
                         let tile = Image::new(&walker_bmp, position);
-                        tile.draw(&mut self.display);
+                        let _ = tile.draw(&mut self.display);
                     }
                 }
 
@@ -381,7 +381,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
                     if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
                         let position = Point::new(draw_x, draw_y);
                         let tile = Image::new(&dynamite_bmp, position);
-                        tile.draw(&mut self.display);
+                        let _ = tile.draw(&mut self.display);
                     }
                 }
 
@@ -389,12 +389,12 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
                     0 => {
                         let bmp:Bmp<Rgb565> = assets.ghost1.unwrap();
                         let ghost1 = Image::new(&bmp, Point::new(self.ghost_x.try_into().unwrap(), self.ghost_y.try_into().unwrap()));
-                        ghost1.draw(&mut self.display);
+                        let _ = ghost1.draw(&mut self.display);
                     },
                     _ => {
                         let bmp:Bmp<Rgb565> = assets.ghost2.unwrap();
                         let ghost2 = Image::new(&bmp, Point::new(self.ghost_x.try_into().unwrap(), self.ghost_y.try_into().unwrap()));
-                        ghost2.draw(&mut self.display);
+                        let _ = ghost2.draw(&mut self.display);
                     },
 
                 }
@@ -402,22 +402,22 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
                 // Status bar - coins, teleport, walk time, dynamite
                 let position = Point::new(5, 6);
                 let tile = Image::new(&coin_bmp, position);
-                tile.draw(&mut self.display);
+                let _ = tile.draw(&mut self.display);
 
                 let teleport_bmp:Bmp<Rgb565> = assets.teleport.unwrap();
                 let position = Point::new(5, 28);
                 let tile = Image::new(&teleport_bmp, position);
-                tile.draw(&mut self.display);
+                let _ = tile.draw(&mut self.display);
 
                 let walker_bmp:Bmp<Rgb565> = assets.walker.unwrap();
                 let position = Point::new(5, 50);
                 let tile = Image::new(&walker_bmp, position);
-                tile.draw(&mut self.display);
+                let _ = tile.draw(&mut self.display);
 
                 let dynamite_bmp:Bmp<Rgb565> = assets.dynamite.unwrap();
                 let position = Point::new(5, 72);
                 let tile = Image::new(&dynamite_bmp, position);
-                tile.draw(&mut self.display);
+                let _ = tile.draw(&mut self.display);
 
 
                 // display.flush().unwrap();
@@ -440,7 +440,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         let bmp:Bmp<Rgb565> = assets.smiley.unwrap();
         let (x,y) = (self.maze.get_rand() + self.maze.get_rand() % 70, self.maze.get_rand() % 240);
         let outro = Image::new(&bmp, Point::new(x, y));
-        outro.draw(&mut self.display);
+        let _ = outro.draw(&mut self.display);
         &mut self.display
     }
 
