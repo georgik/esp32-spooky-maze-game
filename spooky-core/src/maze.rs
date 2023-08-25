@@ -323,7 +323,7 @@ impl Maze {
     }
 
     #[cfg(feature = "static_maze")]
-    pub fn generate_maze(&mut self, graph_width: usize, graph_height: usize) {
+    pub fn generate_maze(&mut self, _graph_width: usize, _graph_height: usize) {
     }
 
     #[cfg(feature = "dynamic_maze")]

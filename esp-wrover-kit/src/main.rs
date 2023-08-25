@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![feature(default_alloc_error_handler)]
 
 // Implementation specific for esp-wrover-kit
 // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/hw-reference/esp32/get-started-wrover-kit.html
@@ -23,7 +22,7 @@ use hal::{
 use esp_backtrace as _;
 use esp_println::println;
 use embedded_graphics::pixelcolor::Rgb565;
-use spooky_core::{engine::Engine, universe::{Universe, NoMovementController}, spritebuf::SpriteBuf};
+use spooky_core::{engine::Engine, universe::Universe, spritebuf::SpriteBuf};
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
 
@@ -99,7 +98,7 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
-    let button_boot = io.pins.gpio2.into_pull_up_input();
+    // let button_boot = io.pins.gpio2.into_pull_up_input();
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
