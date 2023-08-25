@@ -2,6 +2,7 @@
 #![no_main]
 #![feature(default_alloc_error_handler)]
 
+// Implementation specific for esp-wrover-kit
 // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/hw-reference/esp32/get-started-wrover-kit.html
 
 use display_interface_spi::SPIInterfaceNoCS;
@@ -11,7 +12,6 @@ use embedded_graphics::{
     text::Text,
     Drawable,
 };
-
 use hal::{
     clock::{ClockControl, CpuClock},
     peripherals::Peripherals,
@@ -20,79 +20,25 @@ use hal::{
     timer::TimerGroup,
     Delay, Rng, Rtc, IO,
 };
-
 use esp_backtrace as _;
-
 use esp_println::println;
+use embedded_graphics::pixelcolor::Rgb565;
+use spooky_core::{engine::Engine, universe::{Universe, NoMovementController}, spritebuf::SpriteBuf};
+use embedded_graphics_framebuf::FrameBuf;
+use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "xtensa-lx-rt")]
 use xtensa_lx_rt::entry;
 
-use embedded_graphics::pixelcolor::Rgb565;
-
-use spooky_core::{engine::Engine, spritebuf::SpriteBuf, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite }};
-
-#[cfg(any(feature = "imu_controls"))]
-use shared_bus::BusManagerSimple;
-
-use embedded_graphics_framebuf::FrameBuf;
-use embedded_hal::digital::v2::OutputPin;
-
-pub struct Universe<D> {
-    pub engine: Engine<D>,
-}
-
-impl<D: embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe<D> {
-    pub fn new(seed: Option<[u8; 32]>, engine: Engine<D>) -> Universe<D> {
-        Universe { engine }
-    }
-
-    pub fn initialize(&mut self) {
-        self.engine.initialize();
-        self.engine.start();
-    }
-
-    pub fn move_up(&mut self) {
-        self.engine.action(Up);
-    }
-
-    pub fn move_down(&mut self) {
-        self.engine.action(Down);
-    }
-
-    pub fn move_left(&mut self) {
-        self.engine.action(Left);
-    }
-
-    pub fn move_right(&mut self) {
-        self.engine.action(Right);
-    }
-
-    pub fn teleport(&mut self) {
-        self.engine.action(Teleport);
-    }
-
-    pub fn place_dynamite(&mut self) {
-        self.engine.action(PlaceDynamite);
-    }
-
-    pub fn render_frame(&mut self) -> &D {
-        self.engine.tick();
-        self.engine.draw()
-    }
-}
-
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take();
-
     #[cfg(any(feature = "esp32"))]
     let mut system = peripherals.DPORT.split();
     #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
     let mut system = peripherals.SYSTEM.split();
     let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
 
-    // Disable the RTC and TIMG watchdog timers
     let mut rtc = Rtc::new(peripherals.RTC_CNTL);
     let timer_group0 = TimerGroup::new(
         peripherals.TIMG0,
@@ -162,18 +108,17 @@ fn main() -> ! {
     let fbuf = FrameBuf::new(&mut data, 320, 240);
     let spritebuf = SpriteBuf::new(fbuf);
     let engine = Engine::new(spritebuf, Some(seed_buffer));
-    let mut universe = Universe::new(Some(seed_buffer), engine);
+    let mut universe = Universe::new_without_movement_controller(engine);
     universe.initialize();
 
     println!("Starting main loop");
     loop {
-        if button_boot.is_low().unwrap() {
-            universe.teleport();
-        }
+        // if button_boot.is_low().unwrap() {
+        //     universe.teleport();
+        // }
 
         display
             .draw_iter(universe.render_frame().into_iter())
             .unwrap();
-        // delay.delay_ms(300u32);
     }
 }
