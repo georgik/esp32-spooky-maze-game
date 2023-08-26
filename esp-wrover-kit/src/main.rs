@@ -29,6 +29,9 @@ use embedded_hal::digital::v2::OutputPin;
 mod button_movement_controller;
 use button_movement_controller::ButtonMovementController;
 
+mod embedded_movement_controller;
+use embedded_movement_controller::EmbeddedMovementController;
+
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take();
@@ -100,25 +103,29 @@ fn main() -> ! {
     let mut data = [Rgb565::BLACK; 320 * 240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);
     let spritebuf = SpriteBuf::new(fbuf);
+    let start_button = io.pins.gpio16.into_pull_up_input();
+
+    let movement_controller = EmbeddedMovementController::new(
+        DemoMovementController::new(seed_buffer),
+        ButtonMovementController::new(
+            io.pins.gpio14.into_pull_up_input(),
+            io.pins.gpio12.into_pull_up_input(),
+            io.pins.gpio13.into_pull_up_input(),
+            io.pins.gpio15.into_pull_up_input(),
+            io.pins.gpio26.into_pull_up_input(),
+            io.pins.gpio27.into_pull_up_input(),
+        ),
+        start_button,
+    );
 
     println!("Creating universe");
     let engine = Engine::new(spritebuf, Some(seed_buffer));
-    // let movement_controller = DemoMovementController::new(seed_buffer);
 
-    let movement_controller = ButtonMovementController::new(
-        io.pins.gpio14.into_pull_up_input(), // Up
-        io.pins.gpio12.into_pull_up_input(), // Down
-        io.pins.gpio13.into_pull_up_input(), // Left
-        io.pins.gpio15.into_pull_up_input(), // Right
-        io.pins.gpio26.into_pull_up_input(), // Dynamite
-        io.pins.gpio27.into_pull_up_input(), // Teleport
-    );
 
     let mut universe = Universe::new_with_movement_controller(engine, movement_controller);
 
     // let mut universe = Universe::new_with_movement_controller(engine, movement_controller);
 
-    // let mut universe = Universe::new_without_movement_controller(engine);
     universe.initialize();
 
     println!("Starting main loop");
@@ -130,5 +137,6 @@ fn main() -> ! {
         display
             .draw_iter(universe.render_frame().into_iter())
             .unwrap();
+        
     }
 }
