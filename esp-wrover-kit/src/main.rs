@@ -26,16 +26,10 @@ use spooky_core::{engine::Engine, universe::Universe, spritebuf::SpriteBuf, demo
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
 
-#[cfg(feature = "xtensa-lx-rt")]
-use xtensa_lx_rt::entry;
-
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take();
-    #[cfg(any(feature = "esp32"))]
     let mut system = peripherals.DPORT.split();
-    #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
-    let mut system = peripherals.SYSTEM.split();
     let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
 
     let mut rtc = Rtc::new(peripherals.RTC_CNTL);
@@ -52,9 +46,6 @@ fn main() -> ! {
     );
     let mut wdt1 = timer_group1.wdt;
 
-    #[cfg(feature = "esp32c3")]
-    rtc.swd.disable();
-    #[cfg(feature = "xtensa-lx-rt")]
     rtc.rwdt.disable();
 
     wdt0.disable();
@@ -101,7 +92,7 @@ fn main() -> ! {
     // let button_boot = io.pins.gpio2.into_pull_up_input();
 
     let mut rng = Rng::new(peripherals.RNG);
-    let mut seed_buffer = [0u8; 32];
+    let mut seed_buffer = [1u8; 32];
     rng.read(&mut seed_buffer).unwrap();
     let mut data = [Rgb565::BLACK; 320 * 240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);
