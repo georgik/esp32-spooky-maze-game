@@ -44,12 +44,6 @@ where
             last_action: Action::None
         }
     }
-
-    pub fn get_active_index(&self) -> usize {
-        self.active_index
-    }
-
-
 }
 
 impl<Up, Down, Left, Right, Dyn, Tel> MovementController for EmbeddedMovementController<Up, Down, Left, Right, Dyn, Tel>

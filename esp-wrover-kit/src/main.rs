@@ -26,12 +26,11 @@ use hal::{
 use esp_backtrace as _;
 use esp_println::println;
 use embedded_graphics::pixelcolor::Rgb565;
-use spooky_core::{engine::Engine, universe::Universe, spritebuf::SpriteBuf, demo_movement_controller::DemoMovementController};
+use spooky_core::{engine::Engine, universe::Universe, spritebuf::SpriteBuf};
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
 
 mod button_keyboard;
-use button_keyboard::ButtonKeyboard;
 
 mod button_movement_controller;
 use button_movement_controller::ButtonMovementController;
@@ -131,7 +130,7 @@ fn main() -> ! {
     let mut delay = Delay::new(&clocks);
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-    let (unconfigured_pins, mut configured_pins, mut configured_system_pins) = setup_pins(io.pins);
+    let (unconfigured_pins, configured_pins, mut configured_system_pins) = setup_pins(io.pins);
 
     let spi = spi::Spi::new(
         peripherals.SPI3,
@@ -145,7 +144,7 @@ fn main() -> ! {
         &clocks,
     );
 
-    configured_system_pins.backlight.set_low();
+    let _ = configured_system_pins.backlight.set_low();
 
     let di = SPIInterfaceNoCS::new(spi, configured_system_pins.dc);
 
@@ -182,8 +181,8 @@ fn main() -> ! {
     rng.read(&mut seed_buffer).unwrap();
 
     let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
-    let mut button_movement_controller = ButtonMovementController::new();
-    let mut movement_controller = EmbeddedMovementController::new(demo_movement_controller, button_movement_controller, wrover_button_keyboard);
+    let button_movement_controller = ButtonMovementController::new();
+    let movement_controller = EmbeddedMovementController::new(demo_movement_controller, button_movement_controller, wrover_button_keyboard);
 
     let mut data = [Rgb565::BLACK; 320 * 240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);

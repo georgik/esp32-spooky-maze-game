@@ -1,5 +1,5 @@
 use crate::button_keyboard::{ButtonKeyboard, ButtonEvent};
-use embedded_hal::digital::v2::{InputPin, OutputPin};
+use embedded_hal::digital::v2::InputPin;
 use crate::ConfiguredPins;
 
 pub struct WroverButtonKeyboard<Up, Down, Left, Right, Dyn, Tel>
