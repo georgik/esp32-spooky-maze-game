@@ -45,6 +45,8 @@ impl<D: DrawTarget<Color = Rgb565>, M: MovementController> Universe<D, M> {
             Action::Right => self.engine.action(Action::Right),
             Action::Teleport => self.engine.action(Action::Teleport),
             Action::PlaceDynamite => self.engine.action(Action::PlaceDynamite),
+            Action::Start => self.engine.action(Action::Start),
+            Action::Stop => self.engine.action(Action::Stop),
             Action::None => {}
         }
 

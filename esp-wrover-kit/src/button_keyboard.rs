@@ -1,5 +1,6 @@
 use embedded_hal::digital::v2::InputPin;
 
+#[derive(PartialEq)]
 pub enum ButtonEvent {
     UpPressed,
     DownPressed,
@@ -45,8 +46,15 @@ where
             ButtonEvent::UpPressed
         } else if self.down_button.is_low().unwrap_or(false) {
             ButtonEvent::DownPressed
-        } // ... More conditions here
-        else {
+        } else if self.left_button.is_low().unwrap_or(false) {
+            ButtonEvent::LeftPressed
+        } else if self.right_button.is_low().unwrap_or(false) {
+            ButtonEvent::RightPressed
+        } else if self.dynamite_button.is_low().unwrap_or(false) {
+            ButtonEvent::DynamitePressed
+        } else if self.teleport_button.is_low().unwrap_or(false) {
+            ButtonEvent::TeleportPressed
+        } else {
             ButtonEvent::NoEvent
         }
     }

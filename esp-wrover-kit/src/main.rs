@@ -4,6 +4,9 @@
 // Implementation specific for esp-wrover-kit
 // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/hw-reference/esp32/get-started-wrover-kit.html
 
+#[global_allocator]
+static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
+
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
@@ -15,6 +18,7 @@ use hal::{
     clock::{ClockControl, CpuClock},
     peripherals::Peripherals,
     prelude::*,
+    psram,
     spi,
     timer::TimerGroup,
     Delay, Rng, Rtc, IO, gpio::{Pins, self},
@@ -89,12 +93,19 @@ fn setup_pins(pins: Pins) -> (UnconfiguredPins<gpio::Unknown>, ConfiguredPins<im
     (unconfigured_pins, configured_pins, configured_system_pins)
 }
 
-
-
+fn init_psram_heap() {
+    unsafe {
+        ALLOCATOR.init(psram::psram_vaddr_start() as *mut u8, psram::PSRAM_BYTES);
+    }
+}
 
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take();
+
+    psram::init_psram(peripherals.PSRAM);
+    init_psram_heap();
+
     let mut system = peripherals.DPORT.split();
     let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
 
@@ -179,17 +190,16 @@ fn main() -> ! {
     let spritebuf = SpriteBuf::new(fbuf);
 
 
-    println!("Creating universe");
+    println!("Creating Engine");
     let engine = Engine::new(spritebuf, Some(seed_buffer));
 
+    println!("Creating Universe");
     let mut universe = Universe::new_with_movement_controller(engine, movement_controller);
 
     universe.initialize();
 
     println!("Starting main loop");
     loop {
-        // let event = button_keyboard.poll();
-        // movement_controller.react_to_event(event);
         display
             .draw_iter(universe.render_frame().into_iter())
             .unwrap();

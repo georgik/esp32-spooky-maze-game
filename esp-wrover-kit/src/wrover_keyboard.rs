@@ -37,5 +37,6 @@ where
 
     pub fn poll(&self) -> ButtonEvent {
         self.inner.poll()
+        // ButtonEvent::NoEvent
     }
 }
