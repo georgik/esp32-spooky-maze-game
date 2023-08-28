@@ -36,6 +36,9 @@ mod embedded_movement_controller;
 use embedded_movement_controller::EmbeddedMovementController;
 use embedded_hal::digital::v2::InputPin;
 
+mod wrover_keyboard;
+use wrover_keyboard::WroverButtonKeyboard;
+
 struct UnconfiguredPins<MODE> {
     pub sclk: gpio::Gpio19<MODE>,
     pub mosi: gpio::Gpio23<MODE>,
@@ -44,21 +47,23 @@ struct UnconfiguredPins<MODE> {
 }
 
 
-struct ConfiguredPins<Up: InputPin, Down: InputPin, Left: InputPin, Right: InputPin, Dyn: InputPin, Tel: InputPin,
-                      Dc: OutputPin, Bckl: OutputPin, Reset: OutputPin> {
+pub struct ConfiguredPins<Up: InputPin, Down: InputPin, Left: InputPin, Right: InputPin, Dyn: InputPin, Tel: InputPin> {
     pub up_button: Up,
     pub down_button: Down,
     pub left_button: Left,
     pub right_button: Right,
     pub dynamite_button: Dyn,
     pub teleport_button: Tel,
+}
+
+struct ConfigugredSystemPins<Dc: OutputPin, Bckl: OutputPin, Reset: OutputPin> {
     pub dc: Dc,
     pub backlight: Bckl,
     pub reset: Reset,
 }
 
 fn setup_pins(pins: Pins) -> (UnconfiguredPins<gpio::Unknown>, ConfiguredPins<impl InputPin, impl InputPin, impl InputPin, impl InputPin, impl InputPin,
-    impl InputPin, impl OutputPin, impl OutputPin, impl OutputPin>) {
+    impl InputPin>, ConfigugredSystemPins<impl OutputPin, impl OutputPin, impl OutputPin>) {
             let unconfigured_pins = UnconfiguredPins {
         sclk: pins.gpio19,
         mosi: pins.gpio23,
@@ -73,12 +78,15 @@ fn setup_pins(pins: Pins) -> (UnconfiguredPins<gpio::Unknown>, ConfiguredPins<im
         right_button: pins.gpio15.into_pull_up_input(),
         dynamite_button: pins.gpio26.into_pull_up_input(),
         teleport_button: pins.gpio27.into_pull_up_input(),
+    };
+
+    let configured_system_pins = ConfigugredSystemPins {
         dc: pins.gpio21.into_push_pull_output(),
         backlight: pins.gpio5.into_push_pull_output(),
         reset: pins.gpio18.into_push_pull_output(),
     };
 
-    (unconfigured_pins, configured_pins)
+    (unconfigured_pins, configured_pins, configured_system_pins)
 }
 
 
@@ -112,7 +120,7 @@ fn main() -> ! {
     let mut delay = Delay::new(&clocks);
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-    let (unconfigured_pins, mut configured_pins) = setup_pins(io.pins);
+    let (unconfigured_pins, mut configured_pins, mut configured_system_pins) = setup_pins(io.pins);
 
     let spi = spi::Spi::new(
         peripherals.SPI3,
@@ -126,15 +134,15 @@ fn main() -> ! {
         &clocks,
     );
 
-    configured_pins.backlight.set_low();
+    configured_system_pins.backlight.set_low();
 
-    let di = SPIInterfaceNoCS::new(spi, configured_pins.dc);
+    let di = SPIInterfaceNoCS::new(spi, configured_system_pins.dc);
 
     let mut display = match mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(240 as u16, 320 as u16)
         .with_orientation(mipidsi::Orientation::Landscape(false))
         .with_color_order(mipidsi::ColorOrder::Bgr)
-        .init(&mut delay, Some(configured_pins.reset)) {
+        .init(&mut delay, Some(configured_system_pins.reset)) {
             Ok(disp) => { disp },
             Err(_) => { panic!() },
     };
@@ -148,29 +156,28 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
-    let button_keyboard = ButtonKeyboard {
-        up_button: configured_pins.up_button,
-        down_button: configured_pins.down_button,
-        left_button: configured_pins.left_button,
-        right_button: configured_pins.right_button,
-        dynamite_button: configured_pins.dynamite_button,
-        teleport_button: configured_pins.teleport_button,
-    };
+    // let button_keyboard = ButtonKeyboard {
+    //     up_button: configured_pins.up_button,
+    //     down_button: configured_pins.down_button,
+    //     left_button: configured_pins.left_button,
+    //     right_button: configured_pins.right_button,
+    //     dynamite_button: configured_pins.dynamite_button,
+    //     teleport_button: configured_pins.teleport_button,
+    // };
+    let wrover_button_keyboard = WroverButtonKeyboard::new(configured_pins);
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [1u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
-    let button_movement_controller = ButtonMovementController::new();
     let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
-    let mut movement_controller = EmbeddedMovementController::new(demo_movement_controller, button_movement_controller);
-
+    let mut button_movement_controller = ButtonMovementController::new();
+    let mut movement_controller = EmbeddedMovementController::new(demo_movement_controller, button_movement_controller, wrover_button_keyboard);
 
     let mut data = [Rgb565::BLACK; 320 * 240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);
     let spritebuf = SpriteBuf::new(fbuf);
 
-    let mut button_movement_controller = ButtonMovementController::new();
 
     println!("Creating universe");
     let engine = Engine::new(spritebuf, Some(seed_buffer));
@@ -181,7 +188,7 @@ fn main() -> ! {
 
     println!("Starting main loop");
     loop {
-        let event = button_keyboard.poll();
+        // let event = button_keyboard.poll();
         // movement_controller.react_to_event(event);
         display
             .draw_iter(universe.render_frame().into_iter())

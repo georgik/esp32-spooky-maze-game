@@ -28,7 +28,16 @@ where
     Dy: InputPin,
     T: InputPin,
 {
-    // ... Initialization and other methods remain the same
+    pub fn new(up_button: U, down_button: D, left_button: L, right_button: R, dynamite_button: Dy, teleport_button: T) -> Self {
+        Self {
+            up_button,
+            down_button,
+            left_button,
+            right_button,
+            dynamite_button,
+            teleport_button,
+        }
+    }
 
     pub fn poll(&self) -> ButtonEvent {
         // Replace the following example code with your actual polling logic
