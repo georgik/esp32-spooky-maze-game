@@ -1,89 +1,55 @@
-use embedded_hal::digital::v2::InputPin;
 use spooky_core::movement_controller::MovementController;
-use crate::button_movement_controller::ButtonMovementController;
+use crate::{button_movement_controller::ButtonMovementController, button_keyboard::ButtonEvent};
+use spooky_core::engine::Action;
 
-pub struct EmbeddedMovementController<U, D, L, R, Dy, T, S>
-where
-    U: InputPin,
-    D: InputPin,
-    L: InputPin,
-    R: InputPin,
-    Dy: InputPin,
-    T: InputPin,
-    S: InputPin,
-{
+pub struct EmbeddedMovementController {
     pub demo_movement_controller: spooky_core::demo_movement_controller::DemoMovementController,
-    pub button_movement_controller: ButtonMovementController<U, D, L, R, Dy, T>,
-    pub start_button: S,
+    pub button_movement_controller: ButtonMovementController,
     pub(crate) active_index: usize,
 }
 
-impl<U, D, L, R, Dy, T, S> EmbeddedMovementController<U, D, L, R, Dy, T, S>
-where
-    U: InputPin,
-    D: InputPin,
-    L: InputPin,
-    R: InputPin,
-    Dy: InputPin,
-    T: InputPin,
-    S: InputPin,
-{
+impl EmbeddedMovementController {
     pub fn new(
         demo_movement_controller: spooky_core::demo_movement_controller::DemoMovementController,
-        button_movement_controller: ButtonMovementController<U, D, L, R, Dy, T>,
-        start_button: S,
+        button_movement_controller: ButtonMovementController,
     ) -> Self {
         Self {
             demo_movement_controller,
             button_movement_controller,
-            start_button,
             active_index: 0, // Initially, demo is active
         }
     }
 
-    pub fn check_start_button(&mut self) {
-        match self.start_button.is_low() {
-            Ok(true) => {
-                self.active_index = 1;
-            },
-            _ => (),
+    pub fn react_to_event(&mut self, event: ButtonEvent) {
+        match event {
+            ButtonEvent::TeleportPressed => self.active_index = 0,
+            _ => {
+                if self.active_index == 1 {
+                    self.button_movement_controller.react_to_event(event);
+                }
+            }
         }
-    }
-
-    pub fn is_demo(&self) -> bool {
-        self.active_index == 0
     }
 }
 
-impl<U, D, L, R, Dy, T, S> MovementController for EmbeddedMovementController<U, D, L, R, Dy, T, S>
-where
-    U: InputPin,
-    D: InputPin,
-    L: InputPin,
-    R: InputPin,
-    Dy: InputPin,
-    T: InputPin,
-    S: InputPin,
-{
+impl MovementController for EmbeddedMovementController {
     fn set_active(&mut self, index: usize) {
         self.active_index = index;
     }
 
     fn tick(&mut self) {
-        self.check_start_button();
-
         match self.active_index {
             0 => self.demo_movement_controller.tick(),
-            1 => self.button_movement_controller.tick(),
+            1 => {}, // No action required, events are processed in react_to_event
             _ => {}
         }
     }
 
-    fn get_movement(&self) -> spooky_core::engine::Action {
+    fn get_movement(&self) -> Action {
         match self.active_index {
             0 => self.demo_movement_controller.get_movement(),
             1 => self.button_movement_controller.get_movement(),
-            _ => spooky_core::engine::Action::None,
+            _ => Action::None,
         }
     }
 }

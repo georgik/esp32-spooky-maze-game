@@ -1,6 +1,8 @@
 use spooky_core::engine::Action;
 use spooky_core::movement_controller::MovementController;
 
+use crate::button_keyboard::ButtonEvent;
+
 pub struct ButtonMovementController {
     last_action: Action,
 }
@@ -11,7 +13,7 @@ impl ButtonMovementController {
             last_action: Action::None,
         }
     }
-    
+
     pub fn react_to_event(&mut self, event: ButtonEvent) {
         match event {
             ButtonEvent::UpPressed => self.last_action = Action::Up,

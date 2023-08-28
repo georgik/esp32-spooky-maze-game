@@ -17,7 +17,7 @@ use hal::{
     prelude::*,
     spi,
     timer::TimerGroup,
-    Delay, Rng, Rtc, IO, gpio::Pins,
+    Delay, Rng, Rtc, IO, gpio::{Pins, self},
 };
 use esp_backtrace as _;
 use esp_println::println;
@@ -36,16 +36,53 @@ mod embedded_movement_controller;
 use embedded_movement_controller::EmbeddedMovementController;
 use embedded_hal::digital::v2::InputPin;
 
-fn setup_pins(io: &Pins) -> (impl InputPin, impl InputPin, impl InputPin, impl InputPin, impl InputPin, impl InputPin) {
-    (
-        io.gpio14.into_pull_up_input(),
-        io.gpio12.into_pull_up_input(),
-        io.gpio13.into_pull_up_input(),
-        io.gpio15.into_pull_up_input(),
-        io.gpio26.into_pull_up_input(),
-        io.gpio27.into_pull_up_input()
-    )
+struct UnconfiguredPins<MODE> {
+    pub sclk: gpio::Gpio19<MODE>,
+    pub mosi: gpio::Gpio23<MODE>,
+    pub miso: gpio::Gpio25<MODE>,
+    pub cs: gpio::Gpio22<MODE>,
 }
+
+
+struct ConfiguredPins<Up: InputPin, Down: InputPin, Left: InputPin, Right: InputPin, Dyn: InputPin, Tel: InputPin,
+                      Dc: OutputPin, Bckl: OutputPin, Reset: OutputPin> {
+    pub up_button: Up,
+    pub down_button: Down,
+    pub left_button: Left,
+    pub right_button: Right,
+    pub dynamite_button: Dyn,
+    pub teleport_button: Tel,
+    pub dc: Dc,
+    pub backlight: Bckl,
+    pub reset: Reset,
+}
+
+fn setup_pins(pins: Pins) -> (UnconfiguredPins<gpio::Unknown>, ConfiguredPins<impl InputPin, impl InputPin, impl InputPin, impl InputPin, impl InputPin,
+    impl InputPin, impl OutputPin, impl OutputPin, impl OutputPin>) {
+            let unconfigured_pins = UnconfiguredPins {
+        sclk: pins.gpio19,
+        mosi: pins.gpio23,
+        miso: pins.gpio25,
+        cs: pins.gpio22,
+    };
+
+    let configured_pins = ConfiguredPins {
+        up_button: pins.gpio14.into_pull_up_input(),
+        down_button: pins.gpio12.into_pull_up_input(),
+        left_button: pins.gpio13.into_pull_up_input(),
+        right_button: pins.gpio15.into_pull_up_input(),
+        dynamite_button: pins.gpio26.into_pull_up_input(),
+        teleport_button: pins.gpio27.into_pull_up_input(),
+        dc: pins.gpio21.into_push_pull_output(),
+        backlight: pins.gpio5.into_push_pull_output(),
+        reset: pins.gpio18.into_push_pull_output(),
+    };
+
+    (unconfigured_pins, configured_pins)
+}
+
+
+
 
 #[entry]
 fn main() -> ! {
@@ -75,43 +112,33 @@ fn main() -> ! {
     let mut delay = Delay::new(&clocks);
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-    let gpio = peripherals.gpio.split();
-    let (up_button, down_button, left_button, right_button, dynamite_button, teleport_button) = setup_pins(&io.pins);
-
-    let button_keyboard = ButtonKeyboard {
-        up_button,
-        down_button,
-        left_button,
-        right_button,
-        // dynamite_button,
-        // teleport_button,
-    };
-    
-    let mut backlight = io.pins.gpio5.into_push_pull_output();
+    let (unconfigured_pins, mut configured_pins) = setup_pins(io.pins);
 
     let spi = spi::Spi::new(
-        peripherals.SPI3, // Real HW working with SPI2, but Wokwi seems to work only with SPI3
-        io.pins.gpio19,   // SCLK
-        io.pins.gpio23,   // MOSI
-        io.pins.gpio25,   // MISO
-        io.pins.gpio22,   // CS
+        peripherals.SPI3,
+        unconfigured_pins.sclk,
+        unconfigured_pins.mosi,
+        unconfigured_pins.miso,
+        unconfigured_pins.cs,
         60u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
         &clocks,
     );
 
-    backlight.set_low().unwrap();
+    configured_pins.backlight.set_low();
 
-    let reset = io.pins.gpio18.into_push_pull_output();
-    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio21.into_push_pull_output());
+    let di = SPIInterfaceNoCS::new(spi, configured_pins.dc);
 
-    let mut display = mipidsi::Builder::ili9341_rgb565(di)
+    let mut display = match mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(240 as u16, 320 as u16)
         .with_orientation(mipidsi::Orientation::Landscape(false))
         .with_color_order(mipidsi::ColorOrder::Bgr)
-        .init(&mut delay, Some(reset))
-        .unwrap();
+        .init(&mut delay, Some(configured_pins.reset)) {
+            Ok(disp) => { disp },
+            Err(_) => { panic!() },
+    };
+
 
     Text::new(
         "Initializing...",
@@ -121,29 +148,29 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
-    // let button_boot = io.pins.gpio2.into_pull_up_input();
+    let button_keyboard = ButtonKeyboard {
+        up_button: configured_pins.up_button,
+        down_button: configured_pins.down_button,
+        left_button: configured_pins.left_button,
+        right_button: configured_pins.right_button,
+        dynamite_button: configured_pins.dynamite_button,
+        teleport_button: configured_pins.teleport_button,
+    };
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [1u8; 32];
     rng.read(&mut seed_buffer).unwrap();
+
+    let button_movement_controller = ButtonMovementController::new();
+    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
+    let mut movement_controller = EmbeddedMovementController::new(demo_movement_controller, button_movement_controller);
+
+
     let mut data = [Rgb565::BLACK; 320 * 240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);
     let spritebuf = SpriteBuf::new(fbuf);
-    
+
     let mut button_movement_controller = ButtonMovementController::new();
-   
-    // let movement_controller = EmbeddedMovementController::new(
-    //     DemoMovementController::new(seed_buffer),
-    //     ButtonMovementController::new(
-    //         io.pins.gpio14.into_pull_up_input(),
-    //         io.pins.gpio12.into_pull_up_input(),
-    //         io.pins.gpio13.into_pull_up_input(),
-    //         io.pins.gpio15.into_pull_up_input(),
-    //         io.pins.gpio26.into_pull_up_input(),
-    //         io.pins.gpio27.into_pull_up_input(),
-    //     ),
-    //     start_button,
-    // );
 
     println!("Creating universe");
     let engine = Engine::new(spritebuf, Some(seed_buffer));
@@ -154,15 +181,10 @@ fn main() -> ! {
 
     println!("Starting main loop");
     loop {
-        // if button_boot.is_low().unwrap() {
-        //     universe.teleport();
-        // }
-
         let event = button_keyboard.poll();
-        button_movement_controller.react_to_event(event);
+        // movement_controller.react_to_event(event);
         display
             .draw_iter(universe.render_frame().into_iter())
             .unwrap();
-        
     }
 }
