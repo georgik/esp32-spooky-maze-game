@@ -17,7 +17,7 @@ use hal::{
     prelude::*,
     spi,
     timer::TimerGroup,
-    Delay, Rng, Rtc, IO,
+    Delay, Rng, Rtc, IO, gpio::Pins,
 };
 use esp_backtrace as _;
 use esp_println::println;
@@ -26,11 +26,26 @@ use spooky_core::{engine::Engine, universe::Universe, spritebuf::SpriteBuf, demo
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
 
+mod button_keyboard;
+use button_keyboard::ButtonKeyboard;
+
 mod button_movement_controller;
 use button_movement_controller::ButtonMovementController;
 
 mod embedded_movement_controller;
 use embedded_movement_controller::EmbeddedMovementController;
+use embedded_hal::digital::v2::InputPin;
+
+fn setup_pins(io: &Pins) -> (impl InputPin, impl InputPin, impl InputPin, impl InputPin, impl InputPin, impl InputPin) {
+    (
+        io.gpio14.into_pull_up_input(),
+        io.gpio12.into_pull_up_input(),
+        io.gpio13.into_pull_up_input(),
+        io.gpio15.into_pull_up_input(),
+        io.gpio26.into_pull_up_input(),
+        io.gpio27.into_pull_up_input()
+    )
+}
 
 #[entry]
 fn main() -> ! {
@@ -60,7 +75,18 @@ fn main() -> ! {
     let mut delay = Delay::new(&clocks);
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
+    let gpio = peripherals.gpio.split();
+    let (up_button, down_button, left_button, right_button, dynamite_button, teleport_button) = setup_pins(&io.pins);
 
+    let button_keyboard = ButtonKeyboard {
+        up_button,
+        down_button,
+        left_button,
+        right_button,
+        // dynamite_button,
+        // teleport_button,
+    };
+    
     let mut backlight = io.pins.gpio5.into_push_pull_output();
 
     let spi = spi::Spi::new(
@@ -103,28 +129,26 @@ fn main() -> ! {
     let mut data = [Rgb565::BLACK; 320 * 240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);
     let spritebuf = SpriteBuf::new(fbuf);
-    let start_button = io.pins.gpio16.into_pull_up_input();
-
-    let movement_controller = EmbeddedMovementController::new(
-        DemoMovementController::new(seed_buffer),
-        ButtonMovementController::new(
-            io.pins.gpio14.into_pull_up_input(),
-            io.pins.gpio12.into_pull_up_input(),
-            io.pins.gpio13.into_pull_up_input(),
-            io.pins.gpio15.into_pull_up_input(),
-            io.pins.gpio26.into_pull_up_input(),
-            io.pins.gpio27.into_pull_up_input(),
-        ),
-        start_button,
-    );
+    
+    let mut button_movement_controller = ButtonMovementController::new();
+   
+    // let movement_controller = EmbeddedMovementController::new(
+    //     DemoMovementController::new(seed_buffer),
+    //     ButtonMovementController::new(
+    //         io.pins.gpio14.into_pull_up_input(),
+    //         io.pins.gpio12.into_pull_up_input(),
+    //         io.pins.gpio13.into_pull_up_input(),
+    //         io.pins.gpio15.into_pull_up_input(),
+    //         io.pins.gpio26.into_pull_up_input(),
+    //         io.pins.gpio27.into_pull_up_input(),
+    //     ),
+    //     start_button,
+    // );
 
     println!("Creating universe");
     let engine = Engine::new(spritebuf, Some(seed_buffer));
 
-
     let mut universe = Universe::new_with_movement_controller(engine, movement_controller);
-
-    // let mut universe = Universe::new_with_movement_controller(engine, movement_controller);
 
     universe.initialize();
 
@@ -134,6 +158,8 @@ fn main() -> ! {
         //     universe.teleport();
         // }
 
+        let event = button_keyboard.poll();
+        button_movement_controller.react_to_event(event);
         display
             .draw_iter(universe.render_frame().into_iter())
             .unwrap();
