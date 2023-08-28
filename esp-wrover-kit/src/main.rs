@@ -166,14 +166,6 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
-    // let button_keyboard = ButtonKeyboard {
-    //     up_button: configured_pins.up_button,
-    //     down_button: configured_pins.down_button,
-    //     left_button: configured_pins.left_button,
-    //     right_button: configured_pins.right_button,
-    //     dynamite_button: configured_pins.dynamite_button,
-    //     teleport_button: configured_pins.teleport_button,
-    // };
     let wrover_button_keyboard = WroverButtonKeyboard::new(configured_pins);
 
     let mut rng = Rng::new(peripherals.RNG);
