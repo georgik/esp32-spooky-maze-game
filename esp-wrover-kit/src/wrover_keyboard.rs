@@ -1,4 +1,4 @@
-use crate::button_keyboard::{ButtonKeyboard, ButtonEvent};
+use spooky_embedded::button_keyboard::{ButtonKeyboard, ButtonEvent};
 use embedded_hal::digital::v2::InputPin;
 use crate::ConfiguredPins;
 
@@ -37,6 +37,5 @@ where
 
     pub fn poll(&self) -> ButtonEvent {
         self.inner.poll()
-        // ButtonEvent::NoEvent
     }
 }

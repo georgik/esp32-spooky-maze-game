@@ -1,8 +1,8 @@
 use spooky_core::movement_controller::MovementController;
 use spooky_core::engine::Action;
 use spooky_core::demo_movement_controller::DemoMovementController;
-use crate::button_movement_controller::ButtonMovementController;
-use crate::button_keyboard::ButtonEvent;
+use spooky_embedded::button_movement_controller::ButtonMovementController;
+use spooky_embedded::button_keyboard::ButtonEvent;
 use crate::wrover_keyboard::WroverButtonKeyboard;
 use embedded_hal::digital::v2::InputPin;
 

@@ -11,7 +11,7 @@ pub enum ButtonEvent {
     NoEvent,
 }
 
-pub (crate) struct ButtonKeyboard<Up: InputPin, Down: InputPin, Left: InputPin, Right: InputPin, Dyn: InputPin, Tel: InputPin> {
+pub struct ButtonKeyboard<Up: InputPin, Down: InputPin, Left: InputPin, Right: InputPin, Dyn: InputPin, Tel: InputPin> {
     pub up_button: Up,
     pub down_button: Down,
     pub left_button: Left,
@@ -41,7 +41,6 @@ where
     }
 
     pub fn poll(&self) -> ButtonEvent {
-        // Replace the following example code with your actual polling logic
         if self.up_button.is_low().unwrap_or(false) {
             ButtonEvent::UpPressed
         } else if self.down_button.is_low().unwrap_or(false) {

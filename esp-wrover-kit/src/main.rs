@@ -30,10 +30,10 @@ use spooky_core::{engine::Engine, universe::Universe, spritebuf::SpriteBuf};
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
 
-mod button_keyboard;
+// use spooky_embedded::button_keyboard;
 
-mod button_movement_controller;
-use button_movement_controller::ButtonMovementController;
+// mod button_movement_controller;
+use spooky_embedded::button_movement_controller::ButtonMovementController;
 
 mod embedded_movement_controller;
 use embedded_movement_controller::EmbeddedMovementController;
