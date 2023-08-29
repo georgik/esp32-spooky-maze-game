@@ -151,7 +151,7 @@ fn main() -> ! {
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
-    // app_loop(configured_pins, &mut display, seed_buffer);
+
     app_loop( &mut display, seed_buffer, icm);
     loop {}
 

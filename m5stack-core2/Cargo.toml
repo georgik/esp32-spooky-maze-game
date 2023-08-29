@@ -13,7 +13,6 @@ esp-backtrace = { version = "0.7.0", features = [
     "panic-handler",
     "print-uart",
 ] }
-xtensa-lx-rt = { version = "0.15.0", features = ["esp32"], optional = true }
 
 [dependencies]
 embedded-graphics = "0.8.0"
@@ -57,6 +56,6 @@ mpu9250 = ["imu_controls", "dep:mpu9250"]
 
 axp192 = ["i2c", "dep:axp192"]
 
-wokwi = [ "xtensa-lx-rt", "esp32", "mpu6050" ]
+wokwi = [ "esp32", "mpu6050" ]
 
-m5stack_core2 = ["xtensa-lx-rt", "esp32", "mpu6886", "axp192" ]
+m5stack_core2 = [ "esp32", "mpu6886", "axp192" ]
