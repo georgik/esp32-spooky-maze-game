@@ -26,7 +26,7 @@ use hal::{
     Delay,
     Rng,
     Rtc,
-    IO, ledc::channel::config,
+    IO
 };
 
 mod app;
@@ -41,73 +41,10 @@ mod types;
 
 use esp_backtrace as _;
 
-use embedded_graphics::pixelcolor::Rgb565;
-
-use spooky_core::{engine::Engine, spritebuf::SpriteBuf, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite } };
-
 // #[cfg(any(feature = "imu_controls"))]
 use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
 // #[cfg(any(feature = "imu_controls"))]
 use shared_bus::BusManagerSimple;
-
-// use embedded_graphics_framebuf::FrameBuf;
-// use embedded_hal::digital::v2::OutputPin;
-
-// pub struct Universe<I, D> {
-//     pub engine: Engine<D>,
-//     icm: I,
-// }
-
-// impl<I: Accelerometer, D: embedded_graphics::draw_target::DrawTarget<Color = Rgb565>>
-//     Universe<I, D>
-// {
-//     pub fn new(icm: I, seed: Option<[u8; 32]>, engine: Engine<D>) -> Universe<I, D> {
-//         Universe {
-//             engine,
-//             icm,
-//         }
-//     }
-
-//     pub fn initialize(&mut self) {
-//         self.engine.initialize();
-//         self.engine.start();
-//     }
-
-//     pub fn render_frame(&mut self) -> &D {
-//         #[cfg(any(feature = "imu_controls"))]
-//         {
-//             let accel_threshold = 0.20;
-//             let accel_norm = self.icm.accel_norm().unwrap();
-
-//             if accel_norm.y > accel_threshold {
-//                 self.engine.action(Left);
-//             }
-
-//             if accel_norm.y < -accel_threshold {
-//                 self.engine.action(Right);
-//             }
-
-//             if accel_norm.x > accel_threshold {
-//                 self.engine.action(Down);
-//             }
-
-//             if accel_norm.x < -accel_threshold {
-//                 self.engine.action(Up);
-//             }
-
-//             // Quickly move up to teleport
-//             // Quickly move down to place dynamite
-//             if accel_norm.z < -1.2 {
-//                 self.engine.action(Teleport);
-//             } else if accel_norm.z > 1.5 {
-//                 self.engine.action(PlaceDynamite);
-//             }
-//         }
-
-//         self.engine.tick();
-//         self.engine.draw()
-//     }
-// }
 
 fn init_psram_heap() {
     unsafe {

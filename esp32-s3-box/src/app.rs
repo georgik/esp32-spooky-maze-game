@@ -1,11 +1,7 @@
 use crate::s3box_composite_controller::S3BoxCompositeController;
-use crate::types::ConfiguredPins;
 use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
 use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe};
 use embedded_graphics_framebuf::FrameBuf;
-use embedded_hal::digital::v2::InputPin;
-use spooky_embedded::embedded_movement_controller::EmbeddedMovementController;
-// use crate::setup::{setup_movement_controller, setup_button_keyboard};
 use embedded_graphics::prelude::RgbColor;
 use crate::accel_movement_controller::AccelMovementController;
 use crate::Accelerometer;
