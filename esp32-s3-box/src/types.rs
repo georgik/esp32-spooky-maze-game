@@ -5,6 +5,8 @@ use embedded_hal::digital::v2::{ InputPin, OutputPin };
 pub struct UnconfiguredPins<MODE> {
     pub sclk: gpio::Gpio7<MODE>,
     pub mosi: gpio::Gpio6<MODE>,
+    pub sda: gpio::Gpio8<MODE>,
+    pub scl: gpio::Gpio18<MODE>,
 }
 
 pub struct ConfiguredPins<Up: InputPin, Down: InputPin, Left: InputPin, Right: InputPin, Dyn: InputPin, Tel: InputPin> {

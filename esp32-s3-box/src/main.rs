@@ -32,6 +32,8 @@ use hal::{
 mod app;
 use app::app_loop;
 
+mod accel_movement_controller;
+
 mod setup;
 use setup::setup_pins;
 
@@ -44,9 +46,9 @@ use embedded_graphics::pixelcolor::Rgb565;
 use spooky_core::{engine::Engine, spritebuf::SpriteBuf, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite } };
 
 // #[cfg(any(feature = "imu_controls"))]
-// use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
+use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
 // #[cfg(any(feature = "imu_controls"))]
-// use shared_bus::BusManagerSimple;
+use shared_bus::BusManagerSimple;
 
 // use embedded_graphics_framebuf::FrameBuf;
 // use embedded_hal::digital::v2::OutputPin;
@@ -191,34 +193,29 @@ fn main() -> ! {
         .draw(&mut display)
         .unwrap();
 
-    // #[cfg(any(feature = "imu_controls"))]
-    // println!("Initializing IMU");
-    // #[cfg(any(feature = "imu_controls"))]
-    // let sda = io.pins.gpio8;
-    // #[cfg(any(feature = "imu_controls"))]
-    // let scl = io.pins.gpio18;
+
 
     // #[cfg(any(feature = "imu_controls"))]
-    // let i2c = i2c::I2C::new(
-    //     peripherals.I2C0,
-    //     sda,
-    //     scl,
-    //     100u32.kHz(),
-    //     &mut system.peripheral_clock_control,
-    //     &clocks,
-    // );
+    let i2c = i2c::I2C::new(
+        peripherals.I2C0,
+        unconfigured_pins.sda,
+        unconfigured_pins.scl,
+        100u32.kHz(),
+        &mut system.peripheral_clock_control,
+        &clocks,
+    );
 
     // #[cfg(any(feature = "imu_controls"))]
-    // let bus = BusManagerSimple::new(i2c);
+    let bus = BusManagerSimple::new(i2c);
     // #[cfg(any(feature = "imu_controls"))]
-    // let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
+    let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
     // app_loop(configured_pins, &mut display, seed_buffer);
-    app_loop( &mut display, seed_buffer);
+    app_loop( &mut display, seed_buffer, icm);
     loop {}
 
 }

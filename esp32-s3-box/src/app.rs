@@ -6,37 +6,31 @@ use embedded_hal::digital::v2::InputPin;
 use spooky_embedded::embedded_movement_controller::EmbeddedMovementController;
 // use crate::setup::{setup_movement_controller, setup_button_keyboard};
 use embedded_graphics::prelude::RgbColor;
-use spooky_core::nomovement_controller::NoMovementController;
+use crate::accel_movement_controller::AccelMovementController;
+use crate::Accelerometer;
 
-// pub fn app_loop<UP, DP, LP, RP, DB, TP, DISP>(
 pub fn app_loop<DISP>(
-    // configured_pins: ConfiguredPins<UP, DP, LP, RP, DB, TP>,
     display: &mut DISP,
-    seed_buffer: [u8; 32])
+    seed_buffer: [u8; 32],
+    icm: impl Accelerometer // You'll need to pass your accelerometer device here
+)
 where
-    // UP: InputPin,
-    // DP: InputPin,
-    // LP: InputPin,
-    // RP: InputPin,
-    // DB: InputPin,
-    // TP: InputPin,
     DISP: DrawTarget<Color = Rgb565>,
 {
     // let button_keyboard = setup_button_keyboard(configured_pins);
 
-    let no_movement_controller = NoMovementController::new();
+    let accel_movement_controller = AccelMovementController::new(icm, 0.2);
     // let movement_controller = setup_movement_controller(seed_buffer, no_movement_controller);
 
     let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
-    // let movement_controller = EmbeddedMovementController::new(demo_movement_controller, no_movement_controller);
-
+    
     let mut data = [Rgb565::BLACK; 320 * 240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);
     let spritebuf = SpriteBuf::new(fbuf);
 
     let engine = Engine::new(spritebuf, Some(seed_buffer));
 
-    let mut universe = Universe::new_with_movement_controller(engine, demo_movement_controller);
+    let mut universe = Universe::new_with_movement_controller(engine, accel_movement_controller);
 
     universe.initialize();
 

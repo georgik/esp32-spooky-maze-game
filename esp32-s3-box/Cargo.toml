@@ -13,7 +13,6 @@ esp-backtrace = { version = "0.7.0", features = [
     "panic-handler",
     "print-uart",
 ] }
-xtensa-lx-rt = { version = "0.15.0", features = ["esp32s3"], optional = true }
 esp-println = { version = "0.5.0", features = ["esp32s3"] }
 
 [dependencies]
@@ -30,6 +29,7 @@ shared-bus = { version = "0.3.0" }
 # spooky-core = { path = "../spooky-core" }
 # Insufficient memory on ESP32-S3 with 0.9.0, switched to static maze without alloc
 spooky-core = { path = "../spooky-core" }
+spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "dynamic_maze" ] }
 heapless = { version = "0.7.14", default-features = false }
 
 [features]

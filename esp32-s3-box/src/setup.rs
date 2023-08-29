@@ -9,6 +9,8 @@ pub fn setup_pins(pins: Pins) -> (UnconfiguredPins<gpio::Unknown>, /*ConfiguredP
             let unconfigured_pins = UnconfiguredPins {
         sclk: pins.gpio7,
         mosi: pins.gpio6,
+        sda: pins.gpio8,
+        scl: pins.gpio18,
     };
 
     // let configured_pins = ConfiguredPins {
