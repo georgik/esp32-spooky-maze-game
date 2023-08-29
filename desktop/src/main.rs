@@ -16,6 +16,7 @@ mod keyboard_movement_controller;
 use keyboard_movement_controller::KeyboardMovementController;
 
 use spooky_core::demo_movement_controller::DemoMovementController;
+use spooky_core::movement_controller::MovementController;
 
 fn get_seed_buffer() -> Option<[u8; 32]> {
     let mut seed_buffer = [0u8; 32];
@@ -36,11 +37,9 @@ fn main() -> Result<(), core::convert::Infallible> {
 
     let engine = Engine::new(spritebuf, get_seed_buffer());
 
-    let desktop_movement_controller = DesktopMovementControllerBuilder {
-        demo_movement_controller: DemoMovementController::new(get_seed_buffer().unwrap()),
-        keyboard_movement_controller: KeyboardMovementController::new(),
-        active_index: 0,
-    };
+    let demo_movement_controller = DemoMovementController::new(get_seed_buffer().unwrap());
+    let keyboard_movement_controller = KeyboardMovementController::new();
+    let desktop_movement_controller = DesktopMovementControllerBuilder::new(demo_movement_controller, keyboard_movement_controller);
 
     let mut universe = Universe::new_with_movement_controller(engine, desktop_movement_controller);
     universe.initialize();
@@ -57,17 +56,17 @@ fn main() -> Result<(), core::convert::Infallible> {
                 SimulatorEvent::KeyDown { keycode, .. } => {
                     last_user_activity = Instant::now(); // Record the time of the last user activity
 
+                    let main_controller = universe.get_movement_controller_mut();
+                    main_controller.handle_key(keycode);
+
                     if is_demo {
-                        universe.set_active(1);
+                        main_controller.set_active(1);
                         is_demo = false;
                     }
-
-                    let keyboard_controller = universe.get_movement_controller_mut();
-                    keyboard_controller.handle_key(keycode);
                 },
                 SimulatorEvent::KeyUp { keycode, keymod, repeat } => {
-                    let keyboard_controller = universe.get_movement_controller_mut();
-                    keyboard_controller.stop_movement();
+                    let main_controller = universe.get_movement_controller_mut();
+                    main_controller.stop_movement();
                  },
                 _ => {}
             }
@@ -80,16 +79,6 @@ fn main() -> Result<(), core::convert::Infallible> {
         }
 
         display.draw_iter(universe.render_frame().into_iter()).unwrap();
-
-        if is_demo {
-            Text::new(
-                "Demo. Presss any key...",
-                Point::new(80, 80),
-                MonoTextStyle::new(&FONT_8X13, RgbColor::WHITE),
-            )
-            .draw(&mut display)
-            .unwrap();
-        }
 
         window.update(&display);
         std::thread::sleep(Duration::from_millis(50));
