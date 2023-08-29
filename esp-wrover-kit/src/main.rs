@@ -63,12 +63,10 @@ fn main() -> ! {
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
     let (unconfigured_pins, configured_pins, configured_system_pins) =  setup_pins(io.pins);
 
-    let spi = spi::Spi::new(
+    let spi = spi::Spi::new_no_cs_no_miso(
         peripherals.SPI3,
         unconfigured_pins.sclk,
         unconfigured_pins.mosi,
-        unconfigured_pins.miso,
-        unconfigured_pins.cs,
         60u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
