@@ -14,7 +14,6 @@ esp-backtrace = { version = "0.7.0", features = [
     "panic-handler",
     "print-uart",
 ] }
-xtensa-lx-rt = { version = "0.15.0", features = ["esp32"], optional = true }
 esp-println = { version = "0.5.0", features = ["esp32"] }
 
 [dependencies]
@@ -45,4 +44,4 @@ esp32s3 = []
 esp32c3 = ["system_timer"]
 
 # Enable this feature in case you have an ESP32 Wrover Kit with ILI9341
-esp_wrover_kit = [ "xtensa-lx-rt", "esp32" ]
+esp_wrover_kit = [ "esp32" ]
