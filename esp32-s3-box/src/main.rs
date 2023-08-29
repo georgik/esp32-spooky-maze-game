@@ -33,7 +33,7 @@ mod app;
 use app::app_loop;
 
 mod accel_movement_controller;
-
+mod s3box_composite_controller;
 mod setup;
 use setup::setup_pins;
 
@@ -184,7 +184,7 @@ fn main() -> ! {
 
     configured_system_pins.backlight.set_high();
 
-    println!("Initializin...");
+    println!("Initializing...");
         Text::new(
             "Initializing...",
             Point::new(80, 110),
