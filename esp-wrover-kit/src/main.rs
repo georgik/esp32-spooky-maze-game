@@ -30,17 +30,9 @@ use spooky_core::{engine::Engine, universe::Universe, spritebuf::SpriteBuf};
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
 
-// use spooky_embedded::button_keyboard;
-
-// mod button_movement_controller;
-use spooky_embedded::button_movement_controller::ButtonMovementController;
-
-mod embedded_movement_controller;
-use embedded_movement_controller::EmbeddedMovementController;
+use spooky_embedded::button_keyboard::ButtonKeyboard;
+use spooky_embedded::embedded_movement_controller::EmbeddedMovementController;
 use embedded_hal::digital::v2::InputPin;
-
-mod wrover_keyboard;
-use wrover_keyboard::WroverButtonKeyboard;
 
 struct UnconfiguredPins<MODE> {
     pub sclk: gpio::Gpio19<MODE>,
@@ -166,15 +158,20 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
-    let wrover_button_keyboard = WroverButtonKeyboard::new(configured_pins);
-
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [1u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
+    let button_keyboard = ButtonKeyboard::new(
+        configured_pins.up_button,
+        configured_pins.down_button,
+        configured_pins.left_button,
+        configured_pins.right_button,
+        configured_pins.dynamite_button,
+        configured_pins.teleport_button,
+    );
     let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
-    let button_movement_controller = ButtonMovementController::new();
-    let movement_controller = EmbeddedMovementController::new(demo_movement_controller, button_movement_controller, wrover_button_keyboard);
+    let movement_controller = EmbeddedMovementController::new(demo_movement_controller, button_keyboard);
 
     let mut data = [Rgb565::BLACK; 320 * 240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);
