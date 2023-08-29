@@ -45,7 +45,7 @@ use embedded_hal::digital::v2::OutputPin;
 
 mod app;
 use app::app_loop;
-
+mod accel_device;
 mod accel_movement_controller;
 
 mod m5stack_composite_controller;

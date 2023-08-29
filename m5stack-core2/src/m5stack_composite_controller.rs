@@ -1,11 +1,12 @@
 use spooky_core::engine::Action;
 use spooky_core::movement_controller::MovementController;
 use spooky_core::demo_movement_controller::DemoMovementController;
+use crate::accel_device::AccelDevice;
 use crate::accel_movement_controller::AccelMovementController;
 
 pub struct M5StackCompositeController<I>
 where
-    I: Accelerometer,
+    I: AccelDevice,
 {
     demo_controller: DemoMovementController,
     accel_controller: AccelMovementController<I>,
@@ -16,7 +17,7 @@ where
 
 impl<I> M5StackCompositeController<I>
 where
-    I: Accelerometer,
+    I: AccelDevice,
 {
     pub fn new(demo_controller: DemoMovementController, accel_controller: AccelMovementController<I>) -> Self {
         Self {
@@ -31,7 +32,7 @@ where
 
 impl<I> MovementController for M5StackCompositeController<I>
 where
-    I: Accelerometer,
+    I: AccelDevice,
 {
     fn tick(&mut self) {
         self.last_action = Action::None;

@@ -1,36 +1,52 @@
 use spooky_core::engine::Action;
 use spooky_core::movement_controller::MovementController;
-#[cfg(feature = "mpu6886")]
-use mpu6886::Mpu6886;
+use crate::accel_device::AccelDevice; // Replace this with the actual path to your AccelDevice trait
+use crate::accel_device::AccelNorm; // Replace this with the actual path to your AccelNorm struct
 
-
-pub struct AccelMovementController<A, I>
+pub struct AccelMovementController<A>
 where
-    A: Mpu6886<I>,
+    A: AccelDevice,
 {
     icm: A,
     last_action: Action,
     accel_threshold: f32,
 }
 
-impl<I> AccelMovementController<I>
+impl<A> AccelMovementController<A>
 where
-A: Mpu6886<I>,
+    A: AccelDevice,
 {
-    pub fn new(icm: I, accel_threshold: f32) -> Self {
+    pub fn new(icm: A, accel_threshold: f32) -> Self {
         Self {
             icm,
             last_action: Action::None,
             accel_threshold,
         }
     }
+
+    // This function is no longer in the impl block for MovementController
+    fn update_last_action(&mut self, accel_norm: AccelNorm) {
+        if accel_norm.y > self.accel_threshold {
+            self.last_action = Action::Left;
+        } else if accel_norm.y < -self.accel_threshold {
+            self.last_action = Action::Right;
+        } else if accel_norm.x > self.accel_threshold {
+            self.last_action = Action::Down;
+        } else if accel_norm.x < -self.accel_threshold {
+            self.last_action = Action::Up;
+        } else {
+            self.last_action = Action::None;
+        }
+        // Additional actions for Teleport and PlaceDynamite can be added here
+    }
 }
 
-impl<I> MovementController for AccelMovementController<I>
+impl<A> MovementController for AccelMovementController<A>
 where
-A: Mpu6886<I>,
+    A: AccelDevice,
 {
-    fn set_active(&mut self, _index:usize) {
+    fn set_active(&mut self, _index: usize) {
+        // Your implementation here
     }
 
     fn get_movement(&self) -> Action {
@@ -39,18 +55,7 @@ A: Mpu6886<I>,
 
     fn tick(&mut self) {
         if let Ok(accel_norm) = self.icm.accel_norm() {
-            if accel_norm.y > self.accel_threshold {
-                self.last_action = Action::Left;
-            } else if accel_norm.y < -self.accel_threshold {
-                self.last_action = Action::Right;
-            } else if accel_norm.x > self.accel_threshold {
-                self.last_action = Action::Down;
-            } else if accel_norm.x < -self.accel_threshold {
-                self.last_action = Action::Up;
-            } else {
-                self.last_action = Action::None;
-            }
-            // Additional actions for Teleport and PlaceDynamite can be added here
+            self.update_last_action(accel_norm);
         }
     }
 }

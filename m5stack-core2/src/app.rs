@@ -1,4 +1,4 @@
-use crate::m5stack_composite_controller::M5StackCompositeController;
+use crate::{m5stack_composite_controller::M5StackCompositeController, accel_device::AccelDevice};
 use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
 use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe};
 use embedded_graphics_framebuf::FrameBuf;
@@ -8,7 +8,7 @@ use crate::accel_movement_controller::AccelMovementController;
 pub fn app_loop<DISP>(
     display: &mut DISP,
     seed_buffer: [u8; 32],
-    icm: impl Accelerometer // You'll need to pass your accelerometer device here
+    icm: impl AccelDevice // You'll need to pass your accelerometer device here
 )
 where
     DISP: DrawTarget<Color = Rgb565>,
