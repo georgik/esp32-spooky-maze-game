@@ -18,10 +18,9 @@ use embedded_graphics::{
 
 mod setup;
 mod types;
-mod loop_logic;
-
+mod app;
+use app::app_loop;
 use setup::*;
-use loop_logic::app_loop;
 
 pub fn init_psram_heap() {
     unsafe {
