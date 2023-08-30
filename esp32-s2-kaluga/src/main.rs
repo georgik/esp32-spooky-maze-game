@@ -33,20 +33,24 @@ use hal::{
     adc::{AdcConfig, Attenuation, ADC, ADC1},
 };
 
+mod app;
+use app::app_loop;
+
+mod kaluga_composite_controller;
+mod ladder_movement_controller;
+
+mod setup;
+use setup::setup_pins;
+
+mod types;
+
 // systimer was introduced in ESP32-S2, it's not available for ESP32
 #[cfg(feature="system_timer")]
 use hal::systimer::{SystemTimer};
 
-// use panic_halt as _;
 use esp_backtrace as _;
 
-#[cfg(feature="xtensa-lx-rt")]
-use xtensa_lx_rt::entry;
-#[cfg(feature="riscv-rt")]
-use riscv_rt::entry;
-
 use embedded_graphics::{pixelcolor::Rgb565};
-// use esp32s2_hal::Rng;
 
 use spooky_core::{spritebuf::SpriteBuf, engine::Engine, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite }};
 
@@ -58,51 +62,11 @@ pub struct Universe<D> {
 }
 
 
-impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D> {
-    pub fn new(seed: Option<[u8; 32]>, engine:Engine<D>) -> Universe<D> {
-        Universe {
-            engine,
-        }
-    }
-
-    pub fn initialize(&mut self) {
-        self.engine.initialize();
-        self.engine.start();
-    }
-
-    pub fn move_up(&mut self) {
-        self.engine.action(Up);
-    }
-
-    pub fn move_down(&mut self) {
-        self.engine.action(Down);
-    }
-
-    pub fn move_left(&mut self) {
-        self.engine.action(Left);
-    }
-
-    pub fn move_right(&mut self) {
-        self.engine.action(Right);
-    }
-
-    pub fn render_frame(&mut self) -> &D {
-
-        self.engine.tick();
-        self.engine.draw()
-
-    }
-
-}
-
 
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take();
 
-    #[cfg(any(feature = "esp32"))]
-    let mut system = peripherals.DPORT.split();
-    #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
     let mut system = peripherals.SYSTEM.split();
     let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
 
@@ -121,9 +85,6 @@ fn main() -> ! {
     );
     let mut wdt1 = timer_group1.wdt;
 
-    #[cfg(feature="esp32c3")]
-    rtc.swd.disable();
-    #[cfg(feature="xtensa-lx-rt")]
     rtc.rwdt.disable();
 
     wdt0.disable();
@@ -135,43 +96,38 @@ fn main() -> ! {
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
-    // Create ADC instances
-    let analog = peripherals.SENS.split();
-
-    let mut adc1_config = AdcConfig::new();
-
-    let mut button_ladder_pin =
-        adc1_config.enable_pin(io.pins.gpio6.into_analog(), Attenuation::Attenuation11dB);
-
-    let mut adc1 = ADC::<ADC1>::adc(analog.adc1, adc1_config).unwrap();
-
     // Backlight is on GPIO6 in version 1.2, version 1.3 has display always on
     // let mut backlight = io.pins.gpio6.into_push_pull_output();
     // backlight.set_high().unwrap();
+    let (unconfigured_pins, configured_pins, configured_system_pins) = setup_pins(io.pins);
 
-    let spi = spi::Spi::new(
+
+    // let mut adc1_config = AdcConfig::new();
+
+    // let mut resistor_ladder_adc =
+    //     adc1_config.enable_pin(configured_pins.adc, Attenuation::Attenuation11dB);
+
+    // let adc = setup::setup_adc();
+
+    let spi = spi::Spi::new_no_cs_no_miso(
         peripherals.SPI2,
-        io.pins.gpio15,  // SCLK
-        io.pins.gpio9,   // MOSI
-        io.pins.gpio8,   // MISO
-        io.pins.gpio11,   // CS
+        unconfigured_pins.sclk,
+        unconfigured_pins.mosi,
         60u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
-        &clocks);
+        &clocks,
+    );
 
-    let reset = io.pins.gpio16.into_push_pull_output();
+    let di = SPIInterfaceNoCS::new(spi, configured_system_pins.dc);
 
-    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio13.into_push_pull_output());
-
-    #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
     let mut delay = Delay::new(&clocks);
 
     let mut display = mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(320, 240)
         .with_orientation(mipidsi::Orientation::Landscape(true))
         .with_color_order(mipidsi::ColorOrder::Rgb)
-        .init(&mut delay, Some(reset))
+        .init(&mut delay, Some(configured_system_pins.reset))
         .unwrap();
 
     Text::new(
@@ -186,29 +142,24 @@ fn main() -> ! {
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8;32];
     rng.read(&mut seed_buffer).unwrap();
-    let mut data = [Rgb565::BLACK ; 320*240];
-    let fbuf = FrameBuf::new(&mut data, 320, 240);
-    let spritebuf = SpriteBuf::new(fbuf);
-    let engine = Engine::new(spritebuf, Some(seed_buffer));
 
-    let mut universe = Universe::new(Some(seed_buffer), engine);
-    universe.initialize();
 
-    loop {
+    app::app_loop(configured_pins.adc_pin, &mut display, seed_buffer);
+    // loop {
 
-        let button_value: u16 = nb::block!(adc1.read(&mut button_ladder_pin)).unwrap();
-        // Based on https://github.com/espressif/esp-bsp/blob/master/esp32_s2_kaluga_kit/include/bsp/esp32_s2_kaluga_kit.h#L299
-        if button_value > 4000 && button_value < 5000 {
-            universe.move_right();
-        } else if button_value >= 5000 && button_value < 6000 {
-            universe.move_left();
-        } else if button_value >= 6000 && button_value < 7000 {
-            universe.move_down();
-        } else if button_value >= 7000 && button_value < 8180 {
-            universe.move_up();
-        }
+    //     let button_value: u16 = nb::block!(adc1.read(&mut button_ladder_pin)).unwrap();
+    //     // Based on https://github.com/espressif/esp-bsp/blob/master/esp32_s2_kaluga_kit/include/bsp/esp32_s2_kaluga_kit.h#L299
+        // if button_value > 4000 && button_value < 5000 {
+        //     universe.move_right();
+        // } else if button_value >= 5000 && button_value < 6000 {
+        //     universe.move_left();
+        // } else if button_value >= 6000 && button_value < 7000 {
+        //     universe.move_down();
+        // } else if button_value >= 7000 && button_value < 8180 {
+        //     universe.move_up();
+        // }
 
-        display.draw_iter(universe.render_frame().into_iter()).unwrap();
-        // delay.delay_ms(300u32);
-    }
+    //     display.draw_iter(universe.render_frame().into_iter()).unwrap();
+    //     // delay.delay_ms(300u32);
+    // }
 }
