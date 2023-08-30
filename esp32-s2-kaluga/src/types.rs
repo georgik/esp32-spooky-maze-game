@@ -1,5 +1,5 @@
-use hal::{gpio::{self, GpioPin, Analog}, adc::{ADC, AdcPin, ADC1}};
-use embedded_hal::digital::v2::{ InputPin, OutputPin };
+use hal::gpio::{self, GpioPin, Analog};
+use embedded_hal::digital::v2::OutputPin;
 
 // Generic type for unconfigured pins
 pub struct UnconfiguredPins<MODE> {
@@ -8,7 +8,7 @@ pub struct UnconfiguredPins<MODE> {
 }
 
 pub struct ConfiguredPins {
-    pub adc_pin: AdcPin<GpioPin<Analog, 6>, ADC1>,
+    pub adc_pin: GpioPin<Analog, 6>,
 }
 
 pub struct ConfiguredSystemPins<Dc: OutputPin, Bckl: OutputPin, Reset: OutputPin> {

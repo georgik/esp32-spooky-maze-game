@@ -1,10 +1,6 @@
 use crate::types::{UnconfiguredPins, ConfiguredPins, ConfiguredSystemPins};
-use embedded_hal::digital::v2::{OutputPin, InputPin};
+use embedded_hal::digital::v2::OutputPin;
 use hal::gpio::{self, Pins};
-use spooky_embedded::{button_keyboard::ButtonKeyboard, embedded_movement_controller::EmbeddedMovementController};
-use spooky_core;
-use embedded_hal::adc::OneShot;
-use hal::adc::{AdcConfig, Attenuation, ADC, ADC1};
 
 pub fn setup_pins(pins: Pins) -> (UnconfiguredPins<gpio::Unknown>, ConfiguredPins, ConfiguredSystemPins<impl OutputPin, impl OutputPin, impl OutputPin>) {
     let unconfigured_pins = UnconfiguredPins {
@@ -12,11 +8,8 @@ pub fn setup_pins(pins: Pins) -> (UnconfiguredPins<gpio::Unknown>, ConfiguredPin
         mosi: pins.gpio9,
     };
 
-    let mut adc1_config = AdcConfig::new();
-    let adc_pin = adc1_config.enable_pin(pins.gpio6.into_analog(), Attenuation::Attenuation11dB);
-
     let configured_pins = ConfiguredPins {
-        adc_pin,
+        adc_pin: pins.gpio6.into_analog(),
     };
 
     let configured_system_pins = ConfiguredSystemPins {
@@ -48,19 +41,3 @@ pub fn setup_pins(pins: Pins) -> (UnconfiguredPins<gpio::Unknown>, ConfiguredPin
 //         configured_pins.teleport_button,
 //     )
 // }
-
-pub fn setup_movement_controller<Up, Down, Left, Right, Dyn, Tel>(
-    seed_buffer: [u8; 32],
-    button_keyboard: ButtonKeyboard<Up, Down, Left, Right, Dyn, Tel>
-) -> EmbeddedMovementController<Up, Down, Left, Right, Dyn, Tel>
-where
-    Up: InputPin,
-    Down: InputPin,
-    Left: InputPin,
-    Right: InputPin,
-    Dyn: InputPin,
-    Tel: InputPin,
-{
-    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
-    EmbeddedMovementController::new(demo_movement_controller, button_keyboard)
-}

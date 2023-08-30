@@ -1,13 +1,12 @@
 #![no_std]
 #![no_main]
-#![feature(default_alloc_error_handler)]
 
 // Main baord: https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/hw-reference/esp32s2/user-guide-esp32-s2-kaluga-1-kit.html
 // Buttons - Lyra extension board: https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/hw-reference/esp32s2/user-guide-esp-lyrat-8311a_v1.3.html
 
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
-    prelude::{Point, DrawTarget, RgbColor},
+    prelude::{Point, RgbColor},
     mono_font::{
         ascii::{FONT_8X13},
         MonoTextStyle,
@@ -21,7 +20,6 @@ use esp_println::println;
 use hal::{
     clock::{ ClockControl, CpuClock },
     // gdma::Gdma,
-    i2c,
     peripherals::Peripherals,
     prelude::*,
     spi,
@@ -44,24 +42,7 @@ use setup::setup_pins;
 
 mod types;
 
-// systimer was introduced in ESP32-S2, it's not available for ESP32
-#[cfg(feature="system_timer")]
-use hal::systimer::{SystemTimer};
-
 use esp_backtrace as _;
-
-use embedded_graphics::{pixelcolor::Rgb565};
-
-use spooky_core::{spritebuf::SpriteBuf, engine::Engine, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite }};
-
-use embedded_hal::digital::v2::OutputPin;
-use embedded_graphics_framebuf::{FrameBuf};
-
-pub struct Universe<D> {
-    pub engine: Engine<D>,
-}
-
-
 
 #[entry]
 fn main() -> ! {
@@ -90,8 +71,7 @@ fn main() -> ! {
     wdt0.disable();
     wdt1.disable();
 
-    let mut delay = Delay::new(&clocks);
-    // self.delay = Some(delay);
+    // let mut delay = Delay::new(&clocks);
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
@@ -99,15 +79,8 @@ fn main() -> ! {
     // Backlight is on GPIO6 in version 1.2, version 1.3 has display always on
     // let mut backlight = io.pins.gpio6.into_push_pull_output();
     // backlight.set_high().unwrap();
+
     let (unconfigured_pins, configured_pins, configured_system_pins) = setup_pins(io.pins);
-
-
-    // let mut adc1_config = AdcConfig::new();
-
-    // let mut resistor_ladder_adc =
-    //     adc1_config.enable_pin(configured_pins.adc, Attenuation::Attenuation11dB);
-
-    // let adc = setup::setup_adc();
 
     let spi = spi::Spi::new_no_cs_no_miso(
         peripherals.SPI2,
@@ -123,12 +96,14 @@ fn main() -> ! {
 
     let mut delay = Delay::new(&clocks);
 
-    let mut display = mipidsi::Builder::ili9341_rgb565(di)
+    let mut display = match mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(320, 240)
         .with_orientation(mipidsi::Orientation::Landscape(true))
         .with_color_order(mipidsi::ColorOrder::Rgb)
-        .init(&mut delay, Some(configured_system_pins.reset))
-        .unwrap();
+        .init(&mut delay, Some(configured_system_pins.reset)) {
+            Ok(disp) => { disp },
+            Err(_) => { panic!() },
+    };
 
     Text::new(
         "Initializing...",
@@ -143,23 +118,12 @@ fn main() -> ! {
     let mut seed_buffer = [0u8;32];
     rng.read(&mut seed_buffer).unwrap();
 
+    let mut adc1_config = AdcConfig::new();
+    let adc_pin = adc1_config.enable_pin(configured_pins.adc_pin, Attenuation::Attenuation11dB);
 
-    app::app_loop(configured_pins.adc_pin, &mut display, seed_buffer);
-    // loop {
+    let analog = peripherals.SENS.split();
+    let adc1 = ADC::<ADC1>::adc(analog.adc1, adc1_config).unwrap();
 
-    //     let button_value: u16 = nb::block!(adc1.read(&mut button_ladder_pin)).unwrap();
-    //     // Based on https://github.com/espressif/esp-bsp/blob/master/esp32_s2_kaluga_kit/include/bsp/esp32_s2_kaluga_kit.h#L299
-        // if button_value > 4000 && button_value < 5000 {
-        //     universe.move_right();
-        // } else if button_value >= 5000 && button_value < 6000 {
-        //     universe.move_left();
-        // } else if button_value >= 6000 && button_value < 7000 {
-        //     universe.move_down();
-        // } else if button_value >= 7000 && button_value < 8180 {
-        //     universe.move_up();
-        // }
-
-    //     display.draw_iter(universe.render_frame().into_iter()).unwrap();
-    //     // delay.delay_ms(300u32);
-    // }
+    app_loop(adc1, adc_pin, &mut display, seed_buffer);
+    loop {}
 }

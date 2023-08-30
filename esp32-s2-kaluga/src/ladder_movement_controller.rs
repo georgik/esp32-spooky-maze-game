@@ -1,28 +1,35 @@
+use hal::prelude::nb;
 use spooky_core::engine::Action;
 use spooky_core::movement_controller::MovementController;
+use hal::adc::{ADC1, AdcPin, ADC};
+use hal::gpio::{GpioPin, Analog};
+use embedded_hal::adc::OneShot;
 
-pub struct LadderMovementController {
+pub struct LadderMovementController<'a> {
     last_action: Action,
-    resistor_value: u32, // Substitute with actual type for the resistor value
+    adc1: ADC<'a, ADC1>,
+    adc_ladder_pin: AdcPin<GpioPin<Analog, 6>, ADC1>,
 }
 
-impl LadderMovementController {
-    pub fn new(resistor_value: u32) -> Self { // Substitute with actual type for the resistor value
+impl<'a> LadderMovementController<'a> {
+    pub fn new(adc1: ADC<'a, ADC1>, adc_ladder_pin: AdcPin<GpioPin<Analog, 6>, ADC1>) -> Self { // Substitute with actual type for the resistor value
         Self {
             last_action: Action::None,
-            resistor_value,
+            adc1,
+            adc_ladder_pin,
         }
     }
 
     fn update_last_action(&mut self) {
-        // Update self.last_action based on the specific resistor values for Kaluga
-        if self.resistor_value > 4000 && self.resistor_value < 5000 {
+        let resistor_value: u16 = nb::block!(self.adc1.read(&mut self.adc_ladder_pin)).unwrap();
+
+        if resistor_value > 4000 && resistor_value < 5000 {
             self.last_action = Action::Right;
-        } else if self.resistor_value >= 5000 && self.resistor_value < 6000 {
+        } else if resistor_value >= 5000 && resistor_value < 6000 {
             self.last_action = Action::Left;
-        } else if self.resistor_value >= 6000 && self.resistor_value < 7000 {
+        } else if resistor_value >= 6000 && resistor_value < 7000 {
             self.last_action = Action::Down;
-        } else if self.resistor_value >= 7000 && self.resistor_value < 8180 {
+        } else if resistor_value >= 7000 && resistor_value < 8180 {
             self.last_action = Action::Up;
         } else {
             self.last_action = Action::None;
@@ -30,7 +37,7 @@ impl LadderMovementController {
     }
 }
 
-impl MovementController for LadderMovementController {
+impl MovementController for LadderMovementController<'_> {
     fn set_active(&mut self, _index: usize) {
         // Implementation for set_active, if required
     }

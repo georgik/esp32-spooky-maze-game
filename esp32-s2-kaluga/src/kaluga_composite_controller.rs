@@ -3,15 +3,15 @@ use spooky_core::movement_controller::MovementController;
 use crate::ladder_movement_controller::LadderMovementController;
 use spooky_core::demo_movement_controller::DemoMovementController;
 
-pub struct KalugaCompositeController {
+pub struct KalugaCompositeController<'a> {
     demo_controller: DemoMovementController,
-    ladder_controller: LadderMovementController,
+    ladder_controller: LadderMovementController<'a>,
     active_index: usize, // 0 for demo_controller, 1 for ladder_controller
     last_action: Action,
 }
 
-impl KalugaCompositeController {
-    pub fn new(demo_controller: DemoMovementController, ladder_controller: LadderMovementController) -> Self {
+impl<'a> KalugaCompositeController<'a> {
+    pub fn new(demo_controller: DemoMovementController, ladder_controller: LadderMovementController<'a>) -> Self {
         Self {
             demo_controller,
             ladder_controller,
@@ -21,7 +21,7 @@ impl KalugaCompositeController {
     }
 }
 
-impl MovementController for KalugaCompositeController {
+impl MovementController for KalugaCompositeController<'_> {
     fn tick(&mut self) {
         self.last_action = Action::None;
 
