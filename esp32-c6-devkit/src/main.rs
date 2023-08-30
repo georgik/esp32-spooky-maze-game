@@ -24,10 +24,19 @@ use hal::{
     spi,
     timer::TimerGroup,
     Delay,
-    // Rng,
+    Rng,
     Rtc,
     IO,
 };
+
+
+mod app;
+use app::app_loop;
+
+mod setup;
+use setup::*;
+
+mod types;
 
 // systimer was introduced in ESP32-S2, it's not available for ESP32
 #[cfg(feature = "system_timer")]
@@ -40,67 +49,6 @@ use embedded_graphics::pixelcolor::Rgb565;
 
 use spooky_core::{engine::Engine, spritebuf::SpriteBuf, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite }};
 
-#[cfg(any(feature = "imu_controls"))]
-use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
-#[cfg(any(feature = "imu_controls"))]
-use shared_bus::BusManagerSimple;
-
-use embedded_graphics_framebuf::FrameBuf;
-use embedded_hal::digital::v2::OutputPin;
-
-pub struct Universe<D> {
-    pub engine: Engine<D>,
-}
-
-impl<D: embedded_graphics::draw_target::DrawTarget<Color = Rgb565>>
-    Universe<D>
-{
-    pub fn new(seed: Option<[u8; 32]>, engine: Engine<D>) -> Universe<D> {
-        Universe {
-            engine,
-        }
-    }
-
-    pub fn initialize(&mut self) {
-        self.engine.initialize();
-        self.engine.start();
-    }
-
-    pub fn render_frame(&mut self) -> &D {
-        #[cfg(any(feature = "imu_controls"))]
-        {
-            let accel_threshold = 0.20;
-            let accel_norm = self.icm.accel_norm().unwrap();
-
-            if accel_norm.y > accel_threshold {
-                self.engine.action(Left);
-            }
-
-            if accel_norm.y < -accel_threshold {
-                self.engine.action(Right);
-            }
-
-            if accel_norm.x > accel_threshold {
-                self.engine.action(Down);
-            }
-
-            if accel_norm.x < -accel_threshold {
-                self.engine.action(Up);
-            }
-
-            // Quickly move up to teleport
-            // Quickly move down to place dynamite
-            if accel_norm.z < -1.2 {
-                self.engine.action(Teleport);
-            } else if accel_norm.z > 1.5 {
-                self.engine.action(PlaceDynamite);
-            }
-        }
-
-        self.engine.tick();
-        self.engine.draw()
-    }
-}
 
 #[entry]
 fn main() -> ! {
@@ -134,33 +82,40 @@ fn main() -> ! {
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-    // let mut backlight = io.pins.gpio0.into_push_pull_output();
+    let (unconfigured_pins, configured_pins, configured_system_pins) = setup_pins(io.pins);
 
-    let spi = spi::Spi::new(
+    let spi = spi::Spi::new_no_cs_no_miso(
         peripherals.SPI2,
-        io.pins.gpio6, // SCLK
-        io.pins.gpio7, // MOSI
-        io.pins.gpio0, // MISO
-        io.pins.gpio20, // CS
+        unconfigured_pins.sclk,
+        unconfigured_pins.mosi,
         60u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
-        &mut clocks,
+        &clocks,
     );
 
-    let reset = io.pins.gpio3.into_push_pull_output();
-
-    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio21.into_push_pull_output());
+    let di = SPIInterfaceNoCS::new(spi, configured_system_pins.dc);
 
     let mut delay = Delay::new(&clocks);
 
-    let mut display = mipidsi::Builder::ili9341_rgb565(di)
-    .with_display_size(240 as u16, 320 as u16)
-    // .with_framebuffer_size(240 as u16, 320 as u16)
-    .with_orientation(mipidsi::Orientation::Landscape(true))
-    .with_color_order(mipidsi::ColorOrder::Rgb)
-    .init(&mut delay, Some(reset))
-    .unwrap();
+//     let mut display = mipidsi::Builder::ili9341_rgb565(di)
+//     .with_display_size(240 as u16, 320 as u16)
+//     // .with_framebuffer_size(240 as u16, 320 as u16)
+//     .with_orientation(mipidsi::Orientation::Landscape(true))
+//     .with_color_order(mipidsi::ColorOrder::Rgb)
+//     .init(&mut delay, Some(configured_system_pins.reset)) {
+//         Ok(disp) => { disp },
+//         Err(_) => { panic!() },
+// };
+
+    let mut display = match mipidsi::Builder::ili9341_rgb565(di)
+        .with_display_size(240 as u16, 320 as u16)
+        .with_orientation(mipidsi::Orientation::Landscape(true))
+        .with_color_order(mipidsi::ColorOrder::Rgb)
+        .init(&mut delay, Some(configured_system_pins.reset)) {
+            Ok(disp) => { disp },
+            Err(_) => { panic!() },
+    };
 
     println!("Initialzed");
 
@@ -172,43 +127,10 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
-    #[cfg(any(feature = "imu_controls"))]
-    println!("Initializing IMU");
-    #[cfg(any(feature = "imu_controls"))]
-    let sda = io.pins.gpio10;
-    #[cfg(any(feature = "imu_controls"))]
-    let scl = io.pins.gpio8;
+    let mut rng = Rng::new(peripherals.RNG);
+    let mut seed_buffer = [1u8; 32];
+    rng.read(&mut seed_buffer).unwrap();
 
-    #[cfg(any(feature = "imu_controls"))]
-    let i2c = i2c::I2C::new(
-        peripherals.I2C0,
-        sda,
-        scl,
-        100u32.kHz(),
-        &mut system.peripheral_clock_control,
-        &clocks,
-    );
-
-    #[cfg(any(feature = "imu_controls"))]
-    let bus = BusManagerSimple::new(i2c);
-    #[cfg(any(feature = "imu_controls"))]
-    let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
-
-    // let mut rng = Rng::new(peripherals.RNG);
-    let mut seed_buffer = [0u8; 32];
-    // rng.read(&mut seed_buffer).unwrap();
-    let mut data = [Rgb565::BLACK; 320 * 240];
-    let fbuf = FrameBuf::new(&mut data, 320, 240);
-    let spritebuf = SpriteBuf::new(fbuf);
-    let engine = Engine::new(spritebuf, Some(seed_buffer));
-
-    let mut universe = Universe::new( Some(seed_buffer), engine);
-    universe.initialize();
-
-    loop {
-        display
-            .draw_iter(universe.render_frame().into_iter())
-            .unwrap();
-        // delay.delay_ms(300u32);
-    }
+    app_loop(configured_pins, &mut display, seed_buffer);
+    loop {}
 }

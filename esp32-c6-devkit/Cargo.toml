@@ -1,6 +1,6 @@
 [package]
 name = "spooky-esp32-c6"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -27,6 +27,7 @@ petgraph = { git = "https://github.com/zendurix/petgraph.git", branch = "better_
 ] }
 shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core", default-features = false, features = [ "static_maze"]}
+spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze" ] }
 heapless = { version = "0.7.14", default-features = false }
 
 [features]

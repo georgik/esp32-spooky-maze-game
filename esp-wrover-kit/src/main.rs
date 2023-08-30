@@ -60,7 +60,7 @@ fn main() -> ! {
     let mut delay = Delay::new(&clocks);
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-    let (unconfigured_pins, configured_pins, configured_system_pins) =  setup_pins(io.pins);
+    let (unconfigured_pins, configured_pins, configured_system_pins) = setup_pins(io.pins);
 
     let spi = spi::Spi::new_no_cs_no_miso(
         peripherals.SPI3,
