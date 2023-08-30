@@ -4,6 +4,7 @@
 
 // https://docs.makerfactory.io/m5stack/core/fire/
 
+use accel_device::Mpu6886Wrapper;
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
@@ -174,10 +175,10 @@ fn main() -> ! {
     #[cfg(any(feature = "mpu6050"))]
     let mut icm = Mpu6050::new(bus.acquire_i2c());
 
-    #[cfg(any(feature = "mpu6886"))]
-    let mut icm = Mpu6886::new(bus.acquire_i2c());
-
-    #[cfg(any(feature = "mpu6050", feature = "mpu6886"))]
+    // #[cfg(any(feature = "mpu6886"))]
+    // let mut icm = Mpu6886::new(bus.acquire_i2c());
+    let icm_inner = Mpu6886::new(bus.acquire_i2c());
+    let mut icm = Mpu6886Wrapper::new(icm_inner);
     let is_imu_enabled = match icm.init(&mut delay) {
         Ok(_) => true,
         Err(_) => false,
