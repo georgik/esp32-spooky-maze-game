@@ -13,7 +13,7 @@ use embedded_graphics::{
     Drawable,
 };
 
-use esp_println::println;
+use log::info;
 
 use hal::{
     clock::{ClockControl, CpuClock},
@@ -27,11 +27,15 @@ use hal::{
     Rng,
     Rtc,
     IO,
+    adc::{AdcConfig, Attenuation, ADC, ADC1},
 };
 
 
 mod app;
 use app::app_loop;
+
+mod devkitc6_composite_controller;
+mod ladder_movement_controller;
 
 mod setup;
 use setup::*;
@@ -80,14 +84,16 @@ fn main() -> ! {
 
     let mut delay = Delay::new(&clocks);
 
-    println!("About to initialize the SPI LED driver");
+    esp_println::logger::init_logger_from_env();
+
+    info!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-    let (unconfigured_pins, configured_pins, configured_system_pins) = setup_pins(io.pins);
+    let (uninitialized_pins, configured_pins, configured_system_pins) = setup_pins(io.pins);
 
     let spi = spi::Spi::new_no_cs_no_miso(
         peripherals.SPI2,
-        unconfigured_pins.sclk,
-        unconfigured_pins.mosi,
+        uninitialized_pins.sclk,
+        uninitialized_pins.mosi,
         60u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
@@ -117,7 +123,7 @@ fn main() -> ! {
             Err(_) => { panic!() },
     };
 
-    println!("Initialzed");
+    info!("Display initialized");
 
     Text::new(
         "Initializing...",
@@ -131,6 +137,14 @@ fn main() -> ! {
     let mut seed_buffer = [1u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
-    app_loop(configured_pins, &mut display, seed_buffer);
+    info!("Initializing the ADC");
+    let mut adc1_config = AdcConfig::new();
+    let adc_pin = adc1_config.enable_pin(configured_pins.adc_pin, Attenuation::Attenuation11dB);
+
+    let analog = peripherals.APB_SARADC.split();
+    let adc1 = ADC::<ADC1>::adc( &mut system.peripheral_clock_control, analog.adc1, adc1_config).unwrap();
+
+    info!("Entering main loop");
+    app_loop(adc1, adc_pin, &mut display, seed_buffer);
     loop {}
 }
