@@ -29,6 +29,13 @@ impl MovementController for KalugaCompositeController<'_> {
             0 => {
                 self.demo_controller.tick();
                 self.last_action = self.demo_controller.get_movement();
+
+                self.ladder_controller.tick();
+                let ladder_action = self.demo_controller.get_movement();
+                if ladder_action != Action::None {
+                    self.set_active(1);
+                    self.last_action = Action::Start;
+                }
             },
             1 => {
                 self.ladder_controller.tick();

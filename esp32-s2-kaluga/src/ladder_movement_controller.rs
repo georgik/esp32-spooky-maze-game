@@ -4,6 +4,7 @@ use spooky_core::movement_controller::MovementController;
 use hal::adc::{ADC1, AdcPin, ADC};
 use hal::gpio::{GpioPin, Analog};
 use embedded_hal::adc::OneShot;
+use log::debug;
 
 pub struct LadderMovementController<'a> {
     last_action: Action,
@@ -23,6 +24,7 @@ impl<'a> LadderMovementController<'a> {
     fn update_last_action(&mut self) {
         let resistor_value: u16 = nb::block!(self.adc1.read(&mut self.adc_ladder_pin)).unwrap();
 
+        debug!("Resistor value: {}", resistor_value);
         if resistor_value > 4000 && resistor_value < 5000 {
             self.last_action = Action::Right;
         } else if resistor_value >= 5000 && resistor_value < 6000 {

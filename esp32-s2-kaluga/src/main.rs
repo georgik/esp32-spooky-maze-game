@@ -15,8 +15,6 @@ use embedded_graphics::{
     Drawable,
 };
 
-use esp_println::println;
-
 use hal::{
     clock::{ ClockControl, CpuClock },
     // gdma::Gdma,
@@ -72,7 +70,7 @@ fn main() -> ! {
     wdt0.disable();
     wdt1.disable();
 
-    // let mut delay = Delay::new(&clocks);
+    esp_println::logger::init_logger_from_env();
 
     info!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
@@ -111,7 +109,7 @@ fn main() -> ! {
     let mut delay = Delay::new(&clocks);
     delay.delay_ms(500u32);
 
-    println!("Initializing display");
+    info!("Initializing display");
     let mut display = match mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(320, 240)
         .with_orientation(mipidsi::Orientation::Landscape(true))
@@ -121,7 +119,7 @@ fn main() -> ! {
             Err(_) => { panic!() },
     };
 
-    println!("Display initialized");
+    info!("Display initialized");
 
     Text::new(
         "Initializing...",
@@ -136,14 +134,14 @@ fn main() -> ! {
     let mut seed_buffer = [0u8;32];
     rng.read(&mut seed_buffer).unwrap();
 
-    println!("Initializing the ADC");
+    info!("Initializing the ADC");
     let mut adc1_config = AdcConfig::new();
     let adc_pin = adc1_config.enable_pin(configured_pins.adc_pin, Attenuation::Attenuation11dB);
 
     let analog = peripherals.SENS.split();
     let adc1 = ADC::<ADC1>::adc(analog.adc1, adc1_config).unwrap();
 
-    println!("Entering main loop");
+    info!("Entering main loop");
     app_loop(adc1, adc_pin, &mut display, seed_buffer);
     loop {}
 }
