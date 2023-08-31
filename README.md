@@ -5,6 +5,8 @@ The ghost can find artifact "Walker" which allows him to pass throght the wall f
 The ghost can use dynamite to clear wall in the vicinity. The ghost can use also Teleport spell to move to random place in the maze.
 The Teleport spell requires some time to recharge. There are some not friendly spirits running around the maze, when collision occurs the ghost is teleported and loses five coins which are then send randomly back to the maze.
 
+![Spooky on ESP32-S3-BOX](assets/screenshot/esp32-spooky-s3-box.jpg)
+
 ### Creating similar custom ESP32 app from a template
 
 If you'd like to build similar app with multiple targets follow `cargo generate` instructions - https://github.com/georgik/esp32-rust-multi-target-template#generate-new-project .
@@ -60,9 +62,23 @@ Open in web browser: https://localhost:8443.
 
 Note: https is required for access to accelerometer data - https://w3c.github.io/deviceorientation/#security-and-privacy . It's possible to run the app without accelerometer on http.
 
+## Implemented technologies
+
+Each directory contains implementation specific for the HW.
+
+Overview:
+
+- esp-wrover-kit - esp32 - 6 push-button controlls, each connected to separate PIN
+- esp32-c3-devkit-rust - esp32-c3 - icm42670 accelerometer
+- esp32-c6-devkit - esp32-c6 - resistor ladder with push buttons
+- esp32-s2-kaluga - esp32-s2 - resistor ladder with push buttons
+- esp32-s3-box - esp32-s3 - icm42670 accelerometer
+- esp32-s3-usb-otg - esp32-s3 - 5 push-buttons on the board
+- m5stack-core2 - esp32 - mpu6886 accelerometer
+- m5stack-fire - esp32 - mpu9250 accelerometer
+
 ### Build for ESP32-S3-BOX with ILI9486
 
-![Spooky on ESP32-S3-BOX](assets/screenshot/esp32-spooky-s3-box.jpg)
 
 Control: IMU
 - tilt the board to move the character
@@ -222,21 +238,13 @@ cargo espflash flash --release --monitor
 
 HW: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/hw-reference/esp32/get-started-wrover-kit.html
 
-Control: limited, only one button available
+Control: 6 push buttons
 - it's not possible to move the character
 - press button Boot to teleport
 
 ```
 cd esp-wrover-kit
 cargo run --release --monitor
-```
-
-### Build for ESP32-S2 with ILI9341
-
-See tag v0.1.0.
-
-```
-cargo run --release --target xtensa-esp32s2-none-elf --features esp32s2_ili9341 --monitor
 ```
 
 ## Development
