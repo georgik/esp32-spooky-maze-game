@@ -13,7 +13,7 @@ pub fn app_loop<DISP>(
 where
     DISP: DrawTarget<Color = Rgb565>,
 {
-    let accel_movement_controller = AccelMovementController::new(icm, 0.2);
+    let accel_movement_controller = AccelMovementController::new(icm, 0.3);
 
     let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
     let movement_controller = M5StackCompositeController::new(demo_movement_controller, accel_movement_controller);

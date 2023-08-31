@@ -26,13 +26,13 @@ where
 
     // This function is no longer in the impl block for MovementController
     fn update_last_action(&mut self, accel_norm: AccelNorm) {
-        if accel_norm.y > self.accel_threshold {
+        if accel_norm.x > self.accel_threshold {
             self.last_action = Action::Left;
-        } else if accel_norm.y < -self.accel_threshold {
-            self.last_action = Action::Right;
-        } else if accel_norm.x > self.accel_threshold {
-            self.last_action = Action::Down;
         } else if accel_norm.x < -self.accel_threshold {
+            self.last_action = Action::Right;
+        } else if accel_norm.y > self.accel_threshold {
+            self.last_action = Action::Down;
+        } else if accel_norm.y < -self.accel_threshold {
             self.last_action = Action::Up;
         } else {
             self.last_action = Action::None;

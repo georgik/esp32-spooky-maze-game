@@ -1,14 +1,13 @@
 #![no_std]
 #![no_main]
-#![feature(default_alloc_error_handler)]
-
-// https://docs.makerfactory.io/m5stack/core/fire/
+`
+// https://shop.m5stack.com/products/m5stack-core2-esp32-iot-development-kit
 
 use accel_device::Mpu6886Wrapper;
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
-    prelude::{DrawTarget, Point, RgbColor},
+    prelude::{Point, RgbColor},
     text::Text,
     Drawable,
 };
@@ -36,12 +35,11 @@ use mpu6886::Mpu6886;
 
 use embedded_graphics::pixelcolor::Rgb565;
 
-use spooky_core::{engine::Engine, spritebuf::SpriteBuf, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite }};
+use spooky_core::engine::Engine;
 
 #[cfg(any(feature = "i2c"))]
 use shared_bus::BusManagerSimple;
 
-use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
 
 mod app;
@@ -159,15 +157,10 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
-    // let button_a = io.pins.gpio39.into_pull_up_input();
     #[cfg(feature = "wokwi")]
     let button_b = io.pins.gpio34.into_pull_up_input();
     #[cfg(feature = "wokwi")]
     let button_c = io.pins.gpio35.into_pull_up_input();
-    // #[cfg(feature = "m5stack_core2")]
-    // let button_b = io.pins.gpio38.into_pull_up_input();
-    // #[cfg(feature = "m5stack_core2")]
-    // let button_c = io.pins.gpio37.into_pull_up_input();
 
     #[cfg(any(feature = "mpu9250"))]
     let mut icm = Mpu9250::imu_default(bus.acquire_i2c(), &mut delay).unwrap();
@@ -175,25 +168,19 @@ fn main() -> ! {
     #[cfg(any(feature = "mpu6050"))]
     let mut icm = Mpu6050::new(bus.acquire_i2c());
 
-    // #[cfg(any(feature = "mpu6886"))]
-    // let mut icm = Mpu6886::new(bus.acquire_i2c());
     let icm_inner = Mpu6886::new(bus.acquire_i2c());
     let mut icm = Mpu6886Wrapper::new(icm_inner);
-    let is_imu_enabled = match icm.init(&mut delay) {
-        Ok(_) => true,
-        Err(_) => false,
-    };
+    // let is_imu_enabled = match icm.init(&mut delay) {
+    //     Ok(_) => true,
+    //     Err(_) => false,
+    // };
 
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
     let mut data = [Rgb565::BLACK; 320 * 240];
-    // let fbuf = FrameBuf::new(&mut data, 320, 240);
-    // let spritebuf = SpriteBuf::new(fbuf);
-    // let engine = Engine::new(spritebuf, Some(seed_buffer));
-    // let mut universe = Universe::new(Some(seed_buffer), engine);
-    // universe.initialize();
+
     app_loop( &mut display, seed_buffer, icm);
     loop {}
 
