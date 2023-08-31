@@ -8,7 +8,7 @@ use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
     prelude::{Point, RgbColor},
     mono_font::{
-        ascii::{FONT_8X13},
+        ascii::FONT_8X13,
         MonoTextStyle,
     },
     text::Text,
@@ -30,6 +30,7 @@ use hal::{
     Delay,
     adc::{AdcConfig, Attenuation, ADC, ADC1},
 };
+use log::info;
 
 mod app;
 use app::app_loop;
@@ -73,29 +74,44 @@ fn main() -> ! {
 
     // let mut delay = Delay::new(&clocks);
 
-    println!("About to initialize the SPI LED driver");
+    info!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
     // Backlight is on GPIO6 in version 1.2, version 1.3 has display always on
     // let mut backlight = io.pins.gpio6.into_push_pull_output();
     // backlight.set_high().unwrap();
 
-    let (unconfigured_pins, configured_pins, configured_system_pins) = setup_pins(io.pins);
+    let (uninitialized_pins, configured_pins, configured_system_pins) = setup_pins(io.pins);
 
-    let spi = spi::Spi::new_no_cs_no_miso(
+    // This does not work on Kaluga. One need to use the CS pin, since there are more than one device on the SPI bus.
+    // let spi = spi::Spi::new_no_cs_no_miso(
+    //     peripherals.SPI2,
+    //     uninitialized_pins.sclk,
+    //     uninitialized_pins.mosi,
+    //     60u32.MHz(),
+    //     spi::SpiMode::Mode0,
+    //     &mut system.peripheral_clock_control,
+    //     &clocks,
+    // );
+
+
+    let spi = spi::Spi::new(
         peripherals.SPI2,
-        unconfigured_pins.sclk,
-        unconfigured_pins.mosi,
+        uninitialized_pins.sclk,
+        uninitialized_pins.mosi,
+        uninitialized_pins.miso,
+        uninitialized_pins.cs,
         60u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
-        &clocks,
-    );
+        &clocks);
 
     let di = SPIInterfaceNoCS::new(spi, configured_system_pins.dc);
 
     let mut delay = Delay::new(&clocks);
+    delay.delay_ms(500u32);
 
+    println!("Initializing display");
     let mut display = match mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(320, 240)
         .with_orientation(mipidsi::Orientation::Landscape(true))
@@ -104,6 +120,8 @@ fn main() -> ! {
             Ok(disp) => { disp },
             Err(_) => { panic!() },
     };
+
+    println!("Display initialized");
 
     Text::new(
         "Initializing...",
@@ -118,12 +136,14 @@ fn main() -> ! {
     let mut seed_buffer = [0u8;32];
     rng.read(&mut seed_buffer).unwrap();
 
+    println!("Initializing the ADC");
     let mut adc1_config = AdcConfig::new();
     let adc_pin = adc1_config.enable_pin(configured_pins.adc_pin, Attenuation::Attenuation11dB);
 
     let analog = peripherals.SENS.split();
     let adc1 = ADC::<ADC1>::adc(analog.adc1, adc1_config).unwrap();
 
+    println!("Entering main loop");
     app_loop(adc1, adc_pin, &mut display, seed_buffer);
     loop {}
 }
