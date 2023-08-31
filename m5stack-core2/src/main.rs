@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-`
+
 // https://shop.m5stack.com/products/m5stack-core2-esp32-iot-development-kit
 
 use accel_device::Mpu6886Wrapper;
@@ -32,8 +32,6 @@ use mpu6050::Mpu6050;
 
 #[cfg(feature = "mpu6886")]
 use mpu6886::Mpu6886;
-
-use embedded_graphics::pixelcolor::Rgb565;
 
 use spooky_core::engine::Engine;
 
@@ -169,7 +167,7 @@ fn main() -> ! {
     let mut icm = Mpu6050::new(bus.acquire_i2c());
 
     let icm_inner = Mpu6886::new(bus.acquire_i2c());
-    let mut icm = Mpu6886Wrapper::new(icm_inner);
+    let icm = Mpu6886Wrapper::new(icm_inner);
     // let is_imu_enabled = match icm.init(&mut delay) {
     //     Ok(_) => true,
     //     Err(_) => false,
@@ -179,7 +177,6 @@ fn main() -> ! {
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
-    let mut data = [Rgb565::BLACK; 320 * 240];
 
     app_loop( &mut display, seed_buffer, icm);
     loop {}

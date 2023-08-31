@@ -49,11 +49,4 @@ where
     pub fn new(inner: Mpu6886<I>) -> Self {
         Self(inner)
     }
-
-    pub fn init<D>(&mut self, delay: &mut D) -> Result<(), Mpu6886Error<E>>
-    where
-        D: embedded_hal::blocking::delay::DelayMs<u8>,
-    {
-        self.0.init(delay)
-    }
 }
