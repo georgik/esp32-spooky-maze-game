@@ -1,0 +1,13 @@
+[package]
+name = "spooky-embedded"
+version = "0.5.0"
+edition = "2021"
+
+[dependencies]
+embedded-hal = { version = "0.2", features = ["unproven"] }
+spooky-core = { path = "../spooky-core", default-features = false}
+
+[features]
+default = [ "dynamic_maze" ]
+dynamic_maze = ["spooky-core/dynamic_maze"]
+static_maze = ["spooky-core/static_maze"]

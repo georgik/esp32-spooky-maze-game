@@ -7,6 +7,10 @@ rustflags = [
   "-C", "force-frame-pointers",
 ]
 
+[env]
+# Use clean build after changing ESP_LOGLEVEL
+ESP_LOGLEVEL="DEBUG"
+
 [build]
 target = "riscv32imac-unknown-none-elf"
 

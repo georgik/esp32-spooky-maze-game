@@ -3,7 +3,7 @@
 use embedded_graphics::{
     prelude::{Point, RgbColor},
     mono_font::{
-        ascii::{FONT_8X13},
+        ascii::FONT_8X13,
         MonoTextStyle,
     },
     text::Text,
@@ -21,8 +21,10 @@ pub enum GameState {
     Playing,
     GameOver,
     Outro,
+    Demo,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Action {
     None,
     Up,
@@ -31,6 +33,8 @@ pub enum Action {
     Right,
     Teleport,
     PlaceDynamite,
+    Start,
+    Stop,
 }
 
 pub struct Engine<D> {
@@ -71,7 +75,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
             teleport_counter: 100,
             walker_counter: 0,
             dynamite_counter: 1,
-            game_state: GameState::Start,
+            game_state: GameState::Playing,
             outro_counter: 0,
         }
     }
@@ -147,6 +151,19 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
 
     pub fn action(&mut self, action: Action) {
         match self.game_state {
+            GameState::Demo => {
+                match action {
+                    Action::None => {}
+                    Action::Up => self.move_up(),
+                    Action::Down => self.move_down(),
+                    Action::Left => self.move_left(),
+                    Action::Right => self.move_right(),
+                    Action::Teleport => self.teleport(),
+                    Action::PlaceDynamite => self.place_dynamite(),
+                    Action::Start => self.switch_game_state(GameState::Playing),
+                    _ => {}
+                }
+            },
             GameState::Playing => {
                 match action {
                     Action::None => {}
@@ -156,6 +173,8 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
                     Action::Right => self.move_right(),
                     Action::Teleport => self.teleport(),
                     Action::PlaceDynamite => self.place_dynamite(),
+                    Action::Stop => self.switch_game_state(GameState::Demo),
+                    _ => {}
                 }
             },
             GameState::Outro => {
@@ -237,21 +256,21 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
 
                 if x < 0 || y < 0 || x > (self.maze.width-1) as i32 || y > (self.maze.height-1) as i32 {
                     let tile = Image::new(empty, position);
-                    tile.draw(&mut self.display);
+                    let _ = tile.draw(&mut self.display);
                 } else {
                     let tile_index = self.maze.data[(x+y*(self.maze.width as i32)) as usize];
                     match tile_index {
                         0 => {
                             let tile = Image::new(ground, position);
-                            tile.draw(&mut self.display);
+                            let _ = tile.draw(&mut self.display);
                         },
                         1 => {
                             let tile = Image::new(wall, position);
-                            tile.draw(&mut self.display);
+                            let _ = tile.draw(&mut self.display);
                         },
                         _ => {
                             let tile = Image::new(scorched, position);
-                            tile.draw(&mut self.display);
+                            let _ = tile.draw(&mut self.display);
                         }
                     }
                 }
@@ -262,7 +281,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
 
     pub fn tick(&mut self) {
         match self.game_state {
-            GameState::Playing => {
+            GameState::Playing | GameState::Demo => {
 
                 self.animation_step += 1;
                 if self.animation_step > 1 {
@@ -305,12 +324,16 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         self.maze.generate_walkers();
         self.maze.generate_dynamites();
         self.draw_maze(self.camera_x,self.camera_y);
-        self.game_state = GameState::Playing;
+        self.game_state = GameState::Demo;
+    }
+
+    pub fn switch_game_state(&mut self, new_state: GameState) {
+        self.game_state = new_state;
     }
 
     fn draw_status_number(&mut self, value: u32, x: i32, y: i32) {
         let value_message: String<5> = String::from(value);
-        Text::new(&value_message, Point::new(x, y), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
+        let _ = Text::new(&value_message, Point::new(x, y), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
             .draw(&mut self.display);
     }
 
@@ -333,7 +356,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
                     if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
                         let position = Point::new(draw_x, draw_y);
                         let tile = Image::new(&coin_bmp, position);
-                        tile.draw(&mut self.display);
+                        let _ = tile.draw(&mut self.display);
                     }
                 }
 
@@ -349,7 +372,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
                     if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
                         let position = Point::new(draw_x, draw_y);
                         let tile = Image::new(&npc_bmp, position);
-                        tile.draw(&mut self.display);
+                        let _ = tile.draw(&mut self.display);
                     }
                 }
 
@@ -365,7 +388,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
                     if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
                         let position = Point::new(draw_x, draw_y);
                         let tile = Image::new(&walker_bmp, position);
-                        tile.draw(&mut self.display);
+                        let _ = tile.draw(&mut self.display);
                     }
                 }
 
@@ -381,7 +404,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
                     if draw_x >= 0 && draw_y >= 0 && draw_x < (self.maze.visible_width*16).try_into().unwrap() && draw_y < (self.maze.visible_height*16).try_into().unwrap() {
                         let position = Point::new(draw_x, draw_y);
                         let tile = Image::new(&dynamite_bmp, position);
-                        tile.draw(&mut self.display);
+                        let _ = tile.draw(&mut self.display);
                     }
                 }
 
@@ -389,12 +412,12 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
                     0 => {
                         let bmp:Bmp<Rgb565> = assets.ghost1.unwrap();
                         let ghost1 = Image::new(&bmp, Point::new(self.ghost_x.try_into().unwrap(), self.ghost_y.try_into().unwrap()));
-                        ghost1.draw(&mut self.display);
+                        let _ = ghost1.draw(&mut self.display);
                     },
                     _ => {
                         let bmp:Bmp<Rgb565> = assets.ghost2.unwrap();
                         let ghost2 = Image::new(&bmp, Point::new(self.ghost_x.try_into().unwrap(), self.ghost_y.try_into().unwrap()));
-                        ghost2.draw(&mut self.display);
+                        let _ = ghost2.draw(&mut self.display);
                     },
 
                 }
@@ -402,22 +425,22 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
                 // Status bar - coins, teleport, walk time, dynamite
                 let position = Point::new(5, 6);
                 let tile = Image::new(&coin_bmp, position);
-                tile.draw(&mut self.display);
+                let _ = tile.draw(&mut self.display);
 
                 let teleport_bmp:Bmp<Rgb565> = assets.teleport.unwrap();
                 let position = Point::new(5, 28);
                 let tile = Image::new(&teleport_bmp, position);
-                tile.draw(&mut self.display);
+                let _ = tile.draw(&mut self.display);
 
                 let walker_bmp:Bmp<Rgb565> = assets.walker.unwrap();
                 let position = Point::new(5, 50);
                 let tile = Image::new(&walker_bmp, position);
-                tile.draw(&mut self.display);
+                let _ = tile.draw(&mut self.display);
 
                 let dynamite_bmp:Bmp<Rgb565> = assets.dynamite.unwrap();
                 let position = Point::new(5, 72);
                 let tile = Image::new(&dynamite_bmp, position);
-                tile.draw(&mut self.display);
+                let _ = tile.draw(&mut self.display);
 
 
                 // display.flush().unwrap();
@@ -435,17 +458,27 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine <D> {
         &mut self.display
     }
 
+    pub fn draw_demo_text(&mut self) -> &mut D {
+        let _ = Text::new("Demo. Press any key...", Point::new(80, 150), MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE))
+            .draw(&mut self.display);
+        &mut self.display
+    }
+
     pub fn draw_outro_scene(&mut self) -> &mut D {
         let assets = self.assets.as_ref().unwrap();
         let bmp:Bmp<Rgb565> = assets.smiley.unwrap();
         let (x,y) = (self.maze.get_rand() + self.maze.get_rand() % 70, self.maze.get_rand() % 240);
         let outro = Image::new(&bmp, Point::new(x, y));
-        outro.draw(&mut self.display);
+        let _ = outro.draw(&mut self.display);
         &mut self.display
     }
 
     pub fn draw(&mut self) -> &mut D {
         match self.game_state {
+            GameState::Demo => {
+                self.draw_main_scene();
+                self.draw_demo_text()
+            },
             GameState::Playing => {
                 self.draw_main_scene()
             },

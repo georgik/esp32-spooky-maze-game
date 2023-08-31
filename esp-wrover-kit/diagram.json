@@ -1,36 +1,90 @@
 {
-    "version": 1,
-    "author": "Juraj Michálek",
-    "editor": "wokwi",
-    "parts": [
-      {
-        "type": "wokwi-esp32-devkit-v1",
-        "id": "esp",
-        "top": -494.32,
-        "left": -455.03,
-        "attrs": { "builder": "rust-std-esp32" }
-      },
-      {
-        "type": "wokwi-ili9341",
-        "id": "lcd1",
-        "top": -546.22,
-        "left": -134.92,
-        "rotate": 90,
-        "attrs": {}
-      }
-    ],
-    "connections": [
-      [ "esp:TX0", "$serialMonitor:RX", "", [] ],
-      [ "esp:RX0", "$serialMonitor:TX", "", [] ],
-      [ "esp:3V3", "lcd1:VCC", "green", [] ],
-      [ "esp:GND.1", "lcd1:GND", "black", [] ],
-      [ "esp:D19", "lcd1:SCK", "blue", [] ],
-      [ "esp:D23", "lcd1:MOSI", "orange", [] ],
-      [ "esp:D22", "lcd1:CS", "red", [] ],
-      [ "esp:D21", "lcd1:D/C", "magenta", [] ],
-      [ "esp:D18", "lcd1:RST", "yellow", [] ],
-      [ "lcd1:LED", "esp:3V3", "white", [] ]
-    ],
-    "serialMonitor": { "display": "terminal" },
-    "dependencies": {}
-  }
+  "version": 1,
+  "author": "Juraj Michalek",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-esp32-devkit-v1",
+      "id": "esp",
+      "top": -67.14,
+      "left": -202.99,
+      "attrs": { "builder": "rust-std-esp32" }
+    },
+    {
+      "type": "wokwi-ili9341",
+      "id": "lcd1",
+      "top": -183.14,
+      "left": 8.21,
+      "rotate": 90,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnUp",
+      "top": 192.14,
+      "left": -190.88,
+      "attrs": { "color": "green" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnDown",
+      "top": 272.14,
+      "left": -190.88,
+      "attrs": { "color": "blue" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnLeft",
+      "top": 232.14,
+      "left": -230.88,
+      "attrs": { "color": "red" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnRight",
+      "top": 232.14,
+      "left": -150.88,
+      "attrs": { "color": "yellow" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnDynamite",
+      "top": 232.14,
+      "left": -110.88,
+      "attrs": { "color": "orange" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnTeleport",
+      "top": 232.14,
+      "left": -70.88,
+      "attrs": { "color": "purple" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+    [ "esp:3V3", "lcd1:VCC", "green", [] ],
+    [ "esp:GND.1", "lcd1:GND", "black", [] ],
+    [ "esp:D19", "lcd1:SCK", "blue", [] ],
+    [ "esp:D23", "lcd1:MOSI", "orange", [] ],
+    [ "esp:D22", "lcd1:CS", "red", [] ],
+    [ "esp:D21", "lcd1:D/C", "magenta", [] ],
+    [ "esp:D18", "lcd1:RST", "yellow", [] ],
+    [ "lcd1:LED", "esp:3V3", "white", [] ],
+    [ "esp:D14", "btnUp:2.r", "green", [ "h0" ] ],
+    [ "btnUp:1.r", "esp:GND.2", "green", [ "v0" ] ],
+    [ "esp:D12", "btnDown:2.r", "blue", [ "h1" ] ],
+    [ "btnDown:1.r", "esp:GND.2", "blue", [ "v1" ] ],
+    [ "esp:D13", "btnLeft:2.r", "red", [ "h2" ] ],
+    [ "btnLeft:1.r", "esp:GND.2", "red", [ "v2" ] ],
+    [ "esp:D15", "btnRight:2.r", "yellow", [ "h3" ] ],
+    [ "btnRight:1.r", "esp:GND.2", "yellow", [ "v3" ] ],
+    [ "esp:D26", "btnDynamite:2.r", "orange", [ "h4" ] ],
+    [ "btnDynamite:1.r", "esp:GND.2", "orange", [ "v4" ] ],
+    [ "esp:D27", "btnTeleport:2.r", "purple", [ "h5" ] ],
+    [ "btnTeleport:1.r", "esp:GND.2", "purple", [ "v5" ] ]
+  ],
+  "serialMonitor": { "display": "terminal", "convertEol": true },
+  "dependencies": {}
+}

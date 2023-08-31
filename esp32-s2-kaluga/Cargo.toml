@@ -1,6 +1,6 @@
 [package]
 name = "spooky-s2-kaluga"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -13,8 +13,7 @@ esp-backtrace = { version = "0.7.0", features = [
     "panic-handler",
     "print-uart",
 ] }
-xtensa-lx-rt = { version = "0.15.0", features = ["esp32s2"], optional = true }
-esp-println = { version = "0.5.0", features = ["esp32s2"] }
+esp-println = { version = "0.5.0", features = ["esp32s2", "log"] }
 
 [dependencies]
 esp-alloc = "0.3.0"
@@ -23,6 +22,7 @@ embedded-graphics-framebuf = { version = "0.3.0", git = "https://github.com/geor
 embedded-hal = "0.2"
 display-interface = "0.4"
 display-interface-spi = "0.4"
+log = { version = "0.4.18" }
 mipidsi = "0.7.1"
 panic-halt = "0.2"
 rand = { version = "0.8.5", default-features = false }
@@ -31,11 +31,12 @@ shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core", default-features = false, features = [
     "static_maze",
 ] }
+spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze" ] }
 heapless = { version = "0.7.14", default-features = false }
 
 [features]
 default = ["rt", "esp32s2_kaluga" ]
-rt = ["xtensa-lx-rt"]
+rt = []
 
 system_timer = []
 
@@ -49,4 +50,4 @@ esp32s2 = ["system_timer"]
 esp32s3 = []
 esp32c3 = ["system_timer"]
 
-esp32s2_kaluga = ["xtensa-lx-rt", "esp32s2" ]
+esp32s2_kaluga = [ "esp32s2" ]

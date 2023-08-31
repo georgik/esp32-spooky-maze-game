@@ -1,23 +1,22 @@
-
-// #![no_std]
-// #![no_main]
-
 use embedded_graphics::{
     pixelcolor::Rgb565,
-    prelude::*,
+    prelude::*, mono_font::{MonoTextStyle, ascii::FONT_8X13}, text::Text,
 };
 use embedded_graphics_simulator::{
-    sdl2::Keycode, SimulatorDisplay, SimulatorEvent, Window, OutputSettingsBuilder,
+    SimulatorDisplay, SimulatorEvent, Window, OutputSettingsBuilder,
 };
-use embedded_graphics_framebuf::{FrameBuf};
+use embedded_graphics_framebuf::FrameBuf;
+use spooky_core::{spritebuf::SpriteBuf, engine::Engine, universe::Universe};
+use std::time::{Duration, Instant};
 
-use std::time::Duration;
+mod desktop_movement_controller;
+use desktop_movement_controller::DesktopMovementControllerBuilder;
 
-use spooky_core::{ spritebuf::SpriteBuf, engine::Engine, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite } };
+mod keyboard_movement_controller;
+use keyboard_movement_controller::KeyboardMovementController;
 
-pub struct Universe<D> {
-    engine: Engine<D>,
-}
+use spooky_core::demo_movement_controller::DemoMovementController;
+use spooky_core::movement_controller::MovementController;
 
 fn get_seed_buffer() -> Option<[u8; 32]> {
     let mut seed_buffer = [0u8; 32];
@@ -25,99 +24,65 @@ fn get_seed_buffer() -> Option<[u8; 32]> {
     Some(seed_buffer)
 }
 
-impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D> {
-
-    pub fn new(engine:Engine<D>) -> Universe<D> {
-        Universe {
-            engine
-        }
-    }
-
-    pub fn move_up(&mut self) {
-        self.engine.action(Up);
-    }
-
-    pub fn move_down(&mut self) {
-        self.engine.action(Down);
-    }
-
-    pub fn move_left(&mut self) {
-        self.engine.action(Left);
-    }
-
-    pub fn move_right(&mut self) {
-        self.engine.action(Right);
-    }
-
-    pub fn teleport(&mut self) {
-        self.engine.action(Teleport);
-    }
-
-    pub fn initialize(&mut self) {
-        self.engine.initialize();
-        self.engine.start();
-    }
-
-    pub fn place_dynamite(&mut self) {
-        self.engine.action(PlaceDynamite);
-    }
-
-    pub fn render_frame(&mut self) -> &D {
-        self.engine.tick();
-        self.engine.draw()
-    }
-}
-
-
-
 fn main() -> Result<(), core::convert::Infallible> {
     let output_settings = OutputSettingsBuilder::new().scale(2).build();
     let mut window = Window::new("ESP32 Spooky Maze", &output_settings);
 
-    let mut data = [Rgb565::BLACK ; 320*240];
+    let mut data = [Rgb565::BLACK; 320 * 240];
     let fbuf = FrameBuf::new(&mut data, 320, 240);
     let spritebuf = SpriteBuf::new(fbuf);
 
+    let mut last_user_activity = Instant::now();
+    let user_inactivity_timeout = Duration::from_secs(60); // Switch to demo mode after 1 minute of inactivity
+
     let engine = Engine::new(spritebuf, get_seed_buffer());
 
-    let mut universe = Universe::new(engine);
+    let demo_movement_controller = DemoMovementController::new(get_seed_buffer().unwrap());
+    let keyboard_movement_controller = KeyboardMovementController::new();
+    let desktop_movement_controller = DesktopMovementControllerBuilder::new(demo_movement_controller, keyboard_movement_controller);
+
+    let mut universe = Universe::new_with_movement_controller(engine, desktop_movement_controller);
     universe.initialize();
+
     let mut display = SimulatorDisplay::new(Size::new(320, 200));
-
-
     display.draw_iter(universe.render_frame().into_iter()).unwrap();
     window.update(&display);
 
-    // window.update(universe.render_frame());
+    let mut is_demo = true;
     'running: loop {
-        // window.update(&display);
-
         for event in window.events() {
             match event {
                 SimulatorEvent::Quit => break 'running,
                 SimulatorEvent::KeyDown { keycode, .. } => {
-                    match keycode {
-                        Keycode::Left | Keycode::A => universe.move_left(),
-                        Keycode::Right | Keycode::D => universe.move_right(),
-                        Keycode::Up | Keycode::W => universe.move_up(),
-                        Keycode::Down | Keycode::S => universe.move_down(),
-                        Keycode::Return => universe.teleport(),
-                        Keycode::Space => universe.place_dynamite(),
-                        _ => {},
-                    };
-                }
-                // SimulatorEvent::MouseButtonUp { point, .. } => {
-                //     move_circle(&mut display, position, point)?;
-                //     position = point;
-                // }
+                    last_user_activity = Instant::now(); // Record the time of the last user activity
+
+                    let main_controller = universe.get_movement_controller_mut();
+                    main_controller.handle_key(keycode);
+
+                    if is_demo {
+                        main_controller.set_active(1);
+                        is_demo = false;
+                    }
+                },
+                SimulatorEvent::KeyUp { keycode, keymod, repeat } => {
+                    let main_controller = universe.get_movement_controller_mut();
+                    main_controller.stop_movement();
+                 },
                 _ => {}
             }
         }
+
+        // Check for user inactivity and switch back to demo mode if necessary
+        if last_user_activity.elapsed() > user_inactivity_timeout {
+            universe.set_active(0);
+            is_demo = true;
+        }
+
         display.draw_iter(universe.render_frame().into_iter()).unwrap();
+
         window.update(&display);
         std::thread::sleep(Duration::from_millis(50));
     }
 
     Ok(())
 }
-

@@ -1,22 +1,23 @@
 [package]
 name = "spooky-wrover-kit"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
 
 [target.xtensa-esp32-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.4.0"
-hal = { package = "esp32-hal", version = "0.14.0" }
+# hal = { package = "esp32-hal", version = "0.14.0", features = ["psram_8m"] }
+hal = { package = "esp32-hal", git = "https://github.com/esp-rs/esp-hal.git", features = ["psram_8m"], rev = "91b9b51426302e86c967a130611c7338ae3ad049"}
 esp-backtrace = { version = "0.7.0", features = [
     "esp32",
     "panic-handler",
     "print-uart",
 ] }
-xtensa-lx-rt = { version = "0.15.0", features = ["esp32"], optional = true }
 esp-println = { version = "0.5.0", features = ["esp32"] }
 
 [dependencies]
+esp-alloc = "0.3.0"
 embedded-graphics = "0.8.0"
 embedded-graphics-framebuf = { version = "0.3.0", git = "https://github.com/georgik/embedded-graphics-framebuf.git", branch = "feature/embedded-graphics-0.8" }
 embedded-hal = "0.2"
@@ -25,9 +26,8 @@ display-interface-spi = "0.4"
 mipidsi = "0.7.1"
 panic-halt = "0.2"
 shared-bus = { version = "0.3.0" }
-spooky-core = { path = "../spooky-core", default-features = false, features = [
-    "static_maze",
-] }
+spooky-core = { path = "../spooky-core", default-features = false, features = [ "static_maze" ] }
+spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze" ] }
 heapless = { version = "0.7.14", default-features = false }
 
 [features]
@@ -44,4 +44,4 @@ esp32s3 = []
 esp32c3 = ["system_timer"]
 
 # Enable this feature in case you have an ESP32 Wrover Kit with ILI9341
-esp_wrover_kit = [ "xtensa-lx-rt", "esp32" ]
+esp_wrover_kit = [ "esp32" ]
