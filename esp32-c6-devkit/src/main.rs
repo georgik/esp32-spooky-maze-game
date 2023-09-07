@@ -22,10 +22,8 @@ use hal::{
     peripherals::Peripherals,
     prelude::*,
     spi,
-    timer::TimerGroup,
     Delay,
     Rng,
-    Rtc,
     IO,
     adc::{AdcConfig, Attenuation, ADC, ADC1},
 };
@@ -51,36 +49,12 @@ use esp_backtrace as _;
 
 use embedded_graphics::pixelcolor::Rgb565;
 
-use spooky_core::{engine::Engine, spritebuf::SpriteBuf, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite }};
-
-
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take();
 
     let mut system = peripherals.PCR.split();
     let mut clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
-
-    // Disable the RTC and TIMG watchdog timers
-    let mut rtc = Rtc::new(peripherals.LP_CLKRST);
-    let timer_group0 = TimerGroup::new(
-        peripherals.TIMG0,
-        &clocks,
-        &mut system.peripheral_clock_control,
-    );
-    let mut wdt0 = timer_group0.wdt;
-    let timer_group1 = TimerGroup::new(
-        peripherals.TIMG1,
-        &clocks,
-        &mut system.peripheral_clock_control,
-    );
-    let mut wdt1 = timer_group1.wdt;
-
-    rtc.swd.disable();
-    rtc.rwdt.disable();
-
-    wdt0.disable();
-    wdt1.disable();
 
     let mut delay = Delay::new(&clocks);
 

@@ -7,7 +7,7 @@
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
 use esp_backtrace as _;
-use hal::{psram, prelude::*, peripherals::Peripherals, spi, timer::TimerGroup, clock::{ClockControl, CpuClock}, Delay, Rtc, Rng, IO};
+use hal::{psram, prelude::*, peripherals::Peripherals, spi, clock::{ClockControl, CpuClock}, Delay, Rng, IO};
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
@@ -37,25 +37,6 @@ fn main() -> ! {
 
     let mut system = peripherals.DPORT.split();
     let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
-
-    let mut rtc = Rtc::new(peripherals.RTC_CNTL);
-    let timer_group0 = TimerGroup::new(
-        peripherals.TIMG0,
-        &clocks,
-        &mut system.peripheral_clock_control,
-    );
-    let mut wdt0 = timer_group0.wdt;
-    let timer_group1 = TimerGroup::new(
-        peripherals.TIMG1,
-        &clocks,
-        &mut system.peripheral_clock_control,
-    );
-    let mut wdt1 = timer_group1.wdt;
-
-    rtc.rwdt.disable();
-
-    wdt0.disable();
-    wdt1.disable();
 
     let mut delay = Delay::new(&clocks);
 
