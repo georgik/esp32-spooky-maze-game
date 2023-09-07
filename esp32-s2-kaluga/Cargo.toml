@@ -1,19 +1,19 @@
 [package]
 name = "spooky-s2-kaluga"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
 
 [target.xtensa-esp32s2-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.4.0"
-hal = { package = "esp32s2-hal", version = "0.11.0" }
-esp-backtrace = { version = "0.7.0", features = [
+hal = { package = "esp32s2-hal", version = "0.12.0" }
+esp-backtrace = { version = "0.8.0", features = [
     "esp32s2",
     "panic-handler",
     "print-uart",
 ] }
-esp-println = { version = "0.5.0", features = ["esp32s2", "log"] }
+esp-println = { version = "0.6.0", features = ["esp32s2", "log"] }
 
 [dependencies]
 esp-alloc = "0.3.0"

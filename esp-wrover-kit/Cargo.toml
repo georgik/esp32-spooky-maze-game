@@ -1,20 +1,19 @@
 [package]
 name = "spooky-wrover-kit"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
 
 [target.xtensa-esp32-none-elf.dependencies]
 xtensa-atomic-emulation-trap = "0.4.0"
-# hal = { package = "esp32-hal", version = "0.14.0", features = ["psram_8m"] }
-hal = { package = "esp32-hal", git = "https://github.com/esp-rs/esp-hal.git", features = ["psram_8m"], rev = "91b9b51426302e86c967a130611c7338ae3ad049"}
-esp-backtrace = { version = "0.7.0", features = [
+hal = { package = "esp32-hal", version = "0.15.0", features = ["psram_8m"] }
+esp-backtrace = { version = "0.8.0", features = [
     "esp32",
     "panic-handler",
     "print-uart",
 ] }
-esp-println = { version = "0.5.0", features = ["esp32"] }
+esp-println = { version = "0.6.0", features = ["esp32"] }
 
 [dependencies]
 esp-alloc = "0.3.0"
