@@ -34,8 +34,8 @@ spooky-core = { path = "../spooky-core", default-features = false, features = [
 ] }
 heapless = { version = "0.7.14", default-features = false }
 esp-println = { version = "0.6.0", features = [ "esp32s3" ] }
-#axp192 = { git = "https://github.com/georgik/axp192-rs.git", rev = "80e4fd27dfab", optional = true }
-axp2101 = { path = "../../axp2101-rs", optional = true }
+axp2101 = { git = "https://github.com/georgik/axp2101-rs.git", optional = true }
+# axp2101 = { path = "../../axp2101-rs", optional = true }
 
 [features]
 default = ["m5stack_cores3"]
