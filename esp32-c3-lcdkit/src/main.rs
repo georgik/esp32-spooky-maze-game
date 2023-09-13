@@ -53,6 +53,7 @@ fn main() -> ! {
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
+    // https://docs.espressif.com/projects/espressif-esp-dev-kits/en/latest/esp32c3/esp32-c3-lcdkit/user_guide.html#gpio-allocation
     let (unconfigured_pins, /*configured_pins, */mut configured_system_pins) = setup_pins(io.pins);
     println!("SPI LED driver initialized");
     let spi = spi::Spi::new_no_cs_no_miso(
@@ -74,7 +75,7 @@ fn main() -> ! {
     // If there is no delay, display is blank
     delay.delay_ms(500u32);
 
-    let mut display = match mipidsi::Builder::ili9342c_rgb565(di)
+    let mut display = match mipidsi::Builder::gc9a01(di)
     .with_display_size(240 as u16, 320 as u16)
     .with_orientation(mipidsi::Orientation::Landscape(true))
     .with_color_order(mipidsi::ColorOrder::Rgb)
