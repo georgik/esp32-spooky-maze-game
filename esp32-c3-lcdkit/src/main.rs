@@ -43,6 +43,21 @@ use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
 // #[cfg(any(feature = "imu_controls"))]
 use shared_bus::BusManagerSimple;
 
+use embedded_hal::digital::v2::OutputPin;
+struct NoOpPin;
+
+impl OutputPin for NoOpPin {
+    type Error = core::convert::Infallible;
+
+    fn set_low(&mut self) -> Result<(), Self::Error> {
+        Ok(())
+    }
+
+    fn set_high(&mut self) -> Result<(), Self::Error> {
+        Ok(())
+    }
+}
+
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take();
@@ -56,11 +71,13 @@ fn main() -> ! {
     // https://docs.espressif.com/projects/espressif-esp-dev-kits/en/latest/esp32c3/esp32-c3-lcdkit/user_guide.html#gpio-allocation
     let (unconfigured_pins, /*configured_pins, */mut configured_system_pins) = setup_pins(io.pins);
     println!("SPI LED driver initialized");
-    let spi = spi::Spi::new_no_cs_no_miso(
+    let spi = spi::Spi::new(//spi, sck, mosi, miso, cs, frequency, mode, peripheral_clock_control, clocks)
         peripherals.SPI2,
         unconfigured_pins.sclk,
         unconfigured_pins.mosi,
-        60u32.MHz(),
+        unconfigured_pins.miso,
+        unconfigured_pins.cs,
+        20u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
         &clocks,
@@ -76,10 +93,10 @@ fn main() -> ! {
     delay.delay_ms(500u32);
 
     let mut display = match mipidsi::Builder::gc9a01(di)
-    .with_display_size(240 as u16, 320 as u16)
+    .with_display_size(240 as u16, 240 as u16)
     .with_orientation(mipidsi::Orientation::Landscape(true))
     .with_color_order(mipidsi::ColorOrder::Rgb)
-        .init(&mut delay, Some(configured_system_pins.reset)) {
+        .init(&mut delay, Some(NoOpPin)) {
         Ok(display) => display,
         Err(e) => {
             // Handle the error and possibly exit the application
@@ -87,7 +104,7 @@ fn main() -> ! {
         }
     };
 
-    // configured_system_pins.backlight.set_high();
+    let _ = configured_system_pins.backlight.set_high();
 
     println!("Initializing...");
         Text::new(
@@ -101,26 +118,28 @@ fn main() -> ! {
 
 
     // #[cfg(any(feature = "imu_controls"))]
-    let i2c = i2c::I2C::new(
-        peripherals.I2C0,
-        unconfigured_pins.sda,
-        unconfigured_pins.scl,
-        100u32.kHz(),
-        &mut system.peripheral_clock_control,
-        &clocks,
-    );
+    // let i2c = i2c::I2C::new(
+    //     peripherals.I2C0,
+    //     unconfigured_pins.sda,
+    //     unconfigured_pins.scl,
+    //     100u32.kHz(),
+    //     &mut system.peripheral_clock_control,
+    //     &clocks,
+    // );
 
     // #[cfg(any(feature = "imu_controls"))]
-    let bus = BusManagerSimple::new(i2c);
+    // let bus = BusManagerSimple::new(i2c);
     // #[cfg(any(feature = "imu_controls"))]
-    let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
+    // let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
 
-    app_loop( &mut display, seed_buffer, icm);
+    // app_loop( &mut display, seed_buffer, icm);
+    println!("Starting application loop");
+    app_loop( &mut display, seed_buffer);
     loop {}
 
 }

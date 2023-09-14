@@ -4,9 +4,11 @@ use embedded_hal::digital::v2::{ InputPin, OutputPin };
 // Generic type for unconfigured pins
 pub struct UnconfiguredPins<MODE> {
     pub sclk: gpio::Gpio6<MODE>,
-    pub mosi: gpio::Gpio7<MODE>,
-    pub sda: gpio::Gpio8<MODE>,
-    pub scl: gpio::Gpio18<MODE>,
+    pub mosi: gpio::Gpio0<MODE>,
+    pub miso: gpio::Gpio4<MODE>,
+    pub sda: gpio::Gpio3<MODE>,
+    pub scl: gpio::Gpio1<MODE>,
+    pub cs: gpio::Gpio7<MODE>,
 }
 
 pub struct ConfiguredPins<Up: InputPin, Down: InputPin, Left: InputPin, Right: InputPin, Dyn: InputPin, Tel: InputPin> {
