@@ -49,6 +49,7 @@ use esp_backtrace as _;
 
 use embedded_graphics::pixelcolor::Rgb565;
 
+
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take();
@@ -64,10 +65,12 @@ fn main() -> ! {
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
     let (uninitialized_pins, configured_pins, configured_system_pins) = setup_pins(io.pins);
 
-    let spi = spi::Spi::new_no_cs_no_miso(
+    let spi = spi::Spi::new(
         peripherals.SPI2,
         uninitialized_pins.sclk,
         uninitialized_pins.mosi,
+        uninitialized_pins.miso,
+        uninitialized_pins.cs,
         60u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,

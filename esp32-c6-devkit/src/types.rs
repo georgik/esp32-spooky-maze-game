@@ -5,6 +5,8 @@ use embedded_hal::digital::v2::OutputPin;
 pub struct UninitializedPins<MODE> {
     pub sclk: gpio::Gpio6<MODE>,
     pub mosi: gpio::Gpio7<MODE>,
+    pub miso: gpio::Gpio0<MODE>,
+    pub cs: gpio::Gpio20<MODE>,
 }
 
 pub struct ConfiguredPins {
