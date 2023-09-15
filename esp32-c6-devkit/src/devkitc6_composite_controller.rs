@@ -31,7 +31,7 @@ impl MovementController for DevkitC6CompositeController<'_> {
                 self.last_action = self.demo_controller.get_movement();
 
                 // self.ladder_controller.tick();
-                let ladder_action = self.demo_controller.get_movement();
+                let ladder_action = self.ladder_controller.get_movement();
                 if ladder_action != Action::None {
                     self.set_active(1);
                     self.last_action = Action::Start;
