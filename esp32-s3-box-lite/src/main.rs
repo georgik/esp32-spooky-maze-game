@@ -87,10 +87,11 @@ fn main() -> ! {
     // If there is no delay, display is blank
     delay.delay_ms(500u32);
 
-    let mut display = match mipidsi::Builder::ili9342c_rgb565(di)
-        .with_display_size(320, 240)
+    let mut display = match mipidsi::Builder::st7789(di)
+        .with_display_size(240, 320)
         .with_orientation(mipidsi::Orientation::LandscapeInverted(true))
-        // .with_color_order(mipidsi::ColorOrder::Bgr)
+        .with_color_order(mipidsi::ColorOrder::Rgb)
+        .with_invert_colors(mipidsi::ColorInversion::Inverted)
         .init(&mut delay, Some(configured_system_pins.reset)) {
         Ok(display) => display,
         Err(e) => {
