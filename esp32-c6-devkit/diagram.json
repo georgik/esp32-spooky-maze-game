@@ -16,7 +16,7 @@
         "top": -546.22,
         "left": -134.92,
         "rotate": 90,
-        "attrs": {}
+        "attrs": { "flipVertical": "1" }
       }
     ],
     "connections": [
