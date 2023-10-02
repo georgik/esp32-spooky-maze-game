@@ -69,15 +69,15 @@ fn main() -> ! {
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
     // https://docs.espressif.com/projects/espressif-esp-dev-kits/en/latest/esp32c3/esp32-c3-lcdkit/user_guide.html#gpio-allocation
-    let (unconfigured_pins, /*configured_pins, */mut configured_system_pins) = setup_pins(io.pins);
+    let (uninitialized_pins, /*configured_pins, */mut configured_system_pins) = setup_pins(io.pins);
     println!("SPI LED driver initialized");
-    let spi = spi::Spi::new(//spi, sck, mosi, miso, cs, frequency, mode, peripheral_clock_control, clocks)
+    let spi = spi::Spi::new(
         peripherals.SPI2,
-        unconfigured_pins.sclk,
-        unconfigured_pins.mosi,
-        unconfigured_pins.miso,
-        unconfigured_pins.cs,
-        20u32.MHz(),
+        uninitialized_pins.sclk,
+        uninitialized_pins.mosi,
+        uninitialized_pins.miso,
+        uninitialized_pins.cs,
+        60u32.MHz(),
         spi::SpiMode::Mode0,
         &mut system.peripheral_clock_control,
         &clocks,
@@ -91,17 +91,15 @@ fn main() -> ! {
     // If delay is 250ms, picture will be fuzzy.
     // If there is no delay, display is blank
     delay.delay_ms(500u32);
-
     let mut display = match mipidsi::Builder::gc9a01(di)
-    .with_display_size(240 as u16, 240 as u16)
-    .with_orientation(mipidsi::Orientation::Landscape(true))
-    .with_color_order(mipidsi::ColorOrder::Rgb)
-        .init(&mut delay, Some(NoOpPin)) {
-        Ok(display) => display,
-        Err(e) => {
-            // Handle the error and possibly exit the application
-            panic!("Display initialization failed");
-        }
+    // let mut display = match mipidsi::Builder::ili9341_rgb565(di)
+        .with_display_size(240 as u16, 240 as u16)
+        .with_orientation(mipidsi::Orientation::Portrait(false))
+        .with_color_order(mipidsi::ColorOrder::Bgr)
+        .with_invert_colors(mipidsi::ColorInversion::Inverted)
+        .init(&mut delay, Some(configured_system_pins.reset)) {
+            Ok(disp) => { disp },
+            Err(_) => { panic!() },
     };
 
     let _ = configured_system_pins.backlight.set_high();

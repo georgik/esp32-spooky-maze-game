@@ -7,11 +7,11 @@ use spooky_core;
 pub fn setup_pins(pins: Pins) -> (UnconfiguredPins<gpio::Unknown>, /*ConfiguredPins<impl InputPin, impl InputPin, impl InputPin, impl InputPin, impl InputPin,
     impl InputPin>, */ConfiguredSystemPins<impl OutputPin, impl OutputPin, impl OutputPin>) {
             let unconfigured_pins = UnconfiguredPins {
-        sclk: pins.gpio6,
+        sclk: pins.gpio1,
         mosi: pins.gpio0,
         miso: pins.gpio4,
         sda: pins.gpio3,
-        scl: pins.gpio1,
+        scl: pins.gpio6,
         cs: pins.gpio7,
     };
 
