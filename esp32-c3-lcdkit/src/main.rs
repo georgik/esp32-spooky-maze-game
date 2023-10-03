@@ -32,6 +32,7 @@ use app::app_loop;
 mod accel_movement_controller;
 mod s3box_composite_controller;
 mod setup;
+use rotary_encoder_embedded::{ RotaryEncoder, Direction };
 use setup::setup_pins;
 
 mod types;
@@ -69,7 +70,7 @@ fn main() -> ! {
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
     // https://docs.espressif.com/projects/espressif-esp-dev-kits/en/latest/esp32c3/esp32-c3-lcdkit/user_guide.html#gpio-allocation
-    let (uninitialized_pins, /*configured_pins, */mut configured_system_pins) = setup_pins(io.pins);
+    let (uninitialized_pins, mut configured_system_pins, mut rotary_pins) = setup_pins(io.pins);
     println!("SPI LED driver initialized");
     let spi = spi::Spi::new(
         peripherals.SPI2,
@@ -134,9 +135,28 @@ fn main() -> ! {
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
+    let mut rotary_encoder = RotaryEncoder::new(
+        rotary_pins.dt,
+        rotary_pins.clk,
+    ).into_standard_mode();
 
     // app_loop( &mut display, seed_buffer, icm);
     println!("Starting application loop");
+    // loop {
+    //     rotary_encoder.update();
+    //     match rotary_encoder.direction() {
+    //         Direction::Clockwise => {
+    //             println!("Clockwise");
+    //         }
+    //         Direction::Anticlockwise => {
+    //             println!("Anticlockwise");
+    //         }
+    //         Direction::None => {
+    //             println!("None");
+    //         }
+    //     }
+    //     delay.delay_ms(100u32);
+    // }
     app_loop( &mut display, seed_buffer);
     loop {}
 

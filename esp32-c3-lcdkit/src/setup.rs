@@ -1,17 +1,18 @@
-use crate::types::{UnconfiguredPins, ConfiguredPins, ConfiguredSystemPins};
+use crate::types::{UnconfiguredPins, ConfiguredPins, ConfiguredSystemPins, RotaryPins};
 use embedded_hal::digital::v2::{OutputPin, InputPin};
 use hal::gpio::{self, Pins};
 use spooky_embedded::{ button_keyboard::ButtonKeyboard, embedded_movement_controller::EmbeddedMovementController };
 use spooky_core;
 
-pub fn setup_pins(pins: Pins) -> (UnconfiguredPins<gpio::Unknown>, /*ConfiguredPins<impl InputPin, impl InputPin, impl InputPin, impl InputPin, impl InputPin,
-    impl InputPin>, */ConfiguredSystemPins<impl OutputPin, impl OutputPin, impl OutputPin>) {
+pub fn setup_pins(pins: Pins) -> (UnconfiguredPins<gpio::Unknown>,
+    ConfiguredSystemPins<impl OutputPin, impl OutputPin, impl OutputPin>,
+    RotaryPins<impl InputPin, impl InputPin, impl InputPin> ) {
             let unconfigured_pins = UnconfiguredPins {
         sclk: pins.gpio1,
         mosi: pins.gpio0,
         miso: pins.gpio4,
         sda: pins.gpio3,
-        scl: pins.gpio6,
+        // scl: pins.gpio6,
         cs: pins.gpio7,
     };
 
@@ -21,7 +22,13 @@ pub fn setup_pins(pins: Pins) -> (UnconfiguredPins<gpio::Unknown>, /*ConfiguredP
         reset: pins.gpio8.into_push_pull_output(),
     };
 
-    (unconfigured_pins, /*configured_pins, */configured_system_pins)
+    let rotary_pins = RotaryPins {
+        dt: pins.gpio10.into_pull_up_input(),
+        clk: pins.gpio6.into_pull_up_input(),
+        switch: pins.gpio9.into_pull_up_input(),
+    };
+
+    (unconfigured_pins, /*configured_pins, */configured_system_pins, rotary_pins)
 }
 
 pub fn setup_button_keyboard<Up: InputPin, Down: InputPin, Left: InputPin, Right: InputPin, Dyn: InputPin, Tel: InputPin>(

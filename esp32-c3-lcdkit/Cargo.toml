@@ -29,6 +29,7 @@ shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core", default-features = false, features = ["static_maze"]}
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze" ] }
 heapless = { version = "0.7.14", default-features = false }
+rotary-encoder-embedded = "0.2.0"
 
 [features]
 default = [ "esp32c3_ili9341" ]
