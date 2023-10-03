@@ -4,7 +4,7 @@
     "editor": "wokwi",
     "parts": [
       {
-        "type": "board-esp32-c3-rust-1",
+        "type": "board-esp32-c3-devkitm-1",
         "id": "esp",
         "top": -494.32,
         "left": -455.03,
@@ -18,7 +18,7 @@
         "rotate": 90,
         "attrs": {}
       },
-      { "type": "wokwi-ky-040", "id": "encoder1", "top": -17.5, "left": -173.6, "attrs": {} }
+      { "type": "wokwi-ky-040", "id": "encoder1", "top": -417.5, "left": -703.6, "attrs": {} }
     ],
     "connections": [
       [
@@ -40,8 +40,17 @@
       [ "esp:20", "lcd1:CS", "red", [] ],
       [ "esp:21", "lcd1:D/C", "magenta", [] ],
       [ "esp:3", "lcd1:RST", "yellow", [] ],
-      [ "lcd1:LED", "esp:3V3", "white", [] ]
+      [ "lcd1:LED", "esp:3V3", "white", [] ],
+      [ "esp:10", "encoder1:DT", "green", [] ],
+      [ "esp:9", "encoder1:CLK", "blue", [] ],
+      [ "esp:3V3", "encoder1:VCC", "red", [] ],
+      [ "esp:GND.1", "encoder1:GND", "black", [] ],
+      [ "esp:8", "encoder1:SW", "yellow", [] ]
     ],
-    "serialMonitor": { "display": "terminal" },
+    "serialMonitor": {
+      "display": "terminal",
+      "newline": "lf",
+      "convertEol": true
+    },
     "dependencies": {}
   }
