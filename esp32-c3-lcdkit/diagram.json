@@ -17,11 +17,22 @@
         "left": -134.92,
         "rotate": 90,
         "attrs": {}
-      }
+      },
+      { "type": "wokwi-ky-040", "id": "encoder1", "top": -17.5, "left": -173.6, "attrs": {} }
     ],
     "connections": [
-      [ "esp:TX0", "$serialMonitor:RX", "", [] ],
-      [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+      [
+        "esp:TX",
+        "$serialMonitor:RX",
+        "",
+        []
+      ],
+      [
+        "esp:RX",
+        "$serialMonitor:TX",
+        "",
+        []
+      ],
       [ "esp:3V3", "lcd1:VCC", "green", [] ],
       [ "esp:GND.1", "lcd1:GND", "black", [] ],
       [ "esp:6", "lcd1:SCK", "blue", [] ],
