@@ -18,12 +18,15 @@ use hal::{
     clock::{ClockControl, CpuClock},
     // gdma::Gdma,
     i2c,
-    peripherals::Peripherals,
+    interrupt,
+    peripherals::{self, Peripherals, TIMG0, TIMG1},
     prelude::*,
     spi,
     Delay,
     Rng,
-    IO
+    riscv,
+    IO,
+    timer::{Timer, Timer0, TimerGroup},
 };
 
 mod app;
@@ -44,26 +47,37 @@ use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
 // #[cfg(any(feature = "imu_controls"))]
 use shared_bus::BusManagerSimple;
 
-use embedded_hal::digital::v2::OutputPin;
 struct NoOpPin;
+use critical_section::Mutex;
+use core::cell::RefCell;
 
-impl OutputPin for NoOpPin {
-    type Error = core::convert::Infallible;
+static TIMER0: Mutex<RefCell<Option<Timer<Timer0<TIMG0>>>>> = Mutex::new(RefCell::new(None));
+static ROTARY_ENCODER: Mutex<RefCell<Option<RotaryEncoder<MODE, DT, CLK>>>> = Mutex::new(RefCell::new(None));
 
-    fn set_low(&mut self) -> Result<(), Self::Error> {
-        Ok(())
-    }
+#[interrupt]
+fn TG0_T0_LEVEL() {
+    critical_section::with(|cs| {
+        if let Some(ref mut rotary_encoder) = ROTARY_ENCODER.borrow_ref_mut(cs).borrow_mut().as_mut() {
+            rotary_encoder.update();
+        }
 
-    fn set_high(&mut self) -> Result<(), Self::Error> {
-        Ok(())
-    }
+        let mut timer0 = TIMER0.borrow_ref_mut(cs);
+        let timer0 = timer0.as_mut().unwrap();
+
+        timer0.clear_interrupt();
+        timer0.start(50u64.millis());
+    });
 }
+
 
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take();
     let mut system = peripherals.SYSTEM.split();
     let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
+
+    let timer_group0 = TimerGroup::new(peripherals.TIMG0, &clocks);
+    let mut timer0 = timer_group0.timer0;
 
     let mut delay = Delay::new(&clocks);
 
@@ -80,7 +94,6 @@ fn main() -> ! {
         uninitialized_pins.cs,
         60u32.MHz(),
         spi::SpiMode::Mode0,
-        &mut system.peripheral_clock_control,
         &clocks,
     );
 
@@ -139,6 +152,24 @@ fn main() -> ! {
         rotary_pins.dt,
         rotary_pins.clk,
     ).into_standard_mode();
+
+    interrupt::enable(
+        peripherals::Interrupt::TG0_T0_LEVEL,
+        interrupt::Priority::Priority1,
+    )
+    .unwrap();
+    timer0.start(500u64.millis());
+    timer0.listen();
+
+    critical_section::with(|cs| {
+        ROTARY_ENCODER.borrow_ref_mut(cs).replace(Some(rotary_encoder));
+        TIMER0.borrow_ref_mut(cs).replace(timer0);
+    });
+
+    unsafe {
+        riscv::interrupt::enable();
+    }
+
 
     // app_loop( &mut display, seed_buffer, icm);
     println!("Starting application loop");

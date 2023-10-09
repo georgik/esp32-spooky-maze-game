@@ -6,7 +6,8 @@ edition = "2021"
 license = "MIT"
 
 [target.riscv32imac-unknown-none-elf.dependencies]
-hal = { package = "esp32c3-hal", version = "0.12.0" }
+# hal = { package = "esp32c3-hal", version = "0.12.0" }
+hal = { git = "https://github.com/esp-rs/esp-hal.git", package = "esp32c3-hal", rev = "44e968f7a83f80be43d60cdc01c10eccab4b39cf" }
 esp-backtrace = { version = "0.8.0", features = [
     "esp32c3",
     "panic-handler",
@@ -30,6 +31,7 @@ spooky-core = { path = "../spooky-core", default-features = false, features = ["
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze" ] }
 heapless = { version = "0.7.14", default-features = false }
 rotary-encoder-embedded = "0.2.0"
+critical-section = "1.1.2"
 
 [features]
 default = [ "esp32c3_ili9341" ]
