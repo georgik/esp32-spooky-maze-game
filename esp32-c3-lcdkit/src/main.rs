@@ -16,17 +16,18 @@ use esp_println::println;
 
 use hal::{
     clock::{ClockControl, CpuClock},
+    gpio::{Input, PullUp},
     // gdma::Gdma,
     i2c,
     interrupt,
     peripherals::{self, Peripherals, TIMG0, TIMG1},
     prelude::*,
+    riscv,
     spi,
+    timer::{Timer, Timer0, TimerGroup},
     Delay,
     Rng,
-    riscv,
     IO,
-    timer::{Timer, Timer0, TimerGroup},
 };
 
 mod app;
@@ -35,7 +36,7 @@ use app::app_loop;
 mod accel_movement_controller;
 mod s3box_composite_controller;
 mod setup;
-use rotary_encoder_embedded::{ RotaryEncoder, Direction };
+use rotary_encoder_embedded::{standard::StandardMode, Direction, RotaryEncoder};
 use setup::setup_pins;
 
 mod types;
@@ -48,16 +49,28 @@ use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
 use shared_bus::BusManagerSimple;
 
 struct NoOpPin;
+use core::{borrow::BorrowMut, cell::RefCell};
 use critical_section::Mutex;
-use core::cell::RefCell;
 
 static TIMER0: Mutex<RefCell<Option<Timer<Timer0<TIMG0>>>>> = Mutex::new(RefCell::new(None));
-static ROTARY_ENCODER: Mutex<RefCell<Option<RotaryEncoder<MODE, DT, CLK>>>> = Mutex::new(RefCell::new(None));
+static ROTARY_ENCODER: Mutex<
+    RefCell<
+        Option<
+            RotaryEncoder<
+                StandardMode,
+                hal::gpio::GpioPin<Input<PullUp>, 10>,
+                hal::gpio::GpioPin<Input<PullUp>, 6>,
+            >,
+        >,
+    >,
+> = Mutex::new(RefCell::new(None));
 
 #[interrupt]
 fn TG0_T0_LEVEL() {
     critical_section::with(|cs| {
-        if let Some(ref mut rotary_encoder) = ROTARY_ENCODER.borrow_ref_mut(cs).borrow_mut().as_mut() {
+        if let Some(ref mut rotary_encoder) =
+            ROTARY_ENCODER.borrow_ref_mut(cs).borrow_mut().as_mut()
+        {
             rotary_encoder.update();
         }
 
@@ -68,7 +81,6 @@ fn TG0_T0_LEVEL() {
         timer0.start(50u64.millis());
     });
 }
-
 
 #[entry]
 fn main() -> ! {
@@ -106,28 +118,29 @@ fn main() -> ! {
     // If there is no delay, display is blank
     delay.delay_ms(500u32);
     let mut display = match mipidsi::Builder::gc9a01(di)
-    // let mut display = match mipidsi::Builder::ili9341_rgb565(di)
+        // let mut display = match mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(240 as u16, 240 as u16)
         .with_orientation(mipidsi::Orientation::Portrait(false))
         .with_color_order(mipidsi::ColorOrder::Bgr)
         .with_invert_colors(mipidsi::ColorInversion::Inverted)
-        .init(&mut delay, Some(configured_system_pins.reset)) {
-            Ok(disp) => { disp },
-            Err(_) => { panic!() },
+        .init(&mut delay, Some(configured_system_pins.reset))
+    {
+        Ok(disp) => disp,
+        Err(_) => {
+            panic!()
+        }
     };
 
     let _ = configured_system_pins.backlight.set_high();
 
     println!("Initializing...");
-        Text::new(
-            "Initializing...",
-            Point::new(80, 110),
-            MonoTextStyle::new(&FONT_8X13, RgbColor::WHITE),
-        )
-        .draw(&mut display)
-        .unwrap();
-
-
+    Text::new(
+        "Initializing...",
+        Point::new(80, 110),
+        MonoTextStyle::new(&FONT_8X13, RgbColor::WHITE),
+    )
+    .draw(&mut display)
+    .unwrap();
 
     // #[cfg(any(feature = "imu_controls"))]
     // let i2c = i2c::I2C::new(
@@ -148,10 +161,8 @@ fn main() -> ! {
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
-    let mut rotary_encoder = RotaryEncoder::new(
-        rotary_pins.dt,
-        rotary_pins.clk,
-    ).into_standard_mode();
+    let mut rotary_encoder =
+        RotaryEncoder::new(rotary_pins.dt, rotary_pins.clk).into_standard_mode();
 
     interrupt::enable(
         peripherals::Interrupt::TG0_T0_LEVEL,
@@ -162,7 +173,7 @@ fn main() -> ! {
     timer0.listen();
 
     critical_section::with(|cs| {
-        ROTARY_ENCODER.borrow_ref_mut(cs).replace(Some(rotary_encoder));
+        ROTARY_ENCODER.borrow_ref_mut(cs).replace(rotary_encoder);
         TIMER0.borrow_ref_mut(cs).replace(timer0);
     });
 
@@ -170,25 +181,30 @@ fn main() -> ! {
         riscv::interrupt::enable();
     }
 
-
     // app_loop( &mut display, seed_buffer, icm);
     println!("Starting application loop");
-    // loop {
-    //     rotary_encoder.update();
-    //     match rotary_encoder.direction() {
-    //         Direction::Clockwise => {
-    //             println!("Clockwise");
-    //         }
-    //         Direction::Anticlockwise => {
-    //             println!("Anticlockwise");
-    //         }
-    //         Direction::None => {
-    //             println!("None");
-    //         }
-    //     }
-    //     delay.delay_ms(100u32);
-    // }
-    app_loop( &mut display, seed_buffer);
+    loop {
+        let direction = critical_section::with(|cs| {
+            if let Some(ref mut rotary_encoder) =
+                ROTARY_ENCODER.borrow_ref_mut(cs).borrow_mut().as_mut()
+            {
+                return rotary_encoder.direction();
+            }
+            Direction::None
+        });
+        match direction {
+            Direction::Clockwise => {
+                println!("Clockwise");
+            }
+            Direction::Anticlockwise => {
+                println!("Anticlockwise");
+            }
+            Direction::None => {
+                println!("None");
+            }
+        }
+        delay.delay_ms(100u32);
+    }
+    app_loop(&mut display, seed_buffer);
     loop {}
-
 }
