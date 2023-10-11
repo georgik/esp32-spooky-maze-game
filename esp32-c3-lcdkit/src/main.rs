@@ -211,6 +211,16 @@ fn main() -> ! {
     let mut counter_clockwise_action = spooky_core::engine::Action::Left;
     let mut switch_in_progress = false;
 
+    // Do one poll to clear the initial state
+    let _direction = critical_section::with(|cs| {
+        if let Some(ref mut rotary_encoder) =
+            ROTARY_ENCODER.borrow_ref_mut(cs).borrow_mut().as_mut()
+        {
+            return rotary_encoder.poll();
+        }
+        Direction::None
+    });
+
     loop {
         let direction = critical_section::with(|cs| {
             if let Some(ref mut rotary_encoder) =
