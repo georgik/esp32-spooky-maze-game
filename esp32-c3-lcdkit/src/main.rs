@@ -34,8 +34,9 @@ mod app;
 use app::app_loop;
 
 mod accel_movement_controller;
-mod s3box_composite_controller;
+mod lcdkit_composite_controller;
 mod setup;
+mod rotary_movement_controller;
 use rotary_encoder_embedded::{standard::StandardMode, Direction, RotaryEncoder};
 use setup::setup_pins;
 
@@ -181,30 +182,80 @@ fn main() -> ! {
         riscv::interrupt::enable();
     }
 
+    let event_bus = types::EventBus {
+        direction: Direction::None,
+    };
+
     // app_loop( &mut display, seed_buffer, icm);
     println!("Starting application loop");
+
+    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
+    let rotary_movement_controller = crate::rotary_movement_controller::RotaryMovementController::new();
+    let movement_controller = crate::lcdkit_composite_controller::LcdKitCompositeController::new(demo_movement_controller, rotary_movement_controller);
+
+    use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
+    use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe};
+    use embedded_graphics_framebuf::FrameBuf;
+    use embedded_graphics::prelude::RgbColor;
+    let mut data = [Rgb565::BLACK; 240 * 240];
+    let fbuf = FrameBuf::new(&mut data, 240, 240);
+    let spritebuf = SpriteBuf::new(fbuf);
+
+    let engine = Engine::new(spritebuf, Some(seed_buffer));
+
+    let mut universe = Universe::new_with_movement_controller(engine, movement_controller);
+
+    universe.initialize();
+
+    let mut clockwise_action = spooky_core::engine::Action::Right;
+    let mut counter_clockwise_action = spooky_core::engine::Action::Left;
+    let mut switch_in_progress = false;
+
     loop {
         let direction = critical_section::with(|cs| {
             if let Some(ref mut rotary_encoder) =
                 ROTARY_ENCODER.borrow_ref_mut(cs).borrow_mut().as_mut()
             {
-                return rotary_encoder.direction();
+                return rotary_encoder.poll();
             }
             Direction::None
         });
+
+
+        // Switch direction of actions
+        if rotary_pins.switch.is_low().unwrap_or(false) && !switch_in_progress  {
+            println!("Switching direction");
+            if clockwise_action == spooky_core::engine::Action::Right {
+                clockwise_action = spooky_core::engine::Action::Down;
+                counter_clockwise_action = spooky_core::engine::Action::Up;
+            } else {
+                clockwise_action = spooky_core::engine::Action::Right;
+                counter_clockwise_action = spooky_core::engine::Action::Left;
+            }
+            switch_in_progress = true;
+        } else {
+            switch_in_progress = false;
+        }
+
+        let controller = universe.get_movement_controller_mut();
         match direction {
             Direction::Clockwise => {
+                controller.set_movement(clockwise_action);
                 println!("Clockwise");
             }
             Direction::Anticlockwise => {
+                let controller = universe.get_movement_controller_mut();
+                controller.set_movement(counter_clockwise_action);
                 println!("Anticlockwise");
             }
             Direction::None => {
+                controller.set_movement(spooky_core::engine::Action::None);
                 println!("None");
             }
         }
-        delay.delay_ms(100u32);
+
+
+        let _ = display
+            .draw_iter(universe.render_frame().into_iter());
     }
-    app_loop(&mut display, seed_buffer);
-    loop {}
 }
