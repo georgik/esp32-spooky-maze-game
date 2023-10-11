@@ -1,13 +1,23 @@
-use crate::types::{UnconfiguredPins, ConfiguredPins, ConfiguredSystemPins, RotaryPins};
-use embedded_hal::digital::v2::{OutputPin, InputPin};
-use hal::gpio::{self, Pins};
-use spooky_embedded::{ button_keyboard::ButtonKeyboard, embedded_movement_controller::EmbeddedMovementController };
+use crate::types::{ConfiguredPins, ConfiguredSystemPins, RotaryPins, UnconfiguredPins};
+use embedded_hal::digital::v2::{InputPin, OutputPin};
+use hal::gpio::{self, Input, Pins, PullUp};
 use spooky_core;
+use spooky_embedded::{
+    button_keyboard::ButtonKeyboard, embedded_movement_controller::EmbeddedMovementController,
+};
 
-pub fn setup_pins(pins: Pins) -> (UnconfiguredPins<gpio::Unknown>,
+pub fn setup_pins(
+    pins: Pins,
+) -> (
+    UnconfiguredPins<gpio::Unknown>,
     ConfiguredSystemPins<impl OutputPin, impl OutputPin, impl OutputPin>,
-    RotaryPins<impl InputPin, impl InputPin, impl InputPin> ) {
-            let unconfigured_pins = UnconfiguredPins {
+    RotaryPins<
+        hal::gpio::GpioPin<Input<PullUp>, 10>,
+        hal::gpio::GpioPin<Input<PullUp>, 6>,
+        hal::gpio::GpioPin<Input<PullUp>, 9>,
+    >,
+) {
+    let unconfigured_pins = UnconfiguredPins {
         sclk: pins.gpio1,
         mosi: pins.gpio0,
         miso: pins.gpio4,
@@ -28,11 +38,22 @@ pub fn setup_pins(pins: Pins) -> (UnconfiguredPins<gpio::Unknown>,
         switch: pins.gpio9.into_pull_up_input(),
     };
 
-    (unconfigured_pins, /*configured_pins, */configured_system_pins, rotary_pins)
+    (
+        unconfigured_pins,
+        /*configured_pins, */ configured_system_pins,
+        rotary_pins,
+    )
 }
 
-pub fn setup_button_keyboard<Up: InputPin, Down: InputPin, Left: InputPin, Right: InputPin, Dyn: InputPin, Tel: InputPin>(
-    configured_pins: ConfiguredPins<Up, Down, Left, Right, Dyn, Tel>
+pub fn setup_button_keyboard<
+    Up: InputPin,
+    Down: InputPin,
+    Left: InputPin,
+    Right: InputPin,
+    Dyn: InputPin,
+    Tel: InputPin,
+>(
+    configured_pins: ConfiguredPins<Up, Down, Left, Right, Dyn, Tel>,
 ) -> ButtonKeyboard<Up, Down, Left, Right, Dyn, Tel> {
     ButtonKeyboard::new(
         configured_pins.up_button,
@@ -46,7 +67,7 @@ pub fn setup_button_keyboard<Up: InputPin, Down: InputPin, Left: InputPin, Right
 
 pub fn setup_movement_controller<Up, Down, Left, Right, Dyn, Tel>(
     seed_buffer: [u8; 32],
-    button_keyboard: ButtonKeyboard<Up, Down, Left, Right, Dyn, Tel>
+    button_keyboard: ButtonKeyboard<Up, Down, Left, Right, Dyn, Tel>,
 ) -> EmbeddedMovementController<Up, Down, Left, Right, Dyn, Tel>
 where
     Up: InputPin,
@@ -56,6 +77,7 @@ where
     Dyn: InputPin,
     Tel: InputPin,
 {
-    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
+    let demo_movement_controller =
+        spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
     EmbeddedMovementController::new(demo_movement_controller, button_keyboard)
 }

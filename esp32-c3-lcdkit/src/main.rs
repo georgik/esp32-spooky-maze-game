@@ -78,7 +78,7 @@ fn TG0_T0_LEVEL() {
         let timer0 = timer0.as_mut().unwrap();
 
         timer0.clear_interrupt();
-        timer0.start(50u64.millis());
+        timer0.start(10u64.millis());
     });
 }
 
@@ -169,7 +169,7 @@ fn main() -> ! {
         interrupt::Priority::Priority1,
     )
     .unwrap();
-    timer0.start(500u64.millis());
+    timer0.start(10u64.millis());
     timer0.listen();
 
     critical_section::with(|cs| {
