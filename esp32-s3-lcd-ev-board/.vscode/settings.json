@@ -1,0 +1,7 @@
+{
+    "idf.adapterTargetName": "esp32s3",
+    "files.associations": {
+        "spooky_idf.h": "c"
+    },
+    "idf.port": "/dev/cu.usbserial-110"
+}
