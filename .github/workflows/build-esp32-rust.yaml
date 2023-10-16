@@ -6,7 +6,7 @@ on:
       release_tag:
         description: "Upload to specific release"
         required: true
-        default: 'v0.4.0'
+        default: 'v0.6.0'
 
 jobs:
   get_release:
@@ -34,7 +34,7 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     container:
-      image: espressif/idf-rust:all_1.71.0.1
+      image: espressif/idf-rust:all_1.73.0.0
       options: --user esp --workdir /home/esp
     needs: get_release
     steps:
@@ -51,12 +51,11 @@ jobs:
           export HOME=/home/esp
           cd /home/esp
           # Upload loop for each binary
-          for FIRMWARE_DIR in esp-wrover-kit esp32-s2-kaluga esp32-s3-usb-otg esp32-s3-box m5stack-core2 m5stack-fire; do
+          for i in `ls -d esp* m5stack*`; do
             cd project/$FIRMWARE_DIR
             VERSION=$(grep '^version =' Cargo.toml | cut -d '"' -f2)
             CHIP=$(grep 'hal = { package =' Cargo.toml | cut -d '"' -f2 | cut -d '-' -f1)
 
-            # Blocked by: https://github.com/esp-rs/rust-build/issues/229
             cargo espflash save-image --chip ${CHIP} --release --merge spooky-maze-${FIRMWARE_DIR}.bin
 
             asset_path="/home/esp/project/${FIRMWARE_DIR}/spooky-maze-${FIRMWARE_DIR}.bin"
