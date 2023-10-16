@@ -51,8 +51,9 @@ jobs:
           export HOME=/home/esp
           cd /home/esp
           # Upload loop for each binary
-          for i in `ls -d esp* m5stack*`; do
-            cd project/$FIRMWARE_DIR
+          cd project
+          for FIRMWARE_DIR in `ls -d esp* m5stack*`; do
+            cd $FIRMWARE_DIR
             VERSION=$(grep '^version =' Cargo.toml | cut -d '"' -f2)
             CHIP=$(grep 'hal = { package =' Cargo.toml | cut -d '"' -f2 | cut -d '-' -f1)
 
