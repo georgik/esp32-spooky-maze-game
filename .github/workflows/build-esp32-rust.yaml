@@ -51,7 +51,7 @@ jobs:
           # Workaround GitHub issue with setting HOME in container https://github.com/actions/runner/issues/863
           export HOME=/home/esp
           cd /home/esp
-          source /home/esp/.bashrc
+          . /home/esp/.bashrc
           # Upload loop for each binary
           cd project
           for FIRMWARE_DIR in `ls -d esp* m5stack*`; do
