@@ -35,13 +35,11 @@ jobs:
     runs-on: ubuntu-20.04
     container:
       image: espressif/idf-rust:all_1.73.0.0
-      options: --user esp --workdir /home/esp
+      options: --user esp --workdir /home/esp -e "HOME=/home/esp"
     needs: get_release
     steps:
       - name: Clone repository with specific branch
         run: |
-          export HOME=/home/esp
-          cd /home/esp
           pwd
           git clone --depth 1 --branch ${{ github.ref_name }} https://github.com/georgik/esp32-spooky-maze-game.git project
       - name: Build and upload binaries
