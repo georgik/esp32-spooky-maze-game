@@ -52,6 +52,7 @@ jobs:
           export HOME=/home/esp
           cd /home/esp
           . /home/esp/.bashrc
+          . /home/esp/export-esp.sh
           # Upload loop for each binary
           cd project
           for FIRMWARE_DIR in `ls -d esp* m5stack*`; do
