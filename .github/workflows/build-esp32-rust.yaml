@@ -77,8 +77,9 @@ jobs:
             cargo espflash save-image --chip ${CHIP} --release --merge --skip-padding spooky-maze-${FIRMWARE_DIR}.bin
 
             # If skip-wokwi-test.toml exists, skip Wokwi test
-            if [ ! -f "skip-wokwi-test.toml" ]; then
+            if [ -f "skip-wokwi-test.toml" ]; then
               echo "Skipping Wokwi test for $FIRMWARE_DIR"
+            else
               /home/esp/bin/wokwi-cli --timeout 5000 --timeout-exit-code 0 --screenshot-part "lcd1" --screenshot-time 5000 --screenshot-file "screenshot.png" "."
               #convert screenshot.png -rotate 90 screenshot.png
             fi
