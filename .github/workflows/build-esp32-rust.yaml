@@ -7,6 +7,10 @@ on:
         description: "Upload to specific release"
         required: true
         default: 'v0.6.1'
+      skip_projects:
+        description: "Skip projects during build (e.g. esp32-c3-devkit-rust)"
+        required: false
+        default: ''
 
 jobs:
   get_release:
@@ -58,6 +62,13 @@ jobs:
           # Upload loop for each binary
           cd project
           for FIRMWARE_DIR in `ls -d esp* m5stack*`; do
+
+            # If FIRMWARE_DIR is a substring in SKIP_PROJECTS, skip it
+            if [[ ${{ github.event.inputs.skip_projects }} == *"${FIRMWARE_DIR}"* ]]; then
+              echo "Skipping $FIRMWARE_DIR"
+              continue
+            fi
+
             cd $FIRMWARE_DIR
             echo "Building $FIRMWARE_DIR"
             VERSION=$(grep '^version =' Cargo.toml | cut -d '"' -f2)
