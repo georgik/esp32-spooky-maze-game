@@ -121,35 +121,13 @@ fn main() -> ! {
     // https://espressif-docs.readthedocs-hosted.com/projects/espressif-esp-dev-kits/en/latest/esp32s3/esp32-s3-usb-otg/user_guide.html
     // let button_up = button::Button::new();
 
-    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
     let button_ok_pin = io.pins.gpio0.into_pull_up_input();
-    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
     let button_menu_pin = io.pins.gpio14.into_pull_up_input();
-    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
     let button_up_pin = io.pins.gpio10.into_pull_up_input();
-    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
     let button_down_pin = io.pins.gpio11.into_pull_up_input();
 
-    #[cfg(feature = "esp32")]
-    let mut backlight = io.pins.gpio5.into_push_pull_output();
-    #[cfg(any(feature = "esp32s2", feature = "esp32s3_usb_otg"))]
     let mut backlight = io.pins.gpio9.into_push_pull_output();
-    #[cfg(feature = "esp32c3")]
-    let mut backlight = io.pins.gpio0.into_push_pull_output();
 
-    #[cfg(feature = "esp32")]
-    let spi = spi::Spi::new(
-        peripherals.SPI2,
-        io.pins.gpio19,
-        io.pins.gpio23,
-        io.pins.gpio25,
-        io.pins.gpio22,
-        100u32.MHz(),
-        spi::SpiMode::Mode0,
-        &mut system.peripheral_clock_control,
-        &mut clocks);
-
-    #[cfg(any(feature = "esp32s2", feature = "esp32s3_usb_otg"))]
     let spi = spi::Spi::new(
         peripherals.SPI3,
         io.pins.gpio6,
@@ -161,52 +139,14 @@ fn main() -> ! {
         &mut system.peripheral_clock_control,
         &clocks);
 
-
-    #[cfg(any(feature = "esp32s3_box"))]
-    let spi = spi::Spi::new_no_cs_no_miso(
-        peripherals.SPI2,
-        sclk,
-        mosi,
-        60u32.MHz(),
-        spi::SpiMode::Mode0,
-        &mut system.peripheral_clock_control,
-        &clocks,
-    );
-
-    #[cfg(feature = "esp32")]
-    backlight.set_low().unwrap();
-    #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
     backlight.set_high().unwrap();
 
-
-    #[cfg(feature = "esp32c3")]
-    let spi = spi::Spi::new(
-        peripherals.SPI2,
-        io.pins.gpio6,
-        io.pins.gpio7,
-        io.pins.gpio12,
-        io.pins.gpio20,
-        100u32.MHz(),
-        spi::SpiMode::Mode0,
-        &mut system.peripheral_clock_control,
-        &mut clocks);
-
-    #[cfg(any(feature = "esp32", feature = "esp32s2", feature = "esp32s3_usb_otg"))]
     let reset = io.pins.gpio18.into_push_pull_output();
-    #[cfg(any(feature = "esp32s3_box"))]
-    let reset = io.pins.gpio48.into_push_pull_output();
-    #[cfg(any(feature = "esp32c3"))]
-    let reset = io.pins.gpio9.into_push_pull_output();
-
-    #[cfg(any(feature = "esp32", feature = "esp32c3"))]
-    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio21.into_push_pull_output());
-    #[cfg(any(feature = "esp32s2", feature = "esp32s3"))]
     let di = SPIInterfaceNoCS::new(spi, io.pins.gpio4.into_push_pull_output());
 
     #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
     let mut delay = Delay::new(&clocks);
 
-    #[cfg(any(feature = "esp32s2_usb_otg", feature = "esp32s3_usb_otg"))]
     let mut display = mipidsi::Builder::st7789(di)
         .with_display_size(240, 240)
         .with_orientation(mipidsi::Orientation::PortraitInverted(false))
