@@ -59,6 +59,7 @@ jobs:
           cd project
           for FIRMWARE_DIR in `ls -d esp* m5stack*`; do
             cd $FIRMWARE_DIR
+            echo "Building $FIRMWARE_DIR"
             VERSION=$(grep '^version =' Cargo.toml | cut -d '"' -f2)
             CHIP=$(grep 'hal = { package =' Cargo.toml | cut -d '"' -f2 | cut -d '-' -f1)
 
