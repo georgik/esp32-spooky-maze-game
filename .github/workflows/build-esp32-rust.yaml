@@ -1,4 +1,4 @@
-name: Build ESP32 Rust Binaries in Docker image espressif/idf-rust:all_1.71.0.1 and upload to Releases
+name: Build ESP32 Rust Binaries in Docker image espressif/idf-rust:all_... and upload to Releases
 
 on:
   workflow_dispatch:
@@ -63,7 +63,7 @@ jobs:
             CHIP=$(grep 'hal = { package =' Cargo.toml | cut -d '"' -f2 | cut -d '-' -f1)
 
             cargo espflash save-image --chip ${CHIP} --release --merge --skip-padding spooky-maze-${FIRMWARE_DIR}.bin
-            wokwi-cli --timeout 5000 --timeout-exit-code 0 --screenshot-part "lcd1" --screenshot-time 5000 --screenshot-file "screenshot.png" "."
+            /home/esp/bin/wokwi-cli --timeout 5000 --timeout-exit-code 0 --screenshot-part "lcd1" --screenshot-time 5000 --screenshot-file "screenshot.png" "."
             convert screenshot.png -rotate 90 screenshot.png
 
             asset_path="/home/esp/project/${FIRMWARE_DIR}/spooky-maze-${FIRMWARE_DIR}.bin"
