@@ -4,7 +4,7 @@
     "editor": "wokwi",
     "parts": [
       {
-        "type": "board-esp32-s2-devkitm-1",
+        "type": "board-esp32-s3-devkitc-1",
         "id": "esp",
         "top": -494.32,
         "left": -455.03,
@@ -26,7 +26,7 @@
       [ "esp:GND.1", "lcd1:GND", "black", [] ],
       [ "esp:7", "lcd1:SCK", "blue", [] ],
       [ "esp:6", "lcd1:MOSI", "orange", [] ],
-      [ "esp:11", "lcd1:CS", "red", [] ],
+      [ "esp:GND.1", "lcd1:CS", "red", [] ],
       [ "esp:4", "lcd1:D/C", "magenta", [] ],
       [ "esp:48", "lcd1:RST", "yellow", [] ],
       [ "lcd1:LED", "esp:3V3", "white", [] ]

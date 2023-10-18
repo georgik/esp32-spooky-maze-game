@@ -68,7 +68,7 @@
     [ "esp:GND.1", "lcd1:GND", "black", [] ],
     [ "esp:D19", "lcd1:SCK", "blue", [] ],
     [ "esp:D23", "lcd1:MOSI", "orange", [] ],
-    [ "esp:D22", "lcd1:CS", "red", [] ],
+    [ "esp:GND.1", "lcd1:CS", "red", [] ],
     [ "esp:D21", "lcd1:D/C", "magenta", [] ],
     [ "esp:D18", "lcd1:RST", "yellow", [] ],
     [ "lcd1:LED", "esp:3V3", "white", [] ],
