@@ -16,18 +16,17 @@ fi
 
 # Function to build the firmware by entering directory and running cargo-espflash
 function build_firmware {
-    FIRMWARE_DIR=$1
-    CHIP=$2
-    cd ${FIRMWARE_DIR}
-    cargo espflash save-image --chip ${CHIP} --release --merge spooky-maze-${FIRMWARE_DIR}.bin
-    cd ..
+    cd $FIRMWARE_DIR
+    VERSION=$(grep '^version =' Cargo.toml | cut -d '"' -f2)
+    CHIP=$(grep 'hal = { package =' Cargo.toml | cut -d '"' -f2 | cut -d '-' -f1)
+
+    cargo espflash save-image --chip ${CHIP} --release --merge --skip-padding spooky-maze-${FIRMWARE_DIR}.bin
+    cd -
 }
 
-build_firmware esp-wrover-kit esp32
-build_firmware esp32-c3-devkit-rust esp32c3
-build_firmware esp32-c6-devkit esp32c6
-build_firmware esp32-s2-kaluga esp32s2
-build_firmware esp32-s3-usb-otg esp32s3
-build_firmware esp32-s3-box esp32s3
-build_firmware m5stack-core2 esp32
-build_firmware m5stack-fire esp32
+for FIRMWARE_DIR in `ls -d esp* m5stack*`; do
+    build_firmware "$FIRMWARE_DIR"
+done
+
+#build_firmware esp-wrover-kit
+#build_firmware esp32-c3-devkit-rust
