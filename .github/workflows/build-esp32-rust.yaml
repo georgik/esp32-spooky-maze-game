@@ -64,7 +64,7 @@ jobs:
           for FIRMWARE_DIR in `ls -d esp* m5stack*`; do
 
             # If FIRMWARE_DIR is a substring in SKIP_PROJECTS, skip it
-            if [[ ${{ github.event.inputs.skip_projects }} == *"${FIRMWARE_DIR}"* ]]; then
+            if echo "${{ github.event.inputs.skip_projects }}" | grep -q "${FIRMWARE_DIR}"; then
               echo "Skipping $FIRMWARE_DIR"
               continue
             fi
