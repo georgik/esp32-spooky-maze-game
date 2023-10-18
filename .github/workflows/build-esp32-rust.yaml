@@ -75,8 +75,13 @@ jobs:
             CHIP=$(grep 'hal = { package =' Cargo.toml | cut -d '"' -f2 | cut -d '-' -f1)
 
             cargo espflash save-image --chip ${CHIP} --release --merge --skip-padding spooky-maze-${FIRMWARE_DIR}.bin
-            /home/esp/bin/wokwi-cli --timeout 5000 --timeout-exit-code 0 --screenshot-part "lcd1" --screenshot-time 5000 --screenshot-file "screenshot.png" "."
-            #convert screenshot.png -rotate 90 screenshot.png
+
+            # If skip-wokwi-test.toml exists, skip Wokwi test
+            if [ -f "skip-wokwi-test.toml" ]; then
+              echo "Skipping Wokwi test for $FIRMWARE_DIR"
+              /home/esp/bin/wokwi-cli --timeout 5000 --timeout-exit-code 0 --screenshot-part "lcd1" --screenshot-time 5000 --screenshot-file "screenshot.png" "."
+              #convert screenshot.png -rotate 90 screenshot.png
+            fi
 
             asset_path="/home/esp/project/${FIRMWARE_DIR}/spooky-maze-${FIRMWARE_DIR}.bin"
             asset_name="spooky-maze-${FIRMWARE_DIR}-${{ github.event.inputs.release_tag }}.bin"
@@ -87,14 +92,17 @@ jobs:
               --data-binary "@$asset_path" \
               --url "${{ needs.get_release.outputs.upload_url }}?name=${asset_name}"
 
-            asset_path="/home/esp/project/${FIRMWARE_DIR}/screenshot.png"
-            asset_name="spooky-maze-${FIRMWARE_DIR}-${{ github.event.inputs.release_tag }}.png"
-            curl \
-              --request POST \
-              --header "authorization: Bearer $GITHUB_TOKEN" \
-              --header "Content-Type: application/octet-stream" \
-              --data-binary "@$asset_path" \
-              --url "${{ needs.get_release.outputs.upload_url }}?name=${asset_name}"
+            # If skip-wokwi-test.toml exists, skip Wokwi test
+            if [ -f "skip-wokwi-test.toml" ]; then
+                asset_path="/home/esp/project/${FIRMWARE_DIR}/screenshot.png"
+                asset_name="spooky-maze-${FIRMWARE_DIR}-${{ github.event.inputs.release_tag }}.png"
+                curl \
+                --request POST \
+                --header "authorization: Bearer $GITHUB_TOKEN" \
+                --header "Content-Type: application/octet-stream" \
+                --data-binary "@$asset_path" \
+                --url "${{ needs.get_release.outputs.upload_url }}?name=${asset_name}"
+            fi
 
             cd -
           done
