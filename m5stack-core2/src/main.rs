@@ -14,10 +14,13 @@ use embedded_graphics::{
 
 use hal::{
     clock::{ClockControl, CpuClock},
-    i2c,
+    i2c::I2C,
     peripherals::Peripherals,
     prelude::*,
-    spi,
+    spi::{
+        master::Spi,
+        SpiMode,
+    },
     Delay, Rng, IO,
 };
 
@@ -58,7 +61,7 @@ pub struct Universe<D> {
 fn main() -> ! {
     let peripherals = Peripherals::take();
 
-    let mut system = peripherals.DPORT.split();
+    let system = peripherals.SYSTEM.split();
     let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
 
     let mut delay = Delay::new(&clocks);
@@ -69,12 +72,11 @@ fn main() -> ! {
     let sda = io.pins.gpio21;
     let scl = io.pins.gpio22;
 
-    let i2c_bus = i2c::I2C::new(
+    let i2c_bus = I2C::new(
         peripherals.I2C0,
         sda,
         scl,
         400u32.kHz(),
-        &mut system.peripheral_clock_control,
         &clocks,
     );
 
@@ -92,16 +94,14 @@ fn main() -> ! {
     // M5Stack CORE 2 - https://docs.m5stack.com/en/core/core2
     let mut backlight = io.pins.gpio3.into_push_pull_output();
 
-    #[cfg(feature = "esp32")]
-    let spi = spi::Spi::new(
+    let spi = Spi::new(
         peripherals.SPI3,
         io.pins.gpio18,   // SCLK
         io.pins.gpio23,   // MOSI
         io.pins.gpio38,   // MISO
         io.pins.gpio5,   // CS
         60u32.MHz(),
-        spi::SpiMode::Mode0,
-        &mut system.peripheral_clock_control,
+        SpiMode::Mode0,
         &clocks,
     );
 
