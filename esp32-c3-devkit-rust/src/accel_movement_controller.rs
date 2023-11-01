@@ -37,9 +37,9 @@ where
     fn tick(&mut self) {
         if let Ok(accel_norm) = self.icm.accel_norm() {
             if accel_norm.y > self.accel_threshold {
-                self.last_action = Action::Left;
-            } else if accel_norm.y < -self.accel_threshold {
                 self.last_action = Action::Right;
+            } else if accel_norm.y < -self.accel_threshold {
+                self.last_action = Action::Left;
             } else if accel_norm.x > self.accel_threshold {
                 self.last_action = Action::Down;
             } else if accel_norm.x < -self.accel_threshold {
