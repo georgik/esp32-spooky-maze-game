@@ -21,7 +21,7 @@ use hal::{
     peripherals::Peripherals,
     prelude::*,
     psram,
-    spi,
+    spi::{master::Spi, SpiMode},
     Delay,
     Rng,
     IO
@@ -66,15 +66,14 @@ fn main() -> ! {
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
     let (unconfigured_pins, /*configured_pins, */mut configured_system_pins) = setup_pins(io.pins);
     println!("SPI LED driver initialized");
-    let spi = spi::Spi::new(
+    let spi = Spi::new(
         peripherals.SPI2,
         unconfigured_pins.sclk,
         unconfigured_pins.mosi,
         unconfigured_pins.miso,
         unconfigured_pins.cs,
         40u32.MHz(),
-        spi::SpiMode::Mode0,
-        &mut system.peripheral_clock_control,
+        SpiMode::Mode0,
         &clocks,
     );
 

@@ -23,7 +23,7 @@ use hal::{
     // gdma::Gdma,
     peripherals::Peripherals,
     prelude::*,
-    spi,
+    spi::{master::Spi, SpiMode},
     Rng,
     IO,
     Delay,
@@ -128,15 +128,14 @@ fn main() -> ! {
 
     let mut backlight = io.pins.gpio9.into_push_pull_output();
 
-    let spi = spi::Spi::new(
+    let spi = Spi::new(
         peripherals.SPI3,
         io.pins.gpio6,
         io.pins.gpio7,
         io.pins.gpio12,
         io.pins.gpio5,
         60u32.MHz(),
-        spi::SpiMode::Mode0,
-        &mut system.peripheral_clock_control,
+        SpiMode::Mode0,
         &clocks);
 
     backlight.set_high().unwrap();
