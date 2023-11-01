@@ -32,7 +32,8 @@ spooky-core = { path = "../spooky-core", default-features = false, features = [
     "static_maze",
 ] }
 heapless = { version = "0.7.14", default-features = false }
-esp-println = { version = "0.7.0", features = [ "esp32" ] }
+esp-println = { version = "0.7.0", features = [ "esp32", "log" ] }
+log = { version = "0.4.18" }
 axp192 = { git = "https://github.com/georgik/axp192-rs.git", rev = "80e4fd27dfab", optional = true }
 #axp192 = { path = "../../axp192", optional = true }
 
@@ -46,9 +47,6 @@ button_controls = []
 imu_controls = [ "i2c" ]
 
 esp32 = []
-esp32s2 = ["system_timer"]
-esp32s3 = []
-esp32c3 = ["system_timer"]
 
 mpu6050 = ["imu_controls", "dep:mpu6050"]
 mpu6886 = ["imu_controls", "dep:mpu6886"]

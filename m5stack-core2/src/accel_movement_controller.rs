@@ -3,6 +3,8 @@ use spooky_core::movement_controller::MovementController;
 use crate::accel_device::AccelDevice; // Replace this with the actual path to your AccelDevice trait
 use crate::accel_device::AccelNorm; // Replace this with the actual path to your AccelNorm struct
 
+use log::debug;
+
 pub struct AccelMovementController<A>
 where
     A: AccelDevice,
@@ -26,6 +28,7 @@ where
 
     // This function is no longer in the impl block for MovementController
     fn update_last_action(&mut self, accel_norm: AccelNorm) {
+        debug!("Accel values: {}, {}", accel_norm.x, accel_norm.y);
         if accel_norm.x > self.accel_threshold {
             self.last_action = Action::Left;
         } else if accel_norm.x < -self.accel_threshold {
@@ -54,8 +57,9 @@ where
     }
 
     fn tick(&mut self) {
-        if let Ok(accel_norm) = self.icm.accel_norm() {
-            self.update_last_action(accel_norm);
+        match self.icm.accel_norm() {
+            Ok(accel_norm) => self.update_last_action(accel_norm),
+            Err(_e) => debug!("Error reading accelerometer"),
         }
     }
 }

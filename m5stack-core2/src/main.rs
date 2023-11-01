@@ -25,6 +25,7 @@ use hal::{
 };
 
 use esp_backtrace as _;
+use log::debug;
 
 #[cfg(feature = "mpu9250")]
 use mpu9250::{ImuMeasurements, Mpu9250};
@@ -65,6 +66,8 @@ fn main() -> ! {
     let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
 
     let mut delay = Delay::new(&clocks);
+
+    esp_println::logger::init_logger_from_env();
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
@@ -145,12 +148,16 @@ fn main() -> ! {
     #[cfg(any(feature = "mpu6050"))]
     let mut icm = Mpu6050::new(bus.acquire_i2c());
 
-    let icm_inner = Mpu6886::new(bus.acquire_i2c());
+    let mut icm_inner = Mpu6886::new(bus.acquire_i2c());
+    match icm_inner.init(&mut delay) {
+        Ok(_) => {
+            debug!("MPU6886 initialized");
+        }
+        Err(_) => {
+            debug!("Failed to initialize MPU6886");
+        }
+    }
     let icm = Mpu6886Wrapper::new(icm_inner);
-    // let is_imu_enabled = match icm.init(&mut delay) {
-    //     Ok(_) => true,
-    //     Err(_) => false,
-    // };
 
 
     let mut rng = Rng::new(peripherals.RNG);
