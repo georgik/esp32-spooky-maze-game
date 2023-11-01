@@ -18,10 +18,9 @@ use log::info;
 use hal::{
     clock::{ClockControl, CpuClock},
     // gdma::Gdma,
-    i2c,
     peripherals::Peripherals,
     prelude::*,
-    spi,
+    spi::{master::Spi, SpiMode},
     Delay,
     Rng,
     IO,
@@ -54,7 +53,7 @@ use embedded_graphics::pixelcolor::Rgb565;
 fn main() -> ! {
     let peripherals = Peripherals::take();
 
-    let mut system = peripherals.PCR.split();
+    let mut system = peripherals.SYSTEM.split();
     let mut clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
 
     let mut delay = Delay::new(&clocks);
@@ -65,15 +64,14 @@ fn main() -> ! {
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
     let (uninitialized_pins, configured_pins, configured_system_pins) = setup_pins(io.pins);
 
-    let spi = spi::Spi::new(
+    let spi = Spi::new(
         peripherals.SPI2,
         uninitialized_pins.sclk,
         uninitialized_pins.mosi,
         uninitialized_pins.miso,
         uninitialized_pins.cs,
         60u32.MHz(),
-        spi::SpiMode::Mode0,
-        &mut system.peripheral_clock_control,
+        SpiMode::Mode0,
         &clocks,
     );
 
@@ -119,7 +117,7 @@ fn main() -> ! {
     let adc_pin = adc1_config.enable_pin(configured_pins.adc_pin, Attenuation::Attenuation11dB);
 
     let analog = peripherals.APB_SARADC.split();
-    let adc1 = ADC::<ADC1>::adc( &mut system.peripheral_clock_control, analog.adc1, adc1_config).unwrap();
+    let adc1 = ADC::<ADC1>::adc(analog.adc1, adc1_config).unwrap();
 
     info!("Entering main loop");
     app_loop(adc1, adc_pin, &mut display, seed_buffer);
