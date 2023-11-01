@@ -1,6 +1,6 @@
 [package]
 name = "spooky-esp32-c3-lcdkit"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
