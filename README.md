@@ -71,7 +71,7 @@ Overview:
 | Name                 | Chip     | Display  | Controls                              | PMU     |
 |----------------------|----------|----------|---------------------------------------|---------|
 | esp-wrover-kit       | esp32    | ili9341  | 6 push-button controls, separate PINs |         |
-| esp32-c3-devkit-rust | esp32-c3 | ili9342c | icm42670 accelerometer                |         |
+| esp32-c3-devkit-rust | esp32-c3 | st7789   | icm42670 accelerometer                |         |
 | esp32-c3-lcdkit      | esp32-c3 | gc9a01   | rotary encoder                        |         |
 | esp32-c6-devkit      | esp32-c6 | ili9341  | resistor ladder with push buttons     |         |
 | esp32-s2-kaluga      | esp32-s2 | ili9341  | resistor ladder with push buttons     |         |

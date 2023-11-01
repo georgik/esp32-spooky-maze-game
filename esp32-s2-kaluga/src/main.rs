@@ -20,7 +20,7 @@ use hal::{
     // gdma::Gdma,
     peripherals::Peripherals,
     prelude::*,
-    spi,
+    spi::{master::Spi, SpiMode},
     Rng,
     IO,
     Delay,
@@ -45,7 +45,7 @@ use esp_backtrace as _;
 fn main() -> ! {
     let peripherals = Peripherals::take();
 
-    let mut system = peripherals.SYSTEM.split();
+    let system = peripherals.SYSTEM.split();
     let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
 
     esp_println::logger::init_logger_from_env();
@@ -71,15 +71,14 @@ fn main() -> ! {
     // );
 
 
-    let spi = spi::Spi::new(
+    let spi = Spi::new(
         peripherals.SPI2,
         uninitialized_pins.sclk,
         uninitialized_pins.mosi,
         uninitialized_pins.miso,
         uninitialized_pins.cs,
         60u32.MHz(),
-        spi::SpiMode::Mode0,
-        &mut system.peripheral_clock_control,
+        SpiMode::Mode0,
         &clocks);
 
     let di = SPIInterfaceNoCS::new(spi, configured_system_pins.dc);
