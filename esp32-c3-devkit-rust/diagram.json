@@ -20,17 +20,21 @@
       }
     ],
     "connections": [
-      [ "esp:TX0", "$serialMonitor:RX", "", [] ],
-      [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+      [ "esp:21", "$serialMonitor:RX", "", [] ],
+      [ "esp:20", "$serialMonitor:TX", "", [] ],
       [ "esp:3V3", "lcd1:VCC", "green", [] ],
       [ "esp:GND.1", "lcd1:GND", "black", [] ],
-      [ "esp:6", "lcd1:SCK", "blue", [] ],
-      [ "esp:7", "lcd1:MOSI", "orange", [] ],
-      [ "esp:GND.1", "lcd1:CS", "red", [] ],
-      [ "esp:21", "lcd1:D/C", "magenta", [] ],
+      [ "esp:0", "lcd1:SCK", "blue", [] ],
+      [ "esp:6", "lcd1:MOSI", "orange", [] ],
+      [ "esp:5", "lcd1:CS", "red", [] ],
+      [ "esp:4", "lcd1:D/C", "magenta", [] ],
       [ "esp:3", "lcd1:RST", "yellow", [] ],
       [ "lcd1:LED", "esp:3V3", "white", [] ]
     ],
-    "serialMonitor": { "display": "terminal" },
+    "serialMonitor": {
+        "display": "terminal",
+        "newline": "lf",
+        "convertEol": true
+    },
     "dependencies": {}
   }

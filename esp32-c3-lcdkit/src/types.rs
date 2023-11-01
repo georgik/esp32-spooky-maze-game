@@ -1,6 +1,5 @@
 use embedded_hal::digital::v2::{InputPin, OutputPin};
-use hal::gpio::{self, Input, PullUp};
-use rotary_encoder_embedded::Direction;
+use hal::gpio;
 
 // Generic type for unconfigured pins
 pub struct UnconfiguredPins<MODE> {
@@ -10,22 +9,6 @@ pub struct UnconfiguredPins<MODE> {
     pub sda: gpio::Gpio3<MODE>,
     // pub scl: gpio::Gpio6<MODE>,
     pub cs: gpio::Gpio7<MODE>,
-}
-
-pub struct ConfiguredPins<
-    Up: InputPin,
-    Down: InputPin,
-    Left: InputPin,
-    Right: InputPin,
-    Dyn: InputPin,
-    Tel: InputPin,
-> {
-    pub up_button: Up,
-    pub down_button: Down,
-    pub left_button: Left,
-    pub right_button: Right,
-    pub dynamite_button: Dyn,
-    pub teleport_button: Tel,
 }
 
 pub struct RotaryPins<DT: InputPin, CLK: InputPin, SW: InputPin>
@@ -39,8 +22,4 @@ pub struct ConfiguredSystemPins<Dc: OutputPin, Bckl: OutputPin, Reset: OutputPin
     pub dc: Dc,
     pub backlight: Bckl,
     pub reset: Reset,
-}
-
-pub struct EventBus {
-    pub direction: Direction
 }

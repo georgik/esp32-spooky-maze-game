@@ -1,19 +1,18 @@
 [package]
 name = "spooky-esp32-c3-lcdkit"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
 
 [target.riscv32imac-unknown-none-elf.dependencies]
-# hal = { package = "esp32c3-hal", version = "0.12.0" }
-hal = { git = "https://github.com/esp-rs/esp-hal.git", package = "esp32c3-hal", rev = "44e968f7a83f80be43d60cdc01c10eccab4b39cf" }
-esp-backtrace = { version = "0.8.0", features = [
+hal = { package = "esp32c3-hal", version = "0.13.0" }
+esp-backtrace = { version = "0.9.0", features = [
     "esp32c3",
     "panic-handler",
     "print-uart",
 ] }
-esp-println = { version = "0.6.0", features = [ "esp32c3" ] }
+esp-println = { version = "0.7.0", features = [ "esp32c3" ] }
 
 [dependencies]
 esp-alloc = "0.3.0"
@@ -42,9 +41,6 @@ system_timer = []
 button_controls = []
 imu_controls = []
 
-esp32 = []
-esp32s2 = ["system_timer"]
-esp32s3 = []
 esp32c3 = ["system_timer"]
 
 esp32c3_ili9341 = [ "esp32c3", "imu_controls" ]

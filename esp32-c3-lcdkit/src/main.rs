@@ -7,7 +7,7 @@ static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
-    prelude::{Point, RgbColor},
+    prelude::Point,
     text::Text,
     Drawable,
 };
@@ -18,12 +18,11 @@ use hal::{
     clock::{ClockControl, CpuClock},
     gpio::{Input, PullUp},
     // gdma::Gdma,
-    i2c,
     interrupt,
-    peripherals::{self, Peripherals, TIMG0, TIMG1},
+    peripherals::{self, Peripherals, TIMG0},
     prelude::*,
     riscv,
-    spi,
+    spi::{master::Spi, SpiMode},
     timer::{Timer, Timer0, TimerGroup},
     Delay,
     Rng,
@@ -31,9 +30,7 @@ use hal::{
 };
 
 mod app;
-use app::app_loop;
 
-mod accel_movement_controller;
 mod lcdkit_composite_controller;
 mod setup;
 mod rotary_movement_controller;
@@ -44,12 +41,6 @@ mod types;
 
 use esp_backtrace as _;
 
-// #[cfg(any(feature = "imu_controls"))]
-use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
-// #[cfg(any(feature = "imu_controls"))]
-use shared_bus::BusManagerSimple;
-
-struct NoOpPin;
 use core::{borrow::BorrowMut, cell::RefCell};
 use critical_section::Mutex;
 
@@ -86,7 +77,7 @@ fn TG0_T0_LEVEL() {
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take();
-    let mut system = peripherals.SYSTEM.split();
+    let system = peripherals.SYSTEM.split();
     let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
 
     let timer_group0 = TimerGroup::new(peripherals.TIMG0, &clocks);
@@ -97,16 +88,16 @@ fn main() -> ! {
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
     // https://docs.espressif.com/projects/espressif-esp-dev-kits/en/latest/esp32c3/esp32-c3-lcdkit/user_guide.html#gpio-allocation
-    let (uninitialized_pins, mut configured_system_pins, mut rotary_pins) = setup_pins(io.pins);
+    let (uninitialized_pins, mut configured_system_pins, rotary_pins) = setup_pins(io.pins);
     println!("SPI LED driver initialized");
-    let spi = spi::Spi::new(
+    let spi = Spi::new(
         peripherals.SPI2,
         uninitialized_pins.sclk,
         uninitialized_pins.mosi,
         uninitialized_pins.miso,
         uninitialized_pins.cs,
         60u32.MHz(),
-        spi::SpiMode::Mode0,
+        SpiMode::Mode0,
         &clocks,
     );
 
@@ -143,26 +134,11 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
-    // #[cfg(any(feature = "imu_controls"))]
-    // let i2c = i2c::I2C::new(
-    //     peripherals.I2C0,
-    //     unconfigured_pins.sda,
-    //     unconfigured_pins.scl,
-    //     100u32.kHz(),
-    //     &mut system.peripheral_clock_control,
-    //     &clocks,
-    // );
-
-    // #[cfg(any(feature = "imu_controls"))]
-    // let bus = BusManagerSimple::new(i2c);
-    // #[cfg(any(feature = "imu_controls"))]
-    // let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
-
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
-    let mut rotary_encoder =
+    let rotary_encoder =
         RotaryEncoder::new(rotary_pins.dt, rotary_pins.clk).into_standard_mode();
 
     interrupt::enable(
@@ -181,10 +157,6 @@ fn main() -> ! {
     unsafe {
         riscv::interrupt::enable();
     }
-
-    let event_bus = types::EventBus {
-        direction: Direction::None,
-    };
 
     // app_loop( &mut display, seed_buffer, icm);
     println!("Starting application loop");

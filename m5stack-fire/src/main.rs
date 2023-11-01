@@ -13,10 +13,13 @@ use embedded_graphics::{
 
 use hal::{
     clock::{ClockControl, CpuClock},
-    i2c,
+    i2c::I2C,
     peripherals::Peripherals,
     prelude::*,
-    spi,
+    spi::{
+        master::Spi,
+        SpiMode,
+    },
     Delay, Rng, IO,
 };
 
@@ -47,7 +50,7 @@ pub struct Universe<D> {
 }
 
 impl<D: embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe<D> {
-    pub fn new(seed: Option<[u8; 32]>, engine: Engine<D>) -> Universe<D> {
+    pub fn new(_seed: Option<[u8; 32]>, engine: Engine<D>) -> Universe<D> {
         Universe { engine }
     }
 
@@ -90,29 +93,23 @@ impl<D: embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe<D> 
 fn main() -> ! {
     let peripherals = Peripherals::take();
 
-    #[cfg(any(feature = "esp32"))]
-    let mut system = peripherals.DPORT.split();
-    #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
-    let mut system = peripherals.SYSTEM.split();
+    let system = peripherals.SYSTEM.split();
     let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
 
     let mut delay = Delay::new(&clocks);
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
-    #[cfg(feature = "esp32")]
     let mut backlight = io.pins.gpio32.into_push_pull_output();
 
-    #[cfg(feature = "esp32")]
-    let spi = spi::Spi::new(
+    let spi = Spi::new(
         peripherals.SPI3,
         io.pins.gpio18,   // SCLK
         io.pins.gpio23,   // MOSI
         io.pins.gpio19,   // MISO
         io.pins.gpio14,   // CS
         60u32.MHz(),
-        spi::SpiMode::Mode0,
-        &mut system.peripheral_clock_control,
+        SpiMode::Mode0,
         &clocks,
     );
 
@@ -160,12 +157,11 @@ fn main() -> ! {
     let scl = io.pins.gpio22;
 
     #[cfg(any(feature = "imu_controls"))]
-    let i2c = i2c::I2C::new(
+    let i2c = I2C::new(
         peripherals.I2C0,
         sda,
         scl,
         100u32.kHz(),
-        &mut system.peripheral_clock_control,
         &clocks,
     );
 

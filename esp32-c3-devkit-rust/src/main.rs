@@ -20,7 +20,7 @@ use hal::{
     i2c,
     peripherals::Peripherals,
     prelude::*,
-    spi,
+    spi::{master::Spi, SpiMode},
     Delay,
     Rng,
     IO
@@ -46,22 +46,24 @@ use shared_bus::BusManagerSimple;
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take();
-    let mut system = peripherals.SYSTEM.split();
+    let system = peripherals.SYSTEM.split();
     let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
 
     let mut delay = Delay::new(&clocks);
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-    let (unconfigured_pins, /*configured_pins, */mut configured_system_pins) = setup_pins(io.pins);
+    let (uninitialized_pins, /*configured_pins, */configured_system_pins) = setup_pins(io.pins);
     println!("SPI LED driver initialized");
-    let spi = spi::Spi::new_no_cs_no_miso(
+
+    let spi = Spi::new(
         peripherals.SPI2,
-        unconfigured_pins.sclk,
-        unconfigured_pins.mosi,
+        uninitialized_pins.sclk,
+        uninitialized_pins.mosi,
+        uninitialized_pins.miso,
+        uninitialized_pins.cs,
         60u32.MHz(),
-        spi::SpiMode::Mode0,
-        &mut system.peripheral_clock_control,
+        SpiMode::Mode0,
         &clocks,
     );
 
@@ -74,13 +76,13 @@ fn main() -> ! {
     // If there is no delay, display is blank
     delay.delay_ms(500u32);
 
-    let mut display = match mipidsi::Builder::ili9342c_rgb565(di)
+    let mut display = match mipidsi::Builder::st7789(di)
     .with_display_size(240 as u16, 320 as u16)
     .with_orientation(mipidsi::Orientation::Landscape(true))
     .with_color_order(mipidsi::ColorOrder::Rgb)
         .init(&mut delay, Some(configured_system_pins.reset)) {
         Ok(display) => display,
-        Err(e) => {
+        Err(_e) => {
             // Handle the error and possibly exit the application
             panic!("Display initialization failed");
         }
@@ -92,22 +94,20 @@ fn main() -> ! {
         Text::new(
             "Initializing...",
             Point::new(80, 110),
-            MonoTextStyle::new(&FONT_8X13, RgbColor::WHITE),
+            MonoTextStyle::new(&FONT_8X13, RgbColor::GREEN),
         )
         .draw(&mut display)
         .unwrap();
 
-
-
-    // #[cfg(any(feature = "imu_controls"))]
+    println!("Initialized");
     let i2c = i2c::I2C::new(
         peripherals.I2C0,
-        unconfigured_pins.sda,
-        unconfigured_pins.scl,
+        uninitialized_pins.sda,
+        uninitialized_pins.scl,
         100u32.kHz(),
-        &mut system.peripheral_clock_control,
         &clocks,
     );
+    println!("I2C ready");
 
     // #[cfg(any(feature = "imu_controls"))]
     let bus = BusManagerSimple::new(i2c);

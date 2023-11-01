@@ -14,14 +14,18 @@ use embedded_graphics::{
 
 use hal::{
     clock::{ClockControl, CpuClock},
-    i2c,
+    i2c::I2C,
     peripherals::Peripherals,
     prelude::*,
-    spi,
+    spi::{
+        master::Spi,
+        SpiMode,
+    },
     Delay, Rng, IO,
 };
 
 use esp_backtrace as _;
+use log::debug;
 
 #[cfg(feature = "mpu9250")]
 use mpu9250::{ImuMeasurements, Mpu9250};
@@ -58,10 +62,12 @@ pub struct Universe<D> {
 fn main() -> ! {
     let peripherals = Peripherals::take();
 
-    let mut system = peripherals.DPORT.split();
+    let system = peripherals.SYSTEM.split();
     let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
 
     let mut delay = Delay::new(&clocks);
+
+    esp_println::logger::init_logger_from_env();
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
@@ -69,12 +75,11 @@ fn main() -> ! {
     let sda = io.pins.gpio21;
     let scl = io.pins.gpio22;
 
-    let i2c_bus = i2c::I2C::new(
+    let i2c_bus = I2C::new(
         peripherals.I2C0,
         sda,
         scl,
         400u32.kHz(),
-        &mut system.peripheral_clock_control,
         &clocks,
     );
 
@@ -92,16 +97,14 @@ fn main() -> ! {
     // M5Stack CORE 2 - https://docs.m5stack.com/en/core/core2
     let mut backlight = io.pins.gpio3.into_push_pull_output();
 
-    #[cfg(feature = "esp32")]
-    let spi = spi::Spi::new(
+    let spi = Spi::new(
         peripherals.SPI3,
         io.pins.gpio18,   // SCLK
         io.pins.gpio23,   // MOSI
         io.pins.gpio38,   // MISO
         io.pins.gpio5,   // CS
         60u32.MHz(),
-        spi::SpiMode::Mode0,
-        &mut system.peripheral_clock_control,
+        SpiMode::Mode0,
         &clocks,
     );
 
@@ -145,12 +148,16 @@ fn main() -> ! {
     #[cfg(any(feature = "mpu6050"))]
     let mut icm = Mpu6050::new(bus.acquire_i2c());
 
-    let icm_inner = Mpu6886::new(bus.acquire_i2c());
+    let mut icm_inner = Mpu6886::new(bus.acquire_i2c());
+    match icm_inner.init(&mut delay) {
+        Ok(_) => {
+            debug!("MPU6886 initialized");
+        }
+        Err(_) => {
+            debug!("Failed to initialize MPU6886");
+        }
+    }
     let icm = Mpu6886Wrapper::new(icm_inner);
-    // let is_imu_enabled = match icm.init(&mut delay) {
-    //     Ok(_) => true,
-    //     Err(_) => false,
-    // };
 
 
     let mut rng = Rng::new(peripherals.RNG);

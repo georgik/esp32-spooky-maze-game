@@ -5,6 +5,10 @@ rustflags = [
   "-C", "link-arg=-nostartfiles",
 ]
 
+[env]
+# Use clean build after changing ESP_LOGLEVEL
+ESP_LOGLEVEL="DEBUG"
+
 [build]
 # Uncomment the target if you'd like to use automatic code hinting in your IDE
 target = "xtensa-esp32-none-elf"

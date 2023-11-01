@@ -7,7 +7,12 @@
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
 use esp_backtrace as _;
-use hal::{psram, prelude::*, peripherals::Peripherals, spi, clock::{ClockControl, CpuClock}, Delay, Rng, IO};
+use hal::{psram, prelude::*, peripherals::Peripherals,
+    spi::{
+        master::Spi,
+        SpiMode,
+    },
+    clock::{ClockControl, CpuClock}, Delay, Rng, IO};
 use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
@@ -35,7 +40,7 @@ fn main() -> ! {
     psram::init_psram(peripherals.PSRAM);
     init_psram_heap();
 
-    let mut system = peripherals.DPORT.split();
+    let system = peripherals.SYSTEM.split();
     let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
 
     let mut delay = Delay::new(&clocks);
@@ -43,13 +48,12 @@ fn main() -> ! {
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
     let (unconfigured_pins, configured_pins, configured_system_pins) = setup_pins(io.pins);
 
-    let spi = spi::Spi::new_no_cs_no_miso(
-        peripherals.SPI3,
+    let spi = Spi::new_no_cs_no_miso(
+        peripherals.SPI2,
         unconfigured_pins.sclk,
         unconfigured_pins.mosi,
         60u32.MHz(),
-        spi::SpiMode::Mode0,
-        &mut system.peripheral_clock_control,
+        SpiMode::Mode0,
         &clocks,
     );
 
