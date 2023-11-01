@@ -3,8 +3,6 @@ use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
 use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe};
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_graphics::prelude::RgbColor;
-use crate::accel_movement_controller::AccelMovementController;
-use crate::Accelerometer;
 
 pub fn app_loop<DISP>(
     display: &mut DISP,
@@ -23,7 +21,7 @@ where
     let fbuf = FrameBuf::new(&mut data, 240, 240);
     let spritebuf = SpriteBuf::new(fbuf);
 
-    let mut engine = Engine::new(spritebuf, Some(seed_buffer));
+    let engine = Engine::new(spritebuf, Some(seed_buffer));
     // engine.switch_game_state(spooky_core::engine::GameState::Playing);
 
     let mut universe = Universe::new_with_movement_controller(engine, demo_movement_controller);
