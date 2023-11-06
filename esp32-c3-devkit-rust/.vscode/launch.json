@@ -1,0 +1,87 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "probe-rs-debug",
+            "request": "launch",
+            "name": "Flash & Debug with probe-rs",
+            "cwd": "${workspaceFolder}",
+            "chip": "esp32c3",
+            "flashingConfig": {
+                "flashingEnabled": true,
+                "resetAfterFlashing": true,
+                "haltAfterReset": true,
+                "formatOptions": {
+                    "format": "idf"
+                }
+            },
+            "coreConfigs": [
+                {
+                    "coreIndex": 0,
+                    "programBinary": "${workspaceFolder}/target/riscv32imac-unknown-none-elf/debug/spooky-esp32-c3",
+                    "rttEnabled": true,
+                    "rttChannelFormats": [
+                        {
+                            "channelNumer": "0",
+                            "dataFormat": "String",
+                            "showTimestamp": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "probe-rs-debug",
+            "request": "attach",
+            "name": "Attach to probe-rs debugger",
+            "cwd": "${workspaceFolder}",
+            "chip": "esp32c3",
+            "coreConfigs": [
+                {
+                    "coreIndex": 0,
+                    "programBinary": "${workspaceFolder}/target/riscv32imac-unknown-none-elf/debug/spooky-esp32-c3",
+                    "rttEnabled": true,
+                    "rttChannelFormats": [
+                        {
+                            "channelNumer": "0",
+                            "dataFormat": "String",
+                            "showTimestamp": true,
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            // more info at: https://github.com/Marus/cortex-debug/blob/master/package.json
+            "name": "Attach to OpenOCD",
+            "type": "cortex-debug",
+            "request": "attach",
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceFolder}/target/riscv32imac-unknown-none-elf/debug/spooky-esp32-c3",
+            "servertype": "openocd",
+            "interface": "jtag",
+            "toolchainPrefix": "riscv32-esp-elf",
+            "openOCDPreConfigLaunchCommands": ["set ESP_RTOS none"],
+            "serverpath": "openocd",
+            "configFiles": ["board/esp32c3-builtin.cfg"],
+            "gdbPath": "${userHome}/.espressif/tools/riscv32-esp-elf-gdb/12.1_20221002/riscv32-esp-elf-gdb/bin/riscv32-esp-elf-gdb",
+            "overrideAttachCommands": [
+              "set remote hardware-watchpoint-limit 2",
+              "mon halt",
+              "flushregs"
+            ],
+            "overrideRestartCommands": ["mon reset halt", "flushregs", "c"]
+        },
+        {
+            "name": "Attach to Wokwi GDB",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/target/riscv32imac-unknown-none-elf/debug/spooky-esp32-c3",
+            "cwd": "${workspaceFolder}",
+            "MIMode": "gdb",
+            "miDebuggerPath": "${userHome}/.espressif/tools/riscv32-esp-elf-gdb/12.1_20221002/riscv32-esp-elf-gdb/bin/riscv32-esp-elf-gdb",
+            "miDebuggerServerAddress": "localhost:3333"
+          }
+    ]
+}
+
