@@ -2,9 +2,9 @@
 
 [wokwi]
 version = 1
-elf = "target/riscv32imac-unknown-none-elf/debug/spooky-esp32-c3"
-firmware = "target/riscv32imac-unknown-none-elf/debug/spooky-esp32-c3"
-gdbServerPort = 3333
+#elf = "target/riscv32imac-unknown-none-elf/debug/spooky-esp32-c3"
+#firmware = "target/riscv32imac-unknown-none-elf/debug/spooky-esp32-c3"
+#gdbServerPort = 3333
 
-#elf = "target/riscv32imac-unknown-none-elf/release/spooky-esp32-c3"
-#firmware = "target/riscv32imac-unknown-none-elf/release/spooky-esp32-c3"
+elf = "target/riscv32imac-unknown-none-elf/release/spooky-esp32-c3"
+firmware = "target/riscv32imac-unknown-none-elf/release/spooky-esp32-c3"
