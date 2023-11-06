@@ -1,0 +1,56 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "probe-rs-debug",
+            "request": "launch",
+            "name": "Flash & Debug with probe-rs",
+            "cwd": "${workspaceFolder}",
+            "chip": "esp32c3",
+            "flashingConfig": {
+                "flashingEnabled": true,
+                "resetAfterFlashing": true,
+                "haltAfterReset": true,
+                "formatOptions": {
+                    "format": "idf"
+                }
+            },
+            "coreConfigs": [
+                {
+                    "coreIndex": 0,
+                    "programBinary": "./target/riscv32imac-unknown-none-elf/debug/spooky-esp32-c3",
+                    "rttEnabled": true,
+                    "rttChannelFormats": [
+                        {
+                            "channelNumer": "0",
+                            "dataFormat": "String",
+                            "showTimestamp": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "probe-rs-debug",
+            "request": "attach",
+            "name": "Attach to probe-rs debugger",
+            "cwd": "${workspaceFolder}",
+            "chip": "esp32c3",
+            "coreConfigs": [
+                {
+                    "coreIndex": 0,
+                    "programBinary": "./target/riscv32imac-unknown-none-elf/debug/spooky-esp32-c3",
+                    "rttEnabled": true,
+                    "rttChannelFormats": [
+                        {
+                            "channelNumer": "0",
+                            "dataFormat": "String",
+                            "showTimestamp": true,
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+
