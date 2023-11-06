@@ -50,7 +50,28 @@
                     ]
                 }
             ]
-        }
+        },
+        {
+            // more info at: https://github.com/Marus/cortex-debug/blob/master/package.json
+            "name": "Attach to OpenOCD",
+            "type": "cortex-debug",
+            "request": "attach",
+            "cwd": "${workspaceRoot}",
+            "executable": "./target/riscv32imac-unknown-none-elf/debug/spooky-esp32-c3",
+            "servertype": "openocd",
+            "interface": "jtag",
+            "toolchainPrefix": "riscv32-esp-elf",
+            "openOCDPreConfigLaunchCommands": ["set ESP_RTOS none"],
+            "serverpath": "openocd",
+            "configFiles": ["board/esp32c3-builtin.cfg"],
+            "gdbPath": "${userHome}/.espressif/tools/riscv32-esp-elf-gdb/12.1_20221002/riscv32-esp-elf-gdb/bin/riscv32-esp-elf-gdb",
+            "overrideAttachCommands": [
+              "set remote hardware-watchpoint-limit 2",
+              "mon halt",
+              "flushregs"
+            ],
+            "overrideRestartCommands": ["mon reset halt", "flushregs", "c"]
+          }
     ]
 }
 
