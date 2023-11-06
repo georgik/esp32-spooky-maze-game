@@ -1,40 +1,43 @@
 {
-    "version": 1,
-    "author": "Juraj Michálek",
-    "editor": "wokwi",
-    "parts": [
-      {
-        "type": "board-esp32-c3-rust-1",
-        "id": "esp",
-        "top": -494.32,
-        "left": -455.03,
-        "attrs": { "builder": "rust-std-esp32" }
-      },
-      {
-        "type": "wokwi-ili9341",
-        "id": "lcd1",
-        "top": -546.22,
-        "left": -134.92,
-        "rotate": 90,
-        "attrs": { "flipVertical": "1" }
-      }
-    ],
-    "connections": [
-      [ "esp:21", "$serialMonitor:RX", "", [] ],
-      [ "esp:20", "$serialMonitor:TX", "", [] ],
-      [ "esp:3V3", "lcd1:VCC", "green", [] ],
-      [ "esp:GND.1", "lcd1:GND", "black", [] ],
-      [ "esp:0", "lcd1:SCK", "blue", [] ],
-      [ "esp:6", "lcd1:MOSI", "orange", [] ],
-      [ "esp:5", "lcd1:CS", "red", [] ],
-      [ "esp:4", "lcd1:D/C", "magenta", [] ],
-      [ "esp:3", "lcd1:RST", "yellow", [] ],
-      [ "lcd1:LED", "esp:3V3", "white", [] ]
-    ],
-    "serialMonitor": {
-        "display": "terminal",
-        "newline": "lf",
-        "convertEol": true
+  "version": 1,
+  "author": "Juraj Michálek",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-c3-rust-1",
+      "id": "esp",
+      "top": -494.32,
+      "left": -455.03,
+      "attrs": { "builder": "rust-nostd-esp" }
     },
-    "dependencies": {}
+    {
+      "type": "wokwi-ili9341",
+      "id": "lcd1",
+      "top": -541.8,
+      "left": -132.7,
+      "rotate": 90,
+      "attrs": { "flipVertical": "1" }
+    },
+    { "type": "chip-icm42670p", "id": "imu1", "top": -248.58, "left": -302.4, "attrs": {} }
+  ],
+  "connections": [
+    [ "esp:21", "$serialMonitor:RX", "", [] ],
+    [ "esp:20", "$serialMonitor:TX", "", [] ],
+    [ "esp:3V3", "lcd1:VCC", "green", [] ],
+    [ "esp:GND.1", "lcd1:GND", "black", [] ],
+    [ "esp:0", "lcd1:SCK", "blue", [] ],
+    [ "esp:6", "lcd1:MOSI", "orange", [] ],
+    [ "esp:5", "lcd1:CS", "red", [] ],
+    [ "esp:4", "lcd1:D/C", "magenta", [] ],
+    [ "esp:3", "lcd1:RST", "yellow", [] ],
+    [ "lcd1:LED", "esp:3V3", "white", [] ],
+    [ "imu1:SDA", "esp:10", "green", [ "v0" ] ],
+    [ "imu1:SCL", "esp:8.2", "green", [ "v0" ] ],
+    [ "imu1:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "imu1:GND", "esp:GND", "black", [ "v-192", "h-211.12" ] ]
+  ],
+  "serialMonitor": { "display": "terminal", "newline": "lf", "convertEol": true },
+  "dependencies": {
+    "chip-icm42670p": "github:SergioGasquez/wokwi-icm42670p@0.0.4"
   }
+}

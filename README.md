@@ -1,5 +1,7 @@
 # esp32-spooky-maze-game
 
+[![Wokwi](https://img.shields.io/endpoint?url=https%3A%2F%2Fwokwi.com%2Fbadge%2Fclick-to-simulate.json)](https://wokwi.com/projects/380658681618693121)
+
 Spooky Maze is simple game where ghost is located in the maze. The goal is to collect 100 coins.
 The ghost can find artifact "Walker" which allows him to pass throght the wall for limited period of time.
 The ghost can use dynamite to clear wall in the vicinity. The ghost can use also Teleport spell to move to random place in the maze.
