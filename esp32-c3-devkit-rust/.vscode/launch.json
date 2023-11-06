@@ -18,7 +18,7 @@
             "coreConfigs": [
                 {
                     "coreIndex": 0,
-                    "programBinary": "./target/riscv32imac-unknown-none-elf/debug/spooky-esp32-c3",
+                    "programBinary": "${workspaceFolder}/target/riscv32imac-unknown-none-elf/debug/spooky-esp32-c3",
                     "rttEnabled": true,
                     "rttChannelFormats": [
                         {
@@ -39,7 +39,7 @@
             "coreConfigs": [
                 {
                     "coreIndex": 0,
-                    "programBinary": "./target/riscv32imac-unknown-none-elf/debug/spooky-esp32-c3",
+                    "programBinary": "${workspaceFolder}/target/riscv32imac-unknown-none-elf/debug/spooky-esp32-c3",
                     "rttEnabled": true,
                     "rttChannelFormats": [
                         {
@@ -57,7 +57,7 @@
             "type": "cortex-debug",
             "request": "attach",
             "cwd": "${workspaceRoot}",
-            "executable": "./target/riscv32imac-unknown-none-elf/debug/spooky-esp32-c3",
+            "executable": "${workspaceFolder}/target/riscv32imac-unknown-none-elf/debug/spooky-esp32-c3",
             "servertype": "openocd",
             "interface": "jtag",
             "toolchainPrefix": "riscv32-esp-elf",
@@ -71,6 +71,16 @@
               "flushregs"
             ],
             "overrideRestartCommands": ["mon reset halt", "flushregs", "c"]
+        },
+        {
+            "name": "Attach to Wokwi GDB",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/target/riscv32imac-unknown-none-elf/debug/spooky-esp32-c3",
+            "cwd": "${workspaceFolder}",
+            "MIMode": "gdb",
+            "miDebuggerPath": "${userHome}/.espressif/tools/riscv32-esp-elf-gdb/12.1_20221002/riscv32-esp-elf-gdb/bin/riscv32-esp-elf-gdb",
+            "miDebuggerServerAddress": "localhost:3333"
           }
     ]
 }
