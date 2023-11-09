@@ -7,7 +7,7 @@ static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 // use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
-    prelude::{DrawTarget, Point, RgbColor},
+    prelude::Point,
     text::Text,
     Drawable,
 };
@@ -33,9 +33,9 @@ use app::app_loop;
 
 mod accel_movement_controller;
 mod s3box_composite_controller;
-mod setup;
+// mod setup;
 
-mod types;
+// mod types;
 
 use esp_backtrace as _;
 
@@ -68,15 +68,16 @@ fn main() -> ! {
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
     // let (unconfigured_pins, /*configured_pins, */mut configured_system_pins) = setup_pins(io.pins);
 
-    let sclk = io.pins.gpio7;
-    let mosi = io.pins.gpio6;
-    let cs = io.pins.gpio5;
-    let miso = io.pins.gpio2; // random unused pin
-    let sda = io.pins.gpio8;
-    let scl = io.pins.gpio18;
-    let dc = io.pins.gpio4.into_push_pull_output();
-    let mut backlight = io.pins.gpio45.into_push_pull_output();
-    let reset = io.pins.gpio48.into_push_pull_output();
+    let lcd_sclk = io.pins.gpio7;
+    let lcd_mosi = io.pins.gpio6;
+    let lcd_cs = io.pins.gpio5;
+    let lcd_miso = io.pins.gpio2; // random unused pin
+    let lcd_dc = io.pins.gpio4.into_push_pull_output();
+    let mut lcd_backlight = io.pins.gpio45.into_push_pull_output();
+    let lcd_reset = io.pins.gpio48.into_push_pull_output();
+
+    let i2c_sda = io.pins.gpio8;
+    let i2c_scl = io.pins.gpio18;
 
     let dma = Gdma::new(peripherals.DMA);
     let dma_channel = dma.channel0;
@@ -86,10 +87,10 @@ fn main() -> ! {
 
     let spi = Spi::new(
         peripherals.SPI2,
-        sclk,
-        mosi,
-        miso,
-        cs,
+        lcd_sclk,
+        lcd_mosi,
+        lcd_miso,
+        lcd_cs,
         60u32.MHz(),
         SpiMode::Mode0,
         &clocks,
@@ -103,7 +104,7 @@ fn main() -> ! {
     println!("SPI ready");
 
     // let di = SPIInterfaceNoCS::new(spi, configured_system_pins.dc);
-    let di = spi_dma_displayinterface::SPIInterfaceNoCS::new(spi, dc);
+    let di = spi_dma_displayinterface::SPIInterfaceNoCS::new(spi, lcd_dc);
 
     // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
     // If delay is 250ms, picture will be fuzzy.
@@ -114,7 +115,7 @@ fn main() -> ! {
         .with_display_size(320, 240)
         .with_orientation(mipidsi::Orientation::PortraitInverted(false))
         .with_color_order(mipidsi::ColorOrder::Bgr)
-        .init(&mut delay, Some(reset)) {
+        .init(&mut delay, Some(lcd_reset)) {
         Ok(display) => display,
         Err(e) => {
             // Handle the error and possibly exit the application
@@ -122,7 +123,7 @@ fn main() -> ! {
         }
     };
 
-    backlight.set_high();
+    let _ = lcd_backlight.set_high();
 
     println!("Initializing...");
         Text::new(
@@ -138,8 +139,8 @@ fn main() -> ! {
     // #[cfg(any(feature = "imu_controls"))]
     let i2c = i2c::I2C::new(
         peripherals.I2C0,
-        sda,
-        scl,
+        i2c_sda,
+        i2c_scl,
         100u32.kHz(),
         &clocks,
     );
@@ -153,13 +154,13 @@ fn main() -> ! {
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
+    // TODO: Figure out type for display which will have set_pixels
     use crate::s3box_composite_controller::S3BoxCompositeController;
-    use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
+    use embedded_graphics::pixelcolor::Rgb565;
     use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe};
     use embedded_graphics_framebuf::FrameBuf;
     use embedded_graphics::prelude::RgbColor;
     use crate::accel_movement_controller::AccelMovementController;
-    use crate::Accelerometer;
     let accel_movement_controller = AccelMovementController::new(icm, 0.2);
 
     let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
@@ -178,7 +179,6 @@ fn main() -> ! {
     // app_loop( &mut display, seed_buffer, icm);
     loop {
         let pixel_iterator = universe.render_frame().get_pixel_iter();
-        
         let _ = display.set_pixels(0,0,320,240, pixel_iterator);
     }
 
