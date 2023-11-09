@@ -25,7 +25,7 @@ use hal::{
     spi::{master::{prelude::*, Spi}, SpiMode},
     Delay,
     Rng,
-    IO
+    IO, rtc_cntl::sleep
 };
 
 mod app;
@@ -60,7 +60,7 @@ fn main() -> ! {
     init_psram_heap();
 
     let system = peripherals.SYSTEM.split();
-    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
+    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock80MHz).freeze();
 
     let mut delay = Delay::new(&clocks);
 
@@ -179,6 +179,9 @@ fn main() -> ! {
     loop {
         let pixel_iterator = universe.render_frame().get_pixel_iter();
         let _ = display.set_pixels(0,0,320,240, pixel_iterator);
+
+        // Use delay in case of 240MHz clock, 80MHa does not need delay
+        // delay.delay_ms(75u32);
     }
 
 }
