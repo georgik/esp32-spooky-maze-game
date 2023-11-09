@@ -12,8 +12,7 @@ impl NoMovementController {
 impl MovementController for NoMovementController {
     fn tick(&mut self) {}
 
-    fn set_active(&mut self, _index:usize) {
-    }
+    fn set_active(&mut self, _index: usize) {}
 
     fn get_movement(&self) -> Action {
         Action::None

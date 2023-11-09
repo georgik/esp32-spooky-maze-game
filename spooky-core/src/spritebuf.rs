@@ -1,13 +1,13 @@
 // Based on https://github.com/bernii/embedded-graphics-framebuf
 
+use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::{
-    prelude::{RgbColor},
-    prelude::{Point, DrawTarget, Size},
     geometry::OriginDimensions,
+    prelude::RgbColor,
+    prelude::{DrawTarget, Point, Size},
     Pixel,
 };
-use embedded_graphics::{pixelcolor::Rgb565};
-use embedded_graphics_framebuf::{FrameBuf, backends::FrameBufferBackend, PixelIterator};
+use embedded_graphics_framebuf::{backends::FrameBufferBackend, FrameBuf, PixelIterator};
 
 pub struct SpriteBuf<B: FrameBufferBackend<Color = Rgb565>> {
     pub fbuf: FrameBuf<Rgb565, B>,
@@ -20,10 +20,8 @@ impl<B: FrameBufferBackend<Color = Rgb565>> OriginDimensions for SpriteBuf<B> {
 }
 
 impl<B: FrameBufferBackend<Color = Rgb565>> SpriteBuf<B> {
-    pub fn new(fbuf:FrameBuf<Rgb565, B>) -> Self {
-        Self {
-            fbuf,
-        }
+    pub fn new(fbuf: FrameBuf<Rgb565, B>) -> Self {
+        Self { fbuf }
     }
 
     /// Get the framebuffers width.
@@ -49,7 +47,7 @@ impl<B: FrameBufferBackend<Color = Rgb565>> SpriteBuf<B> {
 
 impl<'a, B: FrameBufferBackend<Color = Rgb565>> IntoIterator for &'a SpriteBuf<B> {
     type Item = Pixel<Rgb565>;
-    type IntoIter = PixelIterator<'a, Rgb565,  B>;
+    type IntoIter = PixelIterator<'a, Rgb565, B>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.fbuf.into_iter()
@@ -79,7 +77,6 @@ impl<B: FrameBufferBackend<Color = Rgb565>> DrawTarget for SpriteBuf<B> {
         Ok(())
     }
 }
-
 
 // impl<B> SpriteBuf<B>
 // where

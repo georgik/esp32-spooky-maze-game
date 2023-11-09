@@ -5,16 +5,14 @@ use core::cell::RefCell;
 // use embedded_hal::digital::v2::OutputPin;
 
 use display_interface::{DataFormat, DisplayError, WriteOnlyDataCommand};
-use hal::{
-    dma::{SpiPeripheral, ChannelTypes},
-    prelude::_esp_hal_dma_DmaTransfer,
-    spi::{
-        DuplexMode, IsFullDuplex,
-    },
-};
 use hal::gpio::OutputPin;
 use hal::spi::master::dma::SpiDmaTransfer;
 use hal::spi::master::InstanceDma;
+use hal::{
+    dma::{ChannelTypes, SpiPeripheral},
+    prelude::_esp_hal_dma_DmaTransfer,
+    spi::{DuplexMode, IsFullDuplex},
+};
 
 const DMA_BUFFER_SIZE: usize = 2048;
 type SpiDma<'d, T, C, M> = hal::spi::master::dma::SpiDma<'d, T, C, M>;

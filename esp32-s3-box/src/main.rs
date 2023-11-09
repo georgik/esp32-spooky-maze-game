@@ -22,10 +22,11 @@ use hal::{
     peripherals::Peripherals,
     prelude::*,
     psram,
-    spi::{master::{prelude::*, Spi}, SpiMode},
-    Delay,
-    Rng,
-    IO
+    spi::{
+        master::{prelude::*, Spi},
+        SpiMode,
+    },
+    Delay, Rng, IO,
 };
 
 mod app;
@@ -93,7 +94,8 @@ fn main() -> ! {
         60u32.MHz(),
         SpiMode::Mode0,
         &clocks,
-    ).with_dma(dma_channel.configure(
+    )
+    .with_dma(dma_channel.configure(
         false,
         &mut descriptors,
         &mut rx_descriptors,
@@ -113,7 +115,8 @@ fn main() -> ! {
         .with_display_size(lcd_h_res, lcd_v_res)
         .with_orientation(mipidsi::Orientation::PortraitInverted(false))
         .with_color_order(mipidsi::ColorOrder::Bgr)
-        .init(&mut delay, Some(lcd_reset)) {
+        .init(&mut delay, Some(lcd_reset))
+    {
         Ok(display) => display,
         Err(_e) => {
             // Handle the error and possibly exit the application
@@ -124,24 +127,16 @@ fn main() -> ! {
     let _ = lcd_backlight.set_high();
 
     println!("Initializing...");
-        Text::new(
-            "Initializing...",
-            Point::new(80, 110),
-            MonoTextStyle::new(&FONT_8X13, RgbColor::WHITE),
-        )
-        .draw(&mut display)
-        .unwrap();
-
-
+    Text::new(
+        "Initializing...",
+        Point::new(80, 110),
+        MonoTextStyle::new(&FONT_8X13, RgbColor::WHITE),
+    )
+    .draw(&mut display)
+    .unwrap();
 
     // #[cfg(any(feature = "imu_controls"))]
-    let i2c = i2c::I2C::new(
-        peripherals.I2C0,
-        i2c_sda,
-        i2c_scl,
-        100u32.kHz(),
-        &clocks,
-    );
+    let i2c = i2c::I2C::new(peripherals.I2C0, i2c_sda, i2c_scl, 100u32.kHz(), &clocks);
 
     // #[cfg(any(feature = "imu_controls"))]
     let bus = BusManagerSimple::new(i2c);
@@ -153,7 +148,6 @@ fn main() -> ! {
     rng.read(&mut seed_buffer).unwrap();
 
     println!("Entering main loop");
-    app_loop( &mut display, seed_buffer, icm);
+    app_loop(&mut display, seed_buffer, icm);
     panic!();
-
 }
