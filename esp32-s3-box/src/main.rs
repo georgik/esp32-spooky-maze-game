@@ -33,9 +33,6 @@ use app::app_loop;
 
 mod accel_movement_controller;
 mod s3box_composite_controller;
-// mod setup;
-
-// mod types;
 
 use esp_backtrace as _;
 
@@ -66,7 +63,7 @@ fn main() -> ! {
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-    
+
     let lcd_h_res = 320;
     let lcd_v_res = 240;
 
@@ -157,7 +154,6 @@ fn main() -> ! {
 
     println!("Entering main loop");
     app_loop( &mut display, seed_buffer, icm);
-    loop {
-    }
+    panic!();
 
 }
