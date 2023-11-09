@@ -39,7 +39,7 @@ mod s3box_composite_controller;
 
 use esp_backtrace as _;
 
-mod spi_dma_displayinterface;
+use spi_dma_displayinterface::spi_dma_displayinterface::SPIInterfaceNoCS;
 
 // #[cfg(any(feature = "imu_controls"))]
 use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
@@ -103,8 +103,7 @@ fn main() -> ! {
 
     println!("SPI ready");
 
-    // let di = SPIInterfaceNoCS::new(spi, configured_system_pins.dc);
-    let di = spi_dma_displayinterface::SPIInterfaceNoCS::new(spi, lcd_dc);
+    let di = SPIInterfaceNoCS::new(spi, lcd_dc);
 
     // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
     // If delay is 250ms, picture will be fuzzy.
