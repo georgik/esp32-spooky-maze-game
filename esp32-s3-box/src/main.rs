@@ -4,7 +4,7 @@
 #[global_allocator]
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
-use display_interface_spi::SPIInterfaceNoCS;
+// use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
     prelude::{DrawTarget, Point, RgbColor},
@@ -16,12 +16,13 @@ use esp_println::println;
 
 use hal::{
     clock::{ClockControl, CpuClock},
-    // gdma::Gdma,
+    dma::DmaPriority,
+    gdma::Gdma,
     i2c,
     peripherals::Peripherals,
     prelude::*,
     psram,
-    spi::{master::Spi, SpiMode},
+    spi::{master::{prelude::*, Spi}, SpiMode},
     Delay,
     Rng,
     IO
@@ -33,11 +34,12 @@ use app::app_loop;
 mod accel_movement_controller;
 mod s3box_composite_controller;
 mod setup;
-use setup::setup_pins;
 
 mod types;
 
 use esp_backtrace as _;
+
+mod spi_dma_displayinterface;
 
 // #[cfg(any(feature = "imu_controls"))]
 use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
@@ -57,27 +59,51 @@ fn main() -> ! {
     psram::init_psram(peripherals.PSRAM);
     init_psram_heap();
 
-    let mut system = peripherals.SYSTEM.split();
+    let system = peripherals.SYSTEM.split();
     let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
 
     let mut delay = Delay::new(&clocks);
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-    let (unconfigured_pins, /*configured_pins, */mut configured_system_pins) = setup_pins(io.pins);
-    println!("SPI LED driver initialized");
-    let spi = Spi::new_no_cs_no_miso(
+    // let (unconfigured_pins, /*configured_pins, */mut configured_system_pins) = setup_pins(io.pins);
+
+    let sclk = io.pins.gpio7;
+    let mosi = io.pins.gpio6;
+    let cs = io.pins.gpio5;
+    let miso = io.pins.gpio2; // random unused pin
+    let sda = io.pins.gpio8;
+    let scl = io.pins.gpio18;
+    let dc = io.pins.gpio4.into_push_pull_output();
+    let mut backlight = io.pins.gpio45.into_push_pull_output();
+    let reset = io.pins.gpio48.into_push_pull_output();
+
+    let dma = Gdma::new(peripherals.DMA);
+    let dma_channel = dma.channel0;
+
+    let mut descriptors = [0u32; 8 * 3];
+    let mut rx_descriptors = [0u32; 8 * 3];
+
+    let spi = Spi::new(
         peripherals.SPI2,
-        unconfigured_pins.sclk,
-        unconfigured_pins.mosi,
+        sclk,
+        mosi,
+        miso,
+        cs,
         60u32.MHz(),
         SpiMode::Mode0,
         &clocks,
-    );
+    ).with_dma(dma_channel.configure(
+        false,
+        &mut descriptors,
+        &mut rx_descriptors,
+        DmaPriority::Priority0,
+    ));
 
     println!("SPI ready");
 
-    let di = SPIInterfaceNoCS::new(spi, configured_system_pins.dc);
+    // let di = SPIInterfaceNoCS::new(spi, configured_system_pins.dc);
+    let di = spi_dma_displayinterface::SPIInterfaceNoCS::new(spi, dc);
 
     // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
     // If delay is 250ms, picture will be fuzzy.
@@ -88,7 +114,7 @@ fn main() -> ! {
         .with_display_size(320, 240)
         .with_orientation(mipidsi::Orientation::PortraitInverted(false))
         .with_color_order(mipidsi::ColorOrder::Bgr)
-        .init(&mut delay, Some(configured_system_pins.reset)) {
+        .init(&mut delay, Some(reset)) {
         Ok(display) => display,
         Err(e) => {
             // Handle the error and possibly exit the application
@@ -96,7 +122,7 @@ fn main() -> ! {
         }
     };
 
-    configured_system_pins.backlight.set_high();
+    backlight.set_high();
 
     println!("Initializing...");
         Text::new(
@@ -112,8 +138,8 @@ fn main() -> ! {
     // #[cfg(any(feature = "imu_controls"))]
     let i2c = i2c::I2C::new(
         peripherals.I2C0,
-        unconfigured_pins.sda,
-        unconfigured_pins.scl,
+        sda,
+        scl,
         100u32.kHz(),
         &clocks,
     );
@@ -127,8 +153,33 @@ fn main() -> ! {
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
+    use crate::s3box_composite_controller::S3BoxCompositeController;
+    use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
+    use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe};
+    use embedded_graphics_framebuf::FrameBuf;
+    use embedded_graphics::prelude::RgbColor;
+    use crate::accel_movement_controller::AccelMovementController;
+    use crate::Accelerometer;
+    let accel_movement_controller = AccelMovementController::new(icm, 0.2);
 
-    app_loop( &mut display, seed_buffer, icm);
-    loop {}
+    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
+    let movement_controller = S3BoxCompositeController::new(demo_movement_controller, accel_movement_controller);
+
+    let mut data = [Rgb565::BLACK; 320 * 240];
+    let fbuf = FrameBuf::new(&mut data, 320, 240);
+    let spritebuf = SpriteBuf::new(fbuf);
+
+    let engine = Engine::new(spritebuf, Some(seed_buffer));
+
+    let mut universe = Universe::new_with_movement_controller(engine, movement_controller);
+
+    universe.initialize();
+    println!("Entering main loop");
+    // app_loop( &mut display, seed_buffer, icm);
+    loop {
+        let pixel_iterator = universe.render_frame().get_pixel_iter();
+        
+        let _ = display.set_pixels(0,0,320,240, pixel_iterator);
+    }
 
 }

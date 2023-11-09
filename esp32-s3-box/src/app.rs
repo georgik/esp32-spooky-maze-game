@@ -30,7 +30,9 @@ where
     universe.initialize();
 
     loop {
-        let _ = display
-            .draw_iter(universe.render_frame().into_iter());
+        // let _ = display
+        //     .draw_iter(universe.render_frame().into_iter());
+        // display.
+        // display.set_pixels(0,0,320,240, universe.render_frame().into_iter())
     }
 }

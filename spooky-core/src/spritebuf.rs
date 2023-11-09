@@ -79,3 +79,22 @@ impl<B: FrameBufferBackend<Color = Rgb565>> DrawTarget for SpriteBuf<B> {
         Ok(())
     }
 }
+
+
+// impl<B> SpriteBuf<B>
+// where
+//     B: FrameBufferBackend<Color = Rgb565>,
+// {
+//     pub fn get_pixel_iter(&self) -> impl Iterator<Item = Pixel<Rgb565>> + '_ {
+//         self.fbuf.into_iter()
+//     }
+// }
+
+impl<B> SpriteBuf<B>
+where
+    B: FrameBufferBackend<Color = Rgb565>,
+{
+    pub fn get_pixel_iter(&self) -> impl Iterator<Item = Rgb565> + '_ {
+        self.fbuf.into_iter().map(|pixel| pixel.1)
+    }
+}

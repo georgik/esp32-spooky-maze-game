@@ -31,6 +31,8 @@ shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core" }
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "dynamic_maze" ] }
 heapless = { version = "0.7.14", default-features = false }
+embedded-dma = "0.2.0"
+byte-slice-cast = { version = "0.3.5", default-features = false }
 
 [features]
 default = ["esp32s3_box"]
