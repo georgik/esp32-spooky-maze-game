@@ -7,7 +7,7 @@ static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 // use display_interface_spi::SPIInterfaceNoCS;
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
-    prelude::Point,
+    prelude::{Point, RgbColor},
     text::Text,
     Drawable,
 };
@@ -25,7 +25,7 @@ use hal::{
     spi::{master::{prelude::*, Spi}, SpiMode},
     Delay,
     Rng,
-    IO, rtc_cntl::sleep
+    IO
 };
 
 mod app;
@@ -66,7 +66,9 @@ fn main() -> ! {
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-    // let (unconfigured_pins, /*configured_pins, */mut configured_system_pins) = setup_pins(io.pins);
+    
+    let lcd_h_res = 320;
+    let lcd_v_res = 240;
 
     let lcd_sclk = io.pins.gpio7;
     let lcd_mosi = io.pins.gpio6;
@@ -111,12 +113,12 @@ fn main() -> ! {
     delay.delay_ms(500u32);
 
     let mut display = match mipidsi::Builder::ili9342c_rgb565(di)
-        .with_display_size(320, 240)
+        .with_display_size(lcd_h_res, lcd_v_res)
         .with_orientation(mipidsi::Orientation::PortraitInverted(false))
         .with_color_order(mipidsi::ColorOrder::Bgr)
         .init(&mut delay, Some(lcd_reset)) {
         Ok(display) => display,
-        Err(e) => {
+        Err(_e) => {
             // Handle the error and possibly exit the application
             panic!("Display initialization failed");
         }
@@ -153,35 +155,9 @@ fn main() -> ! {
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
-    // TODO: Figure out type for display which will have set_pixels
-    use crate::s3box_composite_controller::S3BoxCompositeController;
-    use embedded_graphics::pixelcolor::Rgb565;
-    use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe};
-    use embedded_graphics_framebuf::FrameBuf;
-    use embedded_graphics::prelude::RgbColor;
-    use crate::accel_movement_controller::AccelMovementController;
-    let accel_movement_controller = AccelMovementController::new(icm, 0.2);
-
-    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
-    let movement_controller = S3BoxCompositeController::new(demo_movement_controller, accel_movement_controller);
-
-    let mut data = [Rgb565::BLACK; 320 * 240];
-    let fbuf = FrameBuf::new(&mut data, 320, 240);
-    let spritebuf = SpriteBuf::new(fbuf);
-
-    let engine = Engine::new(spritebuf, Some(seed_buffer));
-
-    let mut universe = Universe::new_with_movement_controller(engine, movement_controller);
-
-    universe.initialize();
     println!("Entering main loop");
-    // app_loop( &mut display, seed_buffer, icm);
+    app_loop( &mut display, seed_buffer, icm);
     loop {
-        let pixel_iterator = universe.render_frame().get_pixel_iter();
-        let _ = display.set_pixels(0,0,320,240, pixel_iterator);
-
-        // Use delay in case of 240MHz clock, 80MHa does not need delay
-        // delay.delay_ms(75u32);
     }
 
 }
