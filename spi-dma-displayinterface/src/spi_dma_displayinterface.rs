@@ -2,7 +2,8 @@
 
 use core::cell::RefCell;
 
-// use embedded_hal::digital::v2::OutputPin;
+#[cfg(feature = "esp32")]
+use esp32_hal as hal;
 #[cfg(feature = "esp32c3")]
 use esp32c3_hal as hal;
 #[cfg(feature = "esp32s3")]

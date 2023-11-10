@@ -27,7 +27,7 @@ panic-halt = "0.2"
 shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core", default-features = false, features = [ "static_maze" ] }
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze" ] }
-heapless = { version = "0.7.14", default-features = false }
+spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = [ "esp32" ] }
 
 [features]
 default = [ "esp_wrover_kit" ]
