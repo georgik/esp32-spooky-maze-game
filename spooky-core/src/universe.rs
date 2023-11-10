@@ -1,9 +1,6 @@
-use crate::engine::{Engine, Action};
+use crate::engine::{Action, Engine};
 use crate::movement_controller::MovementController;
-use embedded_graphics::{
-    prelude::DrawTarget,
-    pixelcolor::Rgb565,
-};
+use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
 
 pub struct Universe<D, M>
 where
@@ -22,7 +19,7 @@ impl<D: DrawTarget<Color = Rgb565>, M: MovementController> Universe<D, M> {
         }
     }
 
-    pub fn set_active(&mut self, index:usize) {
+    pub fn set_active(&mut self, index: usize) {
         self.movement_controller.set_active(index);
     }
 

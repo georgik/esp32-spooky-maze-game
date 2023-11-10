@@ -1,6 +1,6 @@
 [package]
 name = "spooky-s2-kaluga"
-version = "0.7.0"
+version = "0.8.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -32,7 +32,7 @@ spooky-core = { path = "../spooky-core", default-features = false, features = [
     "static_maze",
 ] }
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze" ] }
-heapless = { version = "0.7.14", default-features = false }
+spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = [ "esp32s2" ] }
 
 [features]
 default = ["rt", "esp32s2_kaluga" ]

@@ -1,6 +1,6 @@
+use icm42670::accelerometer::Accelerometer;
 use spooky_core::engine::Action;
 use spooky_core::movement_controller::MovementController;
-use icm42670::accelerometer::Accelerometer;
 pub struct AccelMovementController<I>
 where
     I: Accelerometer,
@@ -27,8 +27,7 @@ impl<I> MovementController for AccelMovementController<I>
 where
     I: Accelerometer,
 {
-    fn set_active(&mut self, _index:usize) {
-    }
+    fn set_active(&mut self, _index: usize) {}
 
     fn get_movement(&self) -> Action {
         self.last_action

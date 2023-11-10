@@ -4,10 +4,12 @@
 #[global_allocator]
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
-use display_interface_spi::SPIInterfaceNoCS;
+// use display_interface_spi::SPIInterfaceNoCS;
+use spi_dma_displayinterface::spi_dma_displayinterface::SPIInterfaceNoCS;
+
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
-    prelude::{DrawTarget, Point, RgbColor},
+    prelude::{Point, RgbColor},
     text::Text,
     Drawable,
 };
@@ -16,15 +18,17 @@ use esp_println::println;
 
 use hal::{
     clock::{ClockControl, CpuClock},
-    // gdma::Gdma,
+    dma::DmaPriority,
+    gdma::Gdma,
     i2c,
     peripherals::Peripherals,
     prelude::*,
     psram,
-    spi::{master::Spi, SpiMode},
-    Delay,
-    Rng,
-    IO
+    spi::{
+        master::{prelude::*, Spi},
+        SpiMode,
+    },
+    Delay, Rng, IO,
 };
 
 mod app;
@@ -32,10 +36,6 @@ use app::app_loop;
 
 mod accel_movement_controller;
 mod s3box_composite_controller;
-mod setup;
-use setup::setup_pins;
-
-mod types;
 
 use esp_backtrace as _;
 
@@ -57,27 +57,54 @@ fn main() -> ! {
     psram::init_psram(peripherals.PSRAM);
     init_psram_heap();
 
-    let mut system = peripherals.SYSTEM.split();
-    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
+    let system = peripherals.SYSTEM.split();
+    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
 
     let mut delay = Delay::new(&clocks);
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-    let (unconfigured_pins, /*configured_pins, */mut configured_system_pins) = setup_pins(io.pins);
-    println!("SPI LED driver initialized");
-    let spi = Spi::new_no_cs_no_miso(
+
+    let lcd_h_res = 320;
+    let lcd_v_res = 240;
+
+    let lcd_sclk = io.pins.gpio7;
+    let lcd_mosi = io.pins.gpio6;
+    let lcd_cs = io.pins.gpio5;
+    let lcd_miso = io.pins.gpio2; // random unused pin
+    let lcd_dc = io.pins.gpio4.into_push_pull_output();
+    let mut lcd_backlight = io.pins.gpio45.into_push_pull_output();
+    let lcd_reset = io.pins.gpio48.into_push_pull_output();
+
+    let i2c_sda = io.pins.gpio8;
+    let i2c_scl = io.pins.gpio18;
+
+    let dma = Gdma::new(peripherals.DMA);
+    let dma_channel = dma.channel0;
+
+    let mut descriptors = [0u32; 8 * 3];
+    let mut rx_descriptors = [0u32; 8 * 3];
+
+    let spi = Spi::new(
         peripherals.SPI2,
-        unconfigured_pins.sclk,
-        unconfigured_pins.mosi,
+        lcd_sclk,
+        lcd_mosi,
+        lcd_miso,
+        lcd_cs,
         60u32.MHz(),
         SpiMode::Mode0,
         &clocks,
-    );
+    )
+    .with_dma(dma_channel.configure(
+        false,
+        &mut descriptors,
+        &mut rx_descriptors,
+        DmaPriority::Priority0,
+    ));
 
     println!("SPI ready");
 
-    let di = SPIInterfaceNoCS::new(spi, configured_system_pins.dc);
+    let di = SPIInterfaceNoCS::new(spi, lcd_dc);
 
     // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
     // If delay is 250ms, picture will be fuzzy.
@@ -85,38 +112,31 @@ fn main() -> ! {
     delay.delay_ms(500u32);
 
     let mut display = match mipidsi::Builder::ili9342c_rgb565(di)
-        .with_display_size(320, 240)
+        .with_display_size(lcd_h_res, lcd_v_res)
         .with_orientation(mipidsi::Orientation::PortraitInverted(false))
         .with_color_order(mipidsi::ColorOrder::Bgr)
-        .init(&mut delay, Some(configured_system_pins.reset)) {
+        .init(&mut delay, Some(lcd_reset))
+    {
         Ok(display) => display,
-        Err(e) => {
+        Err(_e) => {
             // Handle the error and possibly exit the application
             panic!("Display initialization failed");
         }
     };
 
-    configured_system_pins.backlight.set_high();
+    let _ = lcd_backlight.set_high();
 
     println!("Initializing...");
-        Text::new(
-            "Initializing...",
-            Point::new(80, 110),
-            MonoTextStyle::new(&FONT_8X13, RgbColor::WHITE),
-        )
-        .draw(&mut display)
-        .unwrap();
-
-
+    Text::new(
+        "Initializing...",
+        Point::new(80, 110),
+        MonoTextStyle::new(&FONT_8X13, RgbColor::WHITE),
+    )
+    .draw(&mut display)
+    .unwrap();
 
     // #[cfg(any(feature = "imu_controls"))]
-    let i2c = i2c::I2C::new(
-        peripherals.I2C0,
-        unconfigured_pins.sda,
-        unconfigured_pins.scl,
-        100u32.kHz(),
-        &clocks,
-    );
+    let i2c = i2c::I2C::new(peripherals.I2C0, i2c_sda, i2c_scl, 100u32.kHz(), &clocks);
 
     // #[cfg(any(feature = "imu_controls"))]
     let bus = BusManagerSimple::new(i2c);
@@ -127,8 +147,7 @@ fn main() -> ! {
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
-
-    app_loop( &mut display, seed_buffer, icm);
-    loop {}
-
+    println!("Entering main loop");
+    app_loop(&mut display, lcd_h_res, lcd_v_res, seed_buffer, icm);
+    panic!();
 }

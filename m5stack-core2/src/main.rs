@@ -4,7 +4,10 @@
 // https://shop.m5stack.com/products/m5stack-core2-esp32-iot-development-kit
 
 use accel_device::Mpu6886Wrapper;
-use display_interface_spi::SPIInterfaceNoCS;
+
+// use display_interface_spi::SPIInterfaceNoCS;
+use spi_dma_displayinterface::spi_dma_displayinterface::SPIInterfaceNoCS;
+
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
     prelude::{Point, RgbColor},
@@ -14,11 +17,13 @@ use embedded_graphics::{
 
 use hal::{
     clock::{ClockControl, CpuClock},
+    dma::DmaPriority,
+    pdma::Dma,
     i2c::I2C,
     peripherals::Peripherals,
     prelude::*,
     spi::{
-        master::Spi,
+        master::{prelude::*, Spi},
         SpiMode,
     },
     Delay, Rng, IO,
@@ -63,7 +68,9 @@ fn main() -> ! {
     let peripherals = Peripherals::take();
 
     let system = peripherals.SYSTEM.split();
-    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
+
+    // With DMA we have sufficient throughput, so we can clock down the CPU to 160MHz
+    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
 
     let mut delay = Delay::new(&clocks);
 
@@ -95,30 +102,50 @@ fn main() -> ! {
     }
 
     // M5Stack CORE 2 - https://docs.m5stack.com/en/core/core2
-    let mut backlight = io.pins.gpio3.into_push_pull_output();
+    let lcd_h_res = 240;
+    let lcd_v_res = 320;
+
+    let lcd_sclk = io.pins.gpio18;
+    let lcd_mosi = io.pins.gpio23;
+    let lcd_miso = io.pins.gpio38;
+    let lcd_cs = io.pins.gpio5;
+    let lcd_dc = io.pins.gpio15.into_push_pull_output();
+    let mut lcd_backlight = io.pins.gpio3.into_push_pull_output();
+    let lcd_reset = io.pins.gpio4.into_push_pull_output();
+
+    let dma = Dma::new(system.dma);
+    let dma_channel = dma.spi2channel;
+
+    let mut descriptors = [0u32; 8 * 3];
+    let mut rx_descriptors = [0u32; 8 * 3];
+
 
     let spi = Spi::new(
-        peripherals.SPI3,
-        io.pins.gpio18,   // SCLK
-        io.pins.gpio23,   // MOSI
-        io.pins.gpio38,   // MISO
-        io.pins.gpio5,   // CS
+        peripherals.SPI2,
+        lcd_sclk,
+        lcd_mosi,
+        lcd_miso,
+        lcd_cs,
         60u32.MHz(),
         SpiMode::Mode0,
         &clocks,
-    );
+    ).with_dma(dma_channel.configure(
+        false,
+        &mut descriptors,
+        &mut rx_descriptors,
+        DmaPriority::Priority0,
+    ));
 
-    backlight.set_high().unwrap();
+    lcd_backlight.set_high().unwrap();
 
-    let reset = io.pins.gpio4.into_push_pull_output();
-    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio15.into_push_pull_output());
+    let di = SPIInterfaceNoCS::new(spi, lcd_dc);
 
     #[cfg(feature = "m5stack_core2")]
     let mut display = mipidsi::Builder::ili9342c_rgb565(di)
         .with_display_size(320, 240)
         .with_color_order(mipidsi::ColorOrder::Bgr)
         .with_invert_colors(mipidsi::ColorInversion::Inverted)
-        .init(&mut delay, Some(reset))
+        .init(&mut delay, Some(lcd_reset))
         .unwrap();
 
     #[cfg(feature = "wokwi")]
@@ -126,7 +153,7 @@ fn main() -> ! {
         .with_display_size(320, 240)
         .with_orientation(mipidsi::Orientation::Landscape(false))
         .with_color_order(mipidsi::ColorOrder::Bgr)
-        .init(&mut delay, Some(reset))
+        .init(&mut delay, Some(lcd_reset))
         .unwrap();
 
     Text::new(
@@ -164,7 +191,7 @@ fn main() -> ! {
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
-    app_loop( &mut display, seed_buffer, icm);
+    app_loop( &mut display, lcd_h_res, lcd_v_res, seed_buffer, icm);
     loop {}
 
 }

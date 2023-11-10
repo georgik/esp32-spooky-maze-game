@@ -6,14 +6,20 @@
 #[global_allocator]
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
+// use display_interface_spi::SPIInterfaceNoCS;
+use spi_dma_displayinterface::spi_dma_displayinterface::SPIInterfaceNoCS;
+
 use esp_backtrace as _;
-use hal::{psram, prelude::*, peripherals::Peripherals,
+use hal::{psram, prelude::*,
+    peripherals::Peripherals,
+    dma::DmaPriority,
+    pdma::Dma,
     spi::{
-        master::Spi,
+        master::{prelude::*, Spi},
         SpiMode,
     },
     clock::{ClockControl, CpuClock}, Delay, Rng, IO};
-use display_interface_spi::SPIInterfaceNoCS;
+
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
     prelude::{Point, RgbColor},
@@ -25,7 +31,8 @@ mod setup;
 mod types;
 mod app;
 use app::app_loop;
-use setup::*;
+
+use crate::types::ConfiguredPins;
 
 pub fn init_psram_heap() {
     unsafe {
@@ -41,29 +48,64 @@ fn main() -> ! {
     init_psram_heap();
 
     let system = peripherals.SYSTEM.split();
-    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
+
+    // With DMA we have sufficient throughput, so we can clock down the CPU to 160MHz
+    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
 
     let mut delay = Delay::new(&clocks);
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-    let (unconfigured_pins, configured_pins, configured_system_pins) = setup_pins(io.pins);
 
-    let spi = Spi::new_no_cs_no_miso(
+    let lcd_h_res = 240;
+    let lcd_v_res = 320;
+
+    let lcd_sclk = io.pins.gpio19;
+    let lcd_mosi = io.pins.gpio23;
+    let lcd_miso = io.pins.gpio25;
+    let lcd_cs = io.pins.gpio22;
+    let lcd_dc = io.pins.gpio21.into_push_pull_output();
+    let _lcd_backlight = io.pins.gpio5.into_push_pull_output();
+    let lcd_reset = io.pins.gpio18.into_push_pull_output();
+
+    let dma = Dma::new(system.dma);
+    let dma_channel = dma.spi2channel;
+
+    let mut descriptors = [0u32; 8 * 3];
+    let mut rx_descriptors = [0u32; 8 * 3];
+
+    let configured_pins = ConfiguredPins {
+        up_button: io.pins.gpio14.into_pull_up_input(),
+        down_button: io.pins.gpio12.into_pull_up_input(),
+        left_button: io.pins.gpio13.into_pull_up_input(),
+        right_button: io.pins.gpio15.into_pull_up_input(),
+        dynamite_button: io.pins.gpio26.into_pull_up_input(),
+        teleport_button: io.pins.gpio27.into_pull_up_input(),
+    };
+
+    let spi = Spi::new(
         peripherals.SPI2,
-        unconfigured_pins.sclk,
-        unconfigured_pins.mosi,
+        lcd_sclk,
+        lcd_mosi,
+        lcd_miso,
+        lcd_cs,
         60u32.MHz(),
         SpiMode::Mode0,
         &clocks,
-    );
+    // );
+    ).with_dma(dma_channel.configure(
+        false,
+        &mut descriptors,
+        &mut rx_descriptors,
+        DmaPriority::Priority0,
+    ));
 
-    let di = SPIInterfaceNoCS::new(spi, configured_system_pins.dc);
+    let di = SPIInterfaceNoCS::new(spi, lcd_dc);
 
     let mut display = match mipidsi::Builder::ili9341_rgb565(di)
-        .with_display_size(240 as u16, 320 as u16)
+        .with_display_size(lcd_h_res as u16, lcd_v_res as u16)
         .with_orientation(mipidsi::Orientation::Landscape(false))
         .with_color_order(mipidsi::ColorOrder::Bgr)
-        .init(&mut delay, Some(configured_system_pins.reset)) {
+        .init(&mut delay, Some(lcd_reset)) {
             Ok(disp) => { disp },
             Err(_) => { panic!() },
     };
@@ -80,6 +122,6 @@ fn main() -> ! {
     let mut seed_buffer = [1u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
-    app_loop(configured_pins, &mut display, seed_buffer);
+    app_loop(&mut display, lcd_h_res, lcd_v_res, configured_pins, seed_buffer);
     loop {}
 }

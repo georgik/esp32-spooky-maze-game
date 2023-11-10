@@ -1,6 +1,6 @@
 [package]
 name = "spooky-esp32-c6"
-version = "0.7.0"
+version = "0.8.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -28,16 +28,12 @@ petgraph = { git = "https://github.com/zendurix/petgraph.git", branch = "better_
 shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core", default-features = false, features = [ "static_maze"]}
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze" ] }
-heapless = { version = "0.7.14", default-features = false }
+spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = [ "esp32c6" ] }
 
 [features]
 default = [ "esp32c6_ili9341" ]
 system_timer = []
-
-
 button_controls = []
 imu_controls = []
-
 esp32c6 = ["system_timer"]
-
 esp32c6_ili9341 = [ "esp32c6" ]

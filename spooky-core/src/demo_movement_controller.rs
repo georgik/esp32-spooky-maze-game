@@ -18,23 +18,19 @@ impl DemoMovementController {
         }
     }
 
-    fn get_rand(&mut self, max_range:i32) -> i32 {
+    fn get_rand(&mut self, max_range: i32) -> i32 {
         self.rng.gen_range(0..max_range)
     }
-
 }
 
 impl MovementController for DemoMovementController {
-
-    fn set_active(&mut self, _index:usize) {
-    }
+    fn set_active(&mut self, _index: usize) {}
 
     fn get_movement(&self) -> Action {
         self.last_action
     }
 
     fn tick(&mut self) {
-
         if self.steps_remaining > 0 {
             self.steps_remaining -= 1;
             return;
@@ -50,6 +46,4 @@ impl MovementController for DemoMovementController {
             _ => Action::None,
         };
     }
-
-
 }

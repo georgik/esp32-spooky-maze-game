@@ -1,8 +1,8 @@
-use spooky_core::movement_controller::MovementController;
-use spooky_core::engine::Action;
-use spooky_core::demo_movement_controller::DemoMovementController;
 use crate::button_keyboard::{ButtonEvent, ButtonKeyboard};
 use embedded_hal::digital::v2::InputPin;
+use spooky_core::demo_movement_controller::DemoMovementController;
+use spooky_core::engine::Action;
+use spooky_core::movement_controller::MovementController;
 
 pub struct EmbeddedMovementController<Up, Down, Left, Right, Dyn, Tel>
 where
@@ -58,7 +58,8 @@ where
     }
 }
 
-impl<Up, Down, Left, Right, Dyn, Tel> MovementController for EmbeddedMovementController<Up, Down, Left, Right, Dyn, Tel>
+impl<Up, Down, Left, Right, Dyn, Tel> MovementController
+    for EmbeddedMovementController<Up, Down, Left, Right, Dyn, Tel>
 where
     Up: InputPin,
     Down: InputPin,
@@ -76,9 +77,9 @@ where
                     self.last_action = Action::Start;
                 }
                 self.demo_movement_controller.tick();
-            },
+            }
             1 => self.poll_keyboard(),
-            _ => {},
+            _ => {}
         }
     }
 
@@ -97,5 +98,4 @@ where
     fn set_active(&mut self, index: usize) {
         self.active_index = index;
     }
-
 }

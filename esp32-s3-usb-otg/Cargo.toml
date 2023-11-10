@@ -1,6 +1,6 @@
 [package]
 name = "spooky-s3-usb-otg"
-version = "0.7.0"
+version = "0.8.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -28,21 +28,13 @@ mipidsi = "0.7.1"
 panic-halt = "0.2"
 shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core" }
-heapless = { version = "0.7.14", default-features = false }
+# spi-dma-displayinterface ={ path = "../spi-dma-displayinterface", features = [ "esp32s3" ] }
 
 [features]
-default = ["rt", "esp32s3_usb_otg"]
-rt = ["xtensa-lx-rt"]
-
-system_timer = []
-
+default = ["esp32s3_usb_otg"]
 button_controls = []
 imu_controls = []
-
-esp32 = []
-esp32s2 = [ "system_timer" ]
 esp32s3 = [ ]
-esp32c3 = [ "system_timer" ]
 
 # Enable this feature in case you have an ESP32-S3-USB-OTG board with ST7789
-esp32s3_usb_otg = [ "xtensa-lx-rt", "esp32s3", "button_controls" ]
+esp32s3_usb_otg = [ "esp32s3", "button_controls" ]

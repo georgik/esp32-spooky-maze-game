@@ -28,8 +28,7 @@ impl ButtonMovementController {
 }
 
 impl MovementController for ButtonMovementController {
-    fn set_active(&mut self, _index: usize) {
-    }
+    fn set_active(&mut self, _index: usize) {}
 
     fn get_movement(&self) -> Action {
         self.last_action

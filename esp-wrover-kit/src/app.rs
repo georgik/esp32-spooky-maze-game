@@ -1,14 +1,19 @@
 use crate::types::ConfiguredPins;
-use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
+use embedded_graphics::pixelcolor::Rgb565;
 use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe};
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::InputPin;
+use display_interface::WriteOnlyDataCommand;
+use mipidsi::models::Model;
+use embedded_hal::digital::v2::OutputPin;
 use crate::setup::{setup_movement_controller, setup_button_keyboard};
 use embedded_graphics::prelude::RgbColor;
 
-pub fn app_loop<UP, DP, LP, RP, DB, TP, DISP>(
+pub fn app_loop<UP, DP, LP, RP, DB, TP, DI, M, RST>(
+    display: &mut mipidsi::Display<DI, M, RST>,
+    lcd_h_res:u16,
+    lcd_v_res:u16,
     configured_pins: ConfiguredPins<UP, DP, LP, RP, DB, TP>,
-    display: &mut DISP,
     seed_buffer: [u8; 32])
 where
     UP: InputPin,
@@ -17,7 +22,9 @@ where
     RP: InputPin,
     DB: InputPin,
     TP: InputPin,
-    DISP: DrawTarget<Color = Rgb565>,
+    DI: WriteOnlyDataCommand,
+    M: Model<ColorFormat = Rgb565>,
+    RST: OutputPin,
 {
     let button_keyboard = setup_button_keyboard(configured_pins);
 
@@ -34,7 +41,7 @@ where
     universe.initialize();
 
     loop {
-        let _ = display
-            .draw_iter(universe.render_frame().into_iter());
+        let pixel_iterator = universe.render_frame().get_pixel_iter();
+        let _ = display.set_pixels(0, 0, lcd_v_res-1, lcd_h_res, pixel_iterator);
     }
 }

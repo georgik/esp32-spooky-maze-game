@@ -1,6 +1,6 @@
 [package]
 name = "spooky-s3-box"
-version = "0.4.0"
+version = "0.8.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -26,24 +26,15 @@ icm42670 = { git = "https://github.com/jessebraham/icm42670/" }
 mipidsi = "0.7.1"
 panic-halt = "0.2"
 shared-bus = { version = "0.3.0" }
-# spooky-core = { path = "../spooky-core" }
-# Insufficient memory on ESP32-S3 with 0.9.0, switched to static maze without alloc
 spooky-core = { path = "../spooky-core" }
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "dynamic_maze" ] }
-heapless = { version = "0.7.14", default-features = false }
+spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = [ "esp32s3" ] }
 
 [features]
 default = ["esp32s3_box"]
 
-system_timer = []
-
 button_controls = []
 imu_controls = []
-
-esp32 = []
-esp32s2 = ["system_timer"]
 esp32s3 = []
-esp32c3 = ["system_timer"]
 
-# Enable this feature in case you have an ESP32-S3-BOX board with ILI9342C
 esp32s3_box = [ "esp32s3", "imu_controls" ]
