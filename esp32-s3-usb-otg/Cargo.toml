@@ -28,7 +28,7 @@ mipidsi = "0.7.1"
 panic-halt = "0.2"
 shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core" }
-# spi-dma-displayinterface ={ path = "../spi-dma-displayinterface" }
+# spi-dma-displayinterface ={ path = "../spi-dma-displayinterface", features = [ "esp32s3" ] }
 
 [features]
 default = ["esp32s3_usb_otg"]

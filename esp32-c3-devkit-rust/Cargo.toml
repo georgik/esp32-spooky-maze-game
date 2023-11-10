@@ -1,6 +1,6 @@
 [package]
 name = "spooky-esp32-c3"
-version = "0.7.0"
+version = "0.8.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -27,7 +27,7 @@ panic-halt = "0.2"
 shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core", default-features = false, features = ["static_maze"]}
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze" ] }
-heapless = { version = "0.7.14", default-features = false }
+spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = ["esp32c3"] }
 
 [features]
 default = [ "esp32c3_ili9341" ]

@@ -3,6 +3,12 @@
 use core::cell::RefCell;
 
 // use embedded_hal::digital::v2::OutputPin;
+#[cfg(feature = "esp32c3")]
+use esp32c3_hal as hal;
+#[cfg(feature = "esp32s3")]
+use esp32s3_hal as hal;
+#[cfg(feature = "esp32c6")]
+use esp32c6_hal as hal;
 
 use display_interface::{DataFormat, DisplayError, WriteOnlyDataCommand};
 use hal::gpio::OutputPin;

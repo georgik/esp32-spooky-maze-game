@@ -10,4 +10,14 @@ display-interface-spi = "0.4"
 embedded-graphics = "0.8.0"
 embedded-hal = { version = "0.2", features = ["unproven"] }
 embedded-dma = "0.2.0"
-hal = { package = "esp32s3-hal", version = "0.13.0" }
+
+esp32c3-hal = { version = "*", optional = true }
+esp32c6-hal = { version = "*", optional = true }
+esp32s3-hal = { version = "*", optional = true }
+
+[features]
+default = []
+esp32c3 = [ "esp32c3-hal" ]
+esp32c6 = [ "esp32c6-hal" ]
+esp32s3 = [ "esp32s3-hal" ]
+
