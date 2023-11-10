@@ -31,11 +31,11 @@ shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core", default-features = false, features = [
     "static_maze",
 ] }
-heapless = { version = "0.7.14", default-features = false }
 esp-println = { version = "0.7.0", features = [ "esp32", "log" ] }
 log = { version = "0.4.18" }
 axp192 = { git = "https://github.com/georgik/axp192-rs.git", rev = "80e4fd27dfab", optional = true }
 #axp192 = { path = "../../axp192", optional = true }
+spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = [ "esp32" ] }
 
 [features]
 default = ["m5stack_core2"]
