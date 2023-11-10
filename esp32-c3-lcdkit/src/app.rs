@@ -1,16 +1,22 @@
 
-use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
+use embedded_graphics::pixelcolor::Rgb565;
 use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe};
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_graphics::prelude::RgbColor;
+use embedded_hal::digital::v2::OutputPin;
+use display_interface::WriteOnlyDataCommand;
+use mipidsi::models::Model;
 
-pub fn app_loop<DISP>(
-    display: &mut DISP,
+pub fn app_loop<DI, M, RST>(
+    display: &mut mipidsi::Display<DI, M, RST>,
+    lcd_h_res:u16,
+    lcd_v_res:u16,
     seed_buffer: [u8; 32],
     // icm: impl Accelerometer // You'll need to pass your accelerometer device here
-)
-where
-    DISP: DrawTarget<Color = Rgb565>,
+) where
+    DI: WriteOnlyDataCommand,
+    M: Model<ColorFormat = Rgb565>,
+    RST: OutputPin,
 {
     // let accel_movement_controller = AccelMovementController::new(icm, 0.2);
 
@@ -29,7 +35,7 @@ where
     universe.initialize();
 
     loop {
-        let _ = display
-            .draw_iter(universe.render_frame().into_iter());
+        let pixel_iterator = universe.render_frame().get_pixel_iter();
+        let _ = display.set_pixels(0, 0, lcd_v_res, lcd_h_res, pixel_iterator);
     }
 }
