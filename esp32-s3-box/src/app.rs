@@ -11,6 +11,8 @@ use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe};
 
 pub fn app_loop<DI, M, RST>(
     display: &mut mipidsi::Display<DI, M, RST>,
+    lcd_h_res:u16,
+    lcd_v_res:u16,
     seed_buffer: [u8; 32],
     icm: impl Accelerometer,
 ) where
@@ -37,6 +39,6 @@ pub fn app_loop<DI, M, RST>(
 
     loop {
         let pixel_iterator = universe.render_frame().get_pixel_iter();
-        let _ = display.set_pixels(0, 0, lcd_hres, lcd_v_res, pixel_iterator);
+        let _ = display.set_pixels(0, 0, lcd_h_res, lcd_v_res, pixel_iterator);
     }
 }

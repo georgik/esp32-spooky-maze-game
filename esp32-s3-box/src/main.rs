@@ -5,6 +5,8 @@
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
 // use display_interface_spi::SPIInterfaceNoCS;
+use spi_dma_displayinterface::spi_dma_displayinterface::SPIInterfaceNoCS;
+
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
     prelude::{Point, RgbColor},
@@ -37,8 +39,6 @@ mod s3box_composite_controller;
 
 use esp_backtrace as _;
 
-use spi_dma_displayinterface::spi_dma_displayinterface::SPIInterfaceNoCS;
-
 // #[cfg(any(feature = "imu_controls"))]
 use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
 // #[cfg(any(feature = "imu_controls"))]
@@ -58,7 +58,7 @@ fn main() -> ! {
     init_psram_heap();
 
     let system = peripherals.SYSTEM.split();
-    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock80MHz).freeze();
+    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
 
     let mut delay = Delay::new(&clocks);
 
@@ -148,6 +148,6 @@ fn main() -> ! {
     rng.read(&mut seed_buffer).unwrap();
 
     println!("Entering main loop");
-    app_loop(&mut display, seed_buffer, icm);
+    app_loop(&mut display, lcd_h_res, lcd_v_res, seed_buffer, icm);
     panic!();
 }
