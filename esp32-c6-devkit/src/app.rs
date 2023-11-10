@@ -1,12 +1,10 @@
-use crate::{types::ConfiguredPins, devkitc6_composite_controller::DevkitC6CompositeController};
+use crate::devkitc6_composite_controller::DevkitC6CompositeController;
 use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
 use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe};
 use embedded_graphics_framebuf::FrameBuf;
-use embedded_hal::digital::v2::InputPin;
 use embedded_graphics::prelude::RgbColor;
 use crate::ladder_movement_controller::LadderMovementController;
 use hal::{adc::{ADC1, AdcPin, ADC}, gpio::{GpioPin, Analog}};
-use log::debug;
 
 pub fn app_loop<DISP>(
     adc1: ADC<'_, ADC1>,

@@ -28,7 +28,7 @@ panic-halt = "0.2"
 shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core" }
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "dynamic_maze" ] }
-spi-dma-displayinterface ={ path = "../spi-dma-displayinterface" }
+spi-dma-displayinterface = { path = "../spi-dma-displayinterface" }
 
 [features]
 default = ["esp32s3_box"]
