@@ -3,7 +3,9 @@
 
 // https://docs.makerfactory.io/m5stack/core/fire/
 
-use display_interface_spi::SPIInterfaceNoCS;
+// use display_interface_spi::SPIInterfaceNoCS;
+use spi_dma_displayinterface::spi_dma_displayinterface::SPIInterfaceNoCS;
+
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
     prelude::{DrawTarget, Point, RgbColor},
@@ -15,9 +17,11 @@ use hal::{
     clock::{ClockControl, CpuClock},
     i2c::I2C,
     peripherals::Peripherals,
+    dma::DmaPriority,
+    pdma::Dma,
     prelude::*,
     spi::{
-        master::Spi,
+        master::{prelude::*, Spi},
         SpiMode,
     },
     Delay, Rng, IO,
@@ -31,9 +35,6 @@ use mpu9250::{ImuMeasurements, Mpu9250};
 
 #[cfg(feature = "mpu6050")]
 use mpu6050::Mpu6050;
-
-#[cfg(feature = "xtensa-lx-rt")]
-use xtensa_lx_rt::entry;
 
 use embedded_graphics::pixelcolor::Rgb565;
 
@@ -94,35 +95,56 @@ fn main() -> ! {
     let peripherals = Peripherals::take();
 
     let system = peripherals.SYSTEM.split();
-    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
+
+    // With DMA we have sufficient throughput, so we can clock down the CPU to 160MHz
+    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
 
     let mut delay = Delay::new(&clocks);
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
-    let mut backlight = io.pins.gpio32.into_push_pull_output();
+    let lcd_h_res = 240;
+    let lcd_v_res = 320;
+
+    let lcd_sclk = io.pins.gpio18;
+    let lcd_mosi = io.pins.gpio23;
+    let lcd_miso = io.pins.gpio19;
+    let lcd_cs = io.pins.gpio14;
+    let lcd_dc = io.pins.gpio27.into_push_pull_output();
+    let mut lcd_backlight = io.pins.gpio32.into_push_pull_output();
+    let lcd_reset = io.pins.gpio33.into_push_pull_output();
+
+    let dma = Dma::new(system.dma);
+    let dma_channel = dma.spi2channel;
+
+    let mut descriptors = [0u32; 8 * 3];
+    let mut rx_descriptors = [0u32; 8 * 3];
 
     let spi = Spi::new(
-        peripherals.SPI3,
-        io.pins.gpio18,   // SCLK
-        io.pins.gpio23,   // MOSI
-        io.pins.gpio19,   // MISO
-        io.pins.gpio14,   // CS
+        peripherals.SPI2,
+        lcd_sclk,
+        lcd_mosi,
+        lcd_miso,
+        lcd_cs,
         60u32.MHz(),
         SpiMode::Mode0,
         &clocks,
-    );
+    ).with_dma(dma_channel.configure(
+        false,
+        &mut descriptors,
+        &mut rx_descriptors,
+        DmaPriority::Priority0,
+    ));
 
-    backlight.set_high().unwrap();
+    lcd_backlight.set_high().unwrap();
 
-    let reset = io.pins.gpio33.into_push_pull_output();
-    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio27.into_push_pull_output());
+    let di = SPIInterfaceNoCS::new(spi, lcd_dc);
 
     #[cfg(feature = "m5stack_fire")]
     let mut display = mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(320, 240)
         .with_color_order(mipidsi::ColorOrder::Bgr)
-        .init(&mut delay, Some(reset))
+        .init(&mut delay, Some(lcd_reset))
         .unwrap();
 
     #[cfg(feature = "wokwi")]
@@ -271,9 +293,8 @@ fn main() -> ! {
                 universe.place_dynamite();
             }
         }
-        display
-            .draw_iter(universe.render_frame().into_iter())
-            .unwrap();
+        let pixel_iterator = universe.render_frame().get_pixel_iter();
+        let _ = display.set_pixels(0, 0, lcd_v_res-1, lcd_h_res, pixel_iterator);
         // delay.delay_ms(300u32);
     }
 }
