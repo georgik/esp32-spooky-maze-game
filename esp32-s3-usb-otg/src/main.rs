@@ -1,15 +1,15 @@
 #![no_std]
 #![no_main]
-#![feature(default_alloc_error_handler)]
 
 #[global_allocator]
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
 use display_interface_spi::SPIInterfaceNoCS;
+
 use embedded_graphics::{
-    prelude::{Point, DrawTarget, RgbColor},
+    prelude::{Point, RgbColor},
     mono_font::{
-        ascii::{FONT_8X13},
+        ascii::FONT_8X13,
         MonoTextStyle,
     },
     text::Text,
@@ -20,32 +20,27 @@ use esp_println::println;
 
 use hal::{
     clock::{ ClockControl, CpuClock },
-    // gdma::Gdma,
+    dma::DmaPriority,
+    gdma::Gdma,
     peripherals::Peripherals,
     prelude::*,
-    spi::{master::Spi, SpiMode},
+    spi::{
+        master::{prelude::*, Spi},
+        SpiMode,
+    },
     Rng,
     IO,
     Delay,
 };
 
-// systimer was introduced in ESP32-S2, it's not available for ESP32
-#[cfg(feature="system_timer")]
-use hal::systimer::{SystemTimer};
-
-// use panic_halt as _;
 use esp_backtrace as _;
 
-use embedded_graphics::{pixelcolor::Rgb565};
-// use esp32s2_hal::Rng;
-
-#[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
-use ili9341::{DisplaySize240x320, Ili9341, Orientation};
+use embedded_graphics::pixelcolor::Rgb565;
 
 use spooky_core::{spritebuf::SpriteBuf, engine::Engine, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite }};
 
 use embedded_hal::digital::v2::OutputPin;
-use embedded_graphics_framebuf::{FrameBuf};
+use embedded_graphics_framebuf::FrameBuf;
 
 pub struct Universe<D> {
     pub engine: Engine<D>,
@@ -53,7 +48,7 @@ pub struct Universe<D> {
 
 
 impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D> {
-    pub fn new(seed: Option<[u8; 32]>, engine:Engine<D>) -> Universe<D> {
+    pub fn new(_seed: Option<[u8; 32]>, engine:Engine<D>) -> Universe<D> {
         Universe {
             engine,
         }
@@ -97,8 +92,7 @@ impl <D:embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe <D>
 
 }
 
-
-#[xtensa_lx_rt::entry]
+#[entry]
 fn main() -> ! {
     const HEAP_SIZE: usize = 65535*4;
     static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
@@ -106,51 +100,65 @@ fn main() -> ! {
 
     let peripherals = Peripherals::take();
 
-    #[cfg(any(feature = "esp32"))]
-    let mut system = peripherals.DPORT.split();
-    #[cfg(any(feature = "esp32s2", feature = "esp32s3", feature = "esp32c3"))]
-    let mut system = peripherals.SYSTEM.split();
-    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
+    let system = peripherals.SYSTEM.split();
+    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock80MHz).freeze();
 
     let mut delay = Delay::new(&clocks);
-    // self.delay = Some(delay);
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
-    // https://espressif-docs.readthedocs-hosted.com/projects/espressif-esp-dev-kits/en/latest/esp32s3/esp32-s3-usb-otg/user_guide.html
-    // let button_up = button::Button::new();
+    // https://docs.espressif.com/projects/espressif-esp-dev-kits/en/latest/esp32s3/esp32-s3-usb-otg/user_guide.html
 
     let button_ok_pin = io.pins.gpio0.into_pull_up_input();
     let button_menu_pin = io.pins.gpio14.into_pull_up_input();
     let button_up_pin = io.pins.gpio10.into_pull_up_input();
     let button_down_pin = io.pins.gpio11.into_pull_up_input();
 
-    let mut backlight = io.pins.gpio9.into_push_pull_output();
+    let lcd_h_res = 240;
+    let lcd_v_res = 240;
+
+    let lcd_sclk = io.pins.gpio6;
+    let lcd_mosi = io.pins.gpio7;
+    let lcd_miso = io.pins.gpio12; // random unused pin
+    let lcd_cs = io.pins.gpio5;
+    let lcd_dc = io.pins.gpio4.into_push_pull_output();
+    let mut lcd_backlight = io.pins.gpio9.into_push_pull_output();
+    let lcd_reset = io.pins.gpio18.into_push_pull_output();
+
+    let dma = Gdma::new(peripherals.DMA);
+    let dma_channel = dma.channel0;
+
+    let mut descriptors = [0u32; 8 * 3];
+    let mut rx_descriptors = [0u32; 8 * 3];
 
     let spi = Spi::new(
-        peripherals.SPI3,
-        io.pins.gpio6,
-        io.pins.gpio7,
-        io.pins.gpio12,
-        io.pins.gpio5,
+        peripherals.SPI2,
+        lcd_sclk,
+        lcd_mosi,
+        lcd_miso,
+        lcd_cs,
         60u32.MHz(),
         SpiMode::Mode0,
-        &clocks);
+        &clocks)
+    .with_dma(dma_channel.configure(
+            false,
+            &mut descriptors,
+            &mut rx_descriptors,
+            DmaPriority::Priority0,
+    ));
 
-    backlight.set_high().unwrap();
+    lcd_backlight.set_high().unwrap();
 
-    let reset = io.pins.gpio18.into_push_pull_output();
-    let di = SPIInterfaceNoCS::new(spi, io.pins.gpio4.into_push_pull_output());
+    let di = SPIInterfaceNoCS::new(spi, lcd_dc);
 
-    #[cfg(any(feature = "esp32s2_ili9341", feature = "esp32_wrover_kit", feature = "esp32c3_ili9341"))]
-    let mut delay = Delay::new(&clocks);
+    delay.delay_ms(500u32);
 
     let mut display = mipidsi::Builder::st7789(di)
-        .with_display_size(240, 240)
+        .with_display_size(lcd_h_res, lcd_v_res)
         .with_orientation(mipidsi::Orientation::PortraitInverted(false))
         .with_invert_colors(mipidsi::ColorInversion::Inverted)
-        .init(&mut delay, Some(reset)).unwrap();
+        .init(&mut delay, Some(lcd_reset)).unwrap();
 
     Text::new(
         "Initializing...",
@@ -164,8 +172,8 @@ fn main() -> ! {
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8;32];
     rng.read(&mut seed_buffer).unwrap();
-    let mut data = [Rgb565::BLACK ; 240*240];
-    let fbuf = FrameBuf::new(&mut data, 240, 240);
+    let mut data = [Rgb565::BLACK ; 240 * 240];
+    let fbuf = FrameBuf::new(&mut data, lcd_h_res.into(), lcd_v_res.into());
     let spritebuf = SpriteBuf::new(fbuf);
     let engine = Engine::new(spritebuf, Some(seed_buffer));
 
@@ -192,6 +200,7 @@ fn main() -> ! {
             universe.move_right();
         }
 
-        display.draw_iter(universe.render_frame().into_iter()).unwrap();
+        let pixel_iterator = universe.render_frame().get_pixel_iter();
+        let _ = display.set_pixels(0, 0, lcd_h_res, lcd_v_res, pixel_iterator);
     }
 }

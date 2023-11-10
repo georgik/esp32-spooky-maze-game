@@ -37,6 +37,6 @@ pub fn app_loop<DI, M, RST>(
 
     loop {
         let pixel_iterator = universe.render_frame().get_pixel_iter();
-        let _ = display.set_pixels(0, 0, 320, 240, pixel_iterator);
+        let _ = display.set_pixels(0, 0, lcd_hres, lcd_v_res, pixel_iterator);
     }
 }
