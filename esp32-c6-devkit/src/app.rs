@@ -1,19 +1,26 @@
 use crate::devkitc6_composite_controller::DevkitC6CompositeController;
-use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
+use display_interface::WriteOnlyDataCommand;
+use embedded_graphics::pixelcolor::Rgb565;
+use mipidsi::models::Model;
 use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe};
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_graphics::prelude::RgbColor;
 use crate::ladder_movement_controller::LadderMovementController;
+use embedded_hal::digital::v2::OutputPin;
 use hal::{adc::{ADC1, AdcPin, ADC}, gpio::{GpioPin, Analog}};
 
-pub fn app_loop<DISP>(
+pub fn app_loop<DI, M, RST>(
+    display: &mut mipidsi::Display<DI, M, RST>,
+    lcd_h_res:u16,
+    lcd_v_res:u16,
     adc1: ADC<'_, ADC1>,
     adc_ladder_pin: AdcPin<GpioPin<Analog, 2>, ADC1>,
-    display: &mut DISP,
     seed_buffer: [u8; 32]
 )
 where
-    DISP: DrawTarget<Color = Rgb565>,
+    DI: WriteOnlyDataCommand,
+    M: Model<ColorFormat = Rgb565>,
+    RST: OutputPin,
 {
     let ladder_movement_controller = LadderMovementController::new(adc1, adc_ladder_pin);
 
@@ -32,7 +39,7 @@ where
     universe.initialize();
 
     loop {
-        let _ = display
-            .draw_iter(universe.render_frame().into_iter());
+        let pixel_iterator = universe.render_frame().get_pixel_iter();
+        let _ = display.set_pixels(0, 0, lcd_v_res, lcd_h_res, pixel_iterator);
     }
 }

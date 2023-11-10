@@ -28,7 +28,7 @@ petgraph = { git = "https://github.com/zendurix/petgraph.git", branch = "better_
 shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core", default-features = false, features = [ "static_maze"]}
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze" ] }
-# spi-dma-displayinterface = { path = "../spi-dma-displayinterface" }
+spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = [ "esp32c6" ] }
 
 [features]
 default = [ "esp32c6_ili9341" ]

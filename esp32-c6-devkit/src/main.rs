@@ -4,8 +4,8 @@
 #[global_allocator]
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
-use display_interface_spi::SPIInterfaceNoCS;
-// use spi_dma_displayinterface::spi_dma_displayinterface::SPIInterfaceNoCS;
+// use display_interface_spi::SPIInterfaceNoCS;
+use spi_dma_displayinterface::spi_dma_displayinterface::SPIInterfaceNoCS;
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
@@ -18,8 +18,8 @@ use log::info;
 
 use hal::{
     clock::{ClockControl, CpuClock},
-    // dma::DmaPriority,
-    // gdma::Gdma,
+    dma::DmaPriority,
+    gdma::Gdma,
     peripherals::Peripherals,
     prelude::*,
     spi::{
@@ -45,7 +45,9 @@ fn main() -> ! {
     let peripherals = Peripherals::take();
 
     let system = peripherals.SYSTEM.split();
-    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
+
+    // With DMA we have sufficient throughput, so we can clock down the CPU to 80MHz
+    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock80MHz).freeze();
 
     esp_println::logger::init_logger_from_env();
 
@@ -65,11 +67,11 @@ fn main() -> ! {
 
     let adc_pin = io.pins.gpio2.into_analog();
 
-    // let dma = Gdma::new(peripherals.DMA);
-    // let dma_channel = dma.channel0;
+    let dma = Gdma::new(peripherals.DMA);
+    let dma_channel = dma.channel0;
 
-    // let mut descriptors = [0u32; 8 * 3];
-    // let mut rx_descriptors = [0u32; 8 * 3];
+    let mut descriptors = [0u32; 8 * 3];
+    let mut rx_descriptors = [0u32; 8 * 3];
 
     let spi = Spi::new(
         peripherals.SPI2,
@@ -80,13 +82,12 @@ fn main() -> ! {
         60u32.MHz(),
         SpiMode::Mode0,
         &clocks
-    );
-    // ).with_dma(dma_channel.configure(
-    //     false,
-    //     &mut descriptors,
-    //     &mut rx_descriptors,
-    //     DmaPriority::Priority0,
-    // ));
+    ).with_dma(dma_channel.configure(
+        false,
+        &mut descriptors,
+        &mut rx_descriptors,
+        DmaPriority::Priority0,
+    ));
 
     let di = SPIInterfaceNoCS::new(spi, lcd_dc);
 
@@ -124,6 +125,6 @@ fn main() -> ! {
     let adc1 = ADC::<ADC1>::adc(analog.adc1, adc1_config).unwrap();
 
     info!("Entering main loop");
-    app_loop(adc1, adc_pin, &mut display, seed_buffer);
+    app_loop(&mut display, lcd_h_res, lcd_v_res, adc1, adc_pin,  seed_buffer);
     loop {}
 }
