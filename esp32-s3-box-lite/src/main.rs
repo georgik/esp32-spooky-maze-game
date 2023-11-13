@@ -59,8 +59,10 @@ fn main() -> ! {
     psram::init_psram(peripherals.PSRAM);
     init_psram_heap();
 
-    let mut system = peripherals.SYSTEM.split();
-    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
+    let system = peripherals.SYSTEM.split();
+
+    // With DMA we have sufficient throughput, so we can clock down the CPU to 160MHz
+    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
 
     let mut delay = Delay::new(&clocks);
 
