@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 embedded-hal = { version = "0.2", features = ["unproven"] }
 embedded-graphics = "0.8.0"
+icm42670 = { git = "https://github.com/jessebraham/icm42670/" }
 spooky-core = { path = "../spooky-core", default-features = false}
 
 [features]

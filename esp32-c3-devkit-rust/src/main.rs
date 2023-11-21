@@ -37,9 +37,6 @@ use app::app_loop;
 
 use spooky_embedded::embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE};
 
-mod accel_movement_controller;
-mod s3box_composite_controller;
-
 use esp_backtrace as _;
 
 // #[cfg(any(feature = "imu_controls"))]

@@ -1,5 +1,10 @@
-use spooky_embedded::embedded_display::{LCD_V_RES, LCD_H_RES, LCD_PIXELS};
-use crate::s3box_composite_controller::S3BoxCompositeController;
+use spooky_embedded::{
+    embedded_display::{LCD_V_RES, LCD_H_RES, LCD_PIXELS},
+    controllers::{
+        composites::s3box::S3BoxCompositeController,
+        accel::AccelMovementController,
+    }
+};
 use embedded_graphics::pixelcolor::Rgb565;
 use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe};
 use embedded_graphics_framebuf::FrameBuf;
@@ -7,7 +12,6 @@ use embedded_graphics::prelude::RgbColor;
 use display_interface::WriteOnlyDataCommand;
 use embedded_hal::digital::v2::OutputPin;
 use mipidsi::models::Model;
-use crate::accel_movement_controller::AccelMovementController;
 use crate::Accelerometer;
 
 pub fn app_loop<DI, M, RST>(

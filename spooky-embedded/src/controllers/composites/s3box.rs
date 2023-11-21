@@ -1,7 +1,7 @@
 use spooky_core::engine::Action;
 use spooky_core::movement_controller::MovementController;
 use spooky_core::demo_movement_controller::DemoMovementController;
-use crate::accel_movement_controller::AccelMovementController;
+use crate::controllers::accel::AccelMovementController;
 use icm42670::accelerometer::Accelerometer;
 
 pub struct S3BoxCompositeController<I>
