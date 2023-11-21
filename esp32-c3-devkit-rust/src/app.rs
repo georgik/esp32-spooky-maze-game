@@ -1,32 +1,22 @@
-use spooky_embedded::{
-    embedded_display::{LCD_V_RES, LCD_H_RES, LCD_PIXELS},
-    controllers::{
-        composites::s3box::S3BoxCompositeController,
-        accel::AccelMovementController,
-    }
-};
+use spooky_embedded::embedded_display::{LCD_V_RES, LCD_H_RES, LCD_PIXELS};
 use embedded_graphics::pixelcolor::Rgb565;
-use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe};
+use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe, movement_controller::MovementController};
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_graphics::prelude::RgbColor;
 use display_interface::WriteOnlyDataCommand;
 use embedded_hal::digital::v2::OutputPin;
 use mipidsi::models::Model;
-use crate::Accelerometer;
 
-pub fn app_loop<DI, M, RST>(
+pub fn app_loop<DI, M, RST, MC>(
     display: &mut mipidsi::Display<DI, M, RST>,
     seed_buffer: [u8; 32],
-    icm: impl Accelerometer
+    movement_controller: MC
 ) where
     DI: WriteOnlyDataCommand,
     M: Model<ColorFormat = Rgb565>,
     RST: OutputPin,
+    MC: MovementController,
 {
-    let accel_movement_controller = AccelMovementController::new(icm, 0.2);
-
-    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
-    let movement_controller = S3BoxCompositeController::new(demo_movement_controller, accel_movement_controller);
 
     let mut data = [Rgb565::BLACK; LCD_PIXELS];
     let fbuf = FrameBuf::new(&mut data, LCD_H_RES as usize, LCD_V_RES as usize);
