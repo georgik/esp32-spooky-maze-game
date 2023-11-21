@@ -1,5 +1,6 @@
+use crate::constants::{LCD_V_RES, LCD_H_RES, LCD_PIXELS};
 use crate::s3box_composite_controller::S3BoxCompositeController;
-use embedded_graphics::{pixelcolor::Rgb565};
+use embedded_graphics::pixelcolor::Rgb565;
 use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe};
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_graphics::prelude::RgbColor;
@@ -11,8 +12,6 @@ use crate::Accelerometer;
 
 pub fn app_loop<DI, M, RST>(
     display: &mut mipidsi::Display<DI, M, RST>,
-    lcd_h_res:u16,
-    lcd_v_res:u16,
     seed_buffer: [u8; 32],
     icm: impl Accelerometer
 ) where
@@ -25,8 +24,8 @@ pub fn app_loop<DI, M, RST>(
     let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
     let movement_controller = S3BoxCompositeController::new(demo_movement_controller, accel_movement_controller);
 
-    let mut data = [Rgb565::BLACK; 320 * 240];
-    let fbuf = FrameBuf::new(&mut data, 320, 240);
+    let mut data = [Rgb565::BLACK; LCD_PIXELS];
+    let fbuf = FrameBuf::new(&mut data, LCD_H_RES as usize, LCD_V_RES as usize);
     let spritebuf = SpriteBuf::new(fbuf);
 
     let engine = Engine::new(spritebuf, Some(seed_buffer));
@@ -37,6 +36,6 @@ pub fn app_loop<DI, M, RST>(
 
     loop {
         let pixel_iterator = universe.render_frame().get_pixel_iter();
-        let _ = display.set_pixels(0, 0, lcd_v_res, lcd_h_res, pixel_iterator);
+        let _ = display.set_pixels(0, 0, LCD_H_RES, LCD_V_RES, pixel_iterator);
     }
 }

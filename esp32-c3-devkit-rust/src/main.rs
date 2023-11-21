@@ -35,6 +35,9 @@ use hal::{
 mod app;
 use app::app_loop;
 
+mod constants;
+use constants::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE};
+
 mod accel_movement_controller;
 mod s3box_composite_controller;
 
@@ -57,10 +60,6 @@ fn main() -> ! {
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-
-    const LCD_H_RES:u16 = 240;
-    const LCD_V_RES:u16 = 320;
-    const LCD_MEMORY_SIZE: usize = (LCD_H_RES as usize) * (LCD_V_RES as usize) * 2;
 
     let lcd_sclk = io.pins.gpio0;
     let lcd_mosi = io.pins.gpio6;
@@ -148,7 +147,7 @@ fn main() -> ! {
     rng.read(&mut seed_buffer).unwrap();
 
 
-    app_loop( &mut display, LCD_H_RES, LCD_V_RES, seed_buffer, icm);
+    app_loop( &mut display, seed_buffer, icm);
     loop {}
 
 }
