@@ -22,7 +22,7 @@ use hal::{
     dma::DmaPriority,
     gdma::Gdma,
     interrupt,
-    peripherals::{self, Peripherals, TIMG0},
+    peripherals::{self, Peripherals, TIMG0, TIMG1},
     prelude::*,
     riscv,
     spi::{
@@ -46,7 +46,12 @@ use esp_backtrace as _;
 use core::{borrow::BorrowMut, cell::RefCell};
 use critical_section::Mutex;
 
+// Timer for encoder polling
 static TIMER0: Mutex<RefCell<Option<Timer<Timer0<TIMG0>>>>> = Mutex::new(RefCell::new(None));
+
+// Timer for frame rate calculation
+static TIMER1: Mutex<RefCell<Option<Timer<Timer0<TIMG1>>>>> = Mutex::new(RefCell::new(None));
+
 static ROTARY_ENCODER: Mutex<
     RefCell<
         Option<
@@ -76,6 +81,35 @@ fn TG0_T0_LEVEL() {
     });
 }
 
+static FRAME_COUNTER: Mutex<RefCell<u32>> = Mutex::new(RefCell::new(0));
+static TIMER_INTERVAL: u64 = 1_000; // 1 second
+
+#[interrupt]
+fn TG1_T0_LEVEL() {
+    critical_section::with(|cs| {
+        // Calculate and print frame rate
+        let frame_count = *FRAME_COUNTER.borrow_ref_mut(cs);
+        let frame_rate = frame_count as f64 / (TIMER_INTERVAL as f64 / 1_000.0);
+        println!("Frame Rate: {:.2} FPS", frame_rate);
+
+        // Reset frame counter
+        *FRAME_COUNTER.borrow_ref_mut(cs) = 0;
+
+        // Reset and restart the timer for the next interval
+        let mut timer1 = TIMER1.borrow_ref_mut(cs);
+        let timer1 = timer1.as_mut().unwrap();
+        timer1.clear_interrupt();
+        timer1.start(TIMER_INTERVAL.millis());
+    });
+}
+
+// Call this function at the end of each frame rendering in your main loop
+fn increment_frame_counter() {
+    critical_section::with(|cs| {
+        *FRAME_COUNTER.borrow_ref_mut(cs) += 1;
+    });
+}
+
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take();
@@ -86,6 +120,8 @@ fn main() -> ! {
 
     let timer_group0 = TimerGroup::new(peripherals.TIMG0, &clocks);
     let mut timer0 = timer_group0.timer0;
+    let timer_group1 = TimerGroup::new(peripherals.TIMG1, &clocks);
+    let mut timer1 = timer_group1.timer0;
 
     let mut delay = Delay::new(&clocks);
 
@@ -175,12 +211,24 @@ fn main() -> ! {
         interrupt::Priority::Priority1,
     )
     .unwrap();
+
+    interrupt::enable(
+        peripherals::Interrupt::TG1_T0_LEVEL,
+        interrupt::Priority::Priority1,
+    )
+    .unwrap();
+
     timer0.start(10u64.millis());
     timer0.listen();
+
+    // Meassure FPS
+    timer1.start(TIMER_INTERVAL.millis());
+    timer1.listen();
 
     critical_section::with(|cs| {
         ROTARY_ENCODER.borrow_ref_mut(cs).replace(rotary_encoder);
         TIMER0.borrow_ref_mut(cs).replace(timer0);
+        TIMER1.borrow_ref_mut(cs).replace(timer1);
     });
 
     unsafe {
@@ -268,6 +316,8 @@ fn main() -> ! {
         let pixel_iterator = universe.render_frame().get_pixel_iter();
         // -1 for some reason is necessary otherwise the display is skewed
         let _ = display.set_pixels(0, 0, (lcd_v_res-1) as u16, lcd_h_res as u16, pixel_iterator);
+
+        increment_frame_counter();
 
     }
 }
