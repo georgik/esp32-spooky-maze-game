@@ -1,4 +1,4 @@
-use spooky_embedded::embedded_display::{LCD_V_RES, LCD_H_RES, LCD_PIXELS};
+use crate::embedded_display::{LCD_V_RES, LCD_H_RES, LCD_PIXELS};
 use embedded_graphics::pixelcolor::Rgb565;
 use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe, movement_controller::MovementController};
 use embedded_graphics_framebuf::FrameBuf;

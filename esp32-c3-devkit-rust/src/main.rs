@@ -24,7 +24,6 @@ use hal::{
     prelude::*,
     spi::{
         master::{prelude::*, Spi},
-        // master::Spi,
         SpiMode,
     },
     Delay,
@@ -32,8 +31,7 @@ use hal::{
     IO
 };
 
-mod app;
-use app::app_loop;
+use spooky_embedded::app::app_loop;
 
 use spooky_embedded::{
     embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE},
@@ -42,9 +40,7 @@ use spooky_embedded::{
 
 use esp_backtrace as _;
 
-// #[cfg(any(feature = "imu_controls"))]
-use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
-// #[cfg(any(feature = "imu_controls"))]
+use icm42670::{Address, Icm42670};
 use shared_bus::BusManagerSimple;
 
 #[entry]

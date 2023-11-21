@@ -4,9 +4,12 @@ version = "0.9.0"
 edition = "2021"
 
 [dependencies]
+display-interface = "0.4"
 embedded-hal = { version = "0.2", features = ["unproven"] }
 embedded-graphics = "0.8.0"
+embedded-graphics-framebuf = { version = "0.3.0", git = "https://github.com/georgik/embedded-graphics-framebuf.git", branch = "feature/embedded-graphics-0.8" }
 icm42670 = { git = "https://github.com/jessebraham/icm42670/" }
+mipidsi = "0.7.1"
 spooky-core = { path = "../spooky-core", default-features = false}
 
 [features]
