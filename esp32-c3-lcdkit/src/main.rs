@@ -5,7 +5,7 @@
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
 // use display_interface_spi::SPIInterfaceNoCS;
-use spi_dma_displayinterface::spi_dma_displayinterface::SPIInterfaceNoCS;
+use spi_dma_displayinterface::spi_dma_displayinterface;
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
@@ -132,7 +132,7 @@ fn main() -> ! {
 
     println!("SPI ready");
 
-    let di = SPIInterfaceNoCS::new(spi, lcd_dc);
+    let di = spi_dma_displayinterface::new_no_cs(lcd_h_res * lcd_v_res * 2, spi, lcd_dc);
 
     // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
     // If delay is 250ms, picture will be fuzzy.
@@ -267,7 +267,7 @@ fn main() -> ! {
 
         let pixel_iterator = universe.render_frame().get_pixel_iter();
         // -1 for some reason is necessary otherwise the display is skewed
-        let _ = display.set_pixels(0, 0, lcd_v_res-1, lcd_h_res, pixel_iterator);
+        let _ = display.set_pixels(0, 0, (lcd_v_res-1) as u16, lcd_h_res as u16, pixel_iterator);
 
     }
 }
