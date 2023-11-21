@@ -7,7 +7,7 @@
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
 // use display_interface_spi::SPIInterfaceNoCS;
-use spi_dma_displayinterface::spi_dma_displayinterface::SPIInterfaceNoCS;
+use spi_dma_displayinterface::spi_dma_displayinterface;
 
 use esp_backtrace as _;
 use hal::{psram, prelude::*,
@@ -99,7 +99,7 @@ fn main() -> ! {
         DmaPriority::Priority0,
     ));
 
-    let di = SPIInterfaceNoCS::new(spi, lcd_dc);
+    let di = spi_dma_displayinterface::new_no_cs(lcd_h_res * lcd_v_res * 2, spi, lcd_dc);
 
     let mut display = match mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(lcd_h_res as u16, lcd_v_res as u16)
@@ -122,6 +122,6 @@ fn main() -> ! {
     let mut seed_buffer = [1u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
-    app_loop(&mut display, lcd_h_res, lcd_v_res, configured_pins, seed_buffer);
+    app_loop(&mut display, lcd_h_res as u16, lcd_v_res as u16, configured_pins, seed_buffer);
     loop {}
 }

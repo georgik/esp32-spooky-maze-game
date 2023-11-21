@@ -1,6 +1,7 @@
 [package]
+# Source: https://github.com/bjoernQ/rust-esp32s3-ili9341/blob/main/src/spi_dma_displayinterface.rs
 name = "spi-dma-displayinterface"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 [dependencies]
@@ -10,6 +11,7 @@ display-interface-spi = "0.4"
 embedded-graphics = "0.8.0"
 embedded-hal = { version = "0.2", features = ["unproven"] }
 embedded-dma = "0.2.0"
+num-traits = { version = "0.2.17", default-features = false }
 
 esp32-hal = { version = "0.16.0", optional = true }
 esp32c3-hal = { version = "*", optional = true }
