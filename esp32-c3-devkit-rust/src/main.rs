@@ -4,8 +4,7 @@
 #[global_allocator]
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
-// use display_interface_spi::SPIInterfaceNoCS;
-use spi_dma_displayinterface::spi_dma_displayinterface::SPIInterfaceNoCS;
+use spi_dma_displayinterface::spi_dma_displayinterface;
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
@@ -59,8 +58,9 @@ fn main() -> ! {
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
-    let lcd_h_res = 240;
-    let lcd_v_res = 320;
+    const LCD_H_RES:u16 = 240;
+    const LCD_V_RES:u16 = 320;
+    const LCD_MEMORY_SIZE: usize = (LCD_H_RES as usize) * (LCD_V_RES as usize) * 2;
 
     let lcd_sclk = io.pins.gpio0;
     let lcd_mosi = io.pins.gpio6;
@@ -98,7 +98,7 @@ fn main() -> ! {
 
     println!("SPI ready");
 
-    let di = SPIInterfaceNoCS::new(spi, lcd_dc);
+    let di = spi_dma_displayinterface::new_no_cs(LCD_MEMORY_SIZE, spi, lcd_dc);
 
     // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
     // If delay is 250ms, picture will be fuzzy.
@@ -106,7 +106,7 @@ fn main() -> ! {
     delay.delay_ms(500u32);
 
     let mut display = match mipidsi::Builder::st7789(di)
-    .with_display_size(lcd_h_res as u16, lcd_v_res as u16)
+    .with_display_size(LCD_H_RES, LCD_V_RES)
     .with_orientation(mipidsi::Orientation::Landscape(true))
     .with_color_order(mipidsi::ColorOrder::Rgb)
         .init(&mut delay, Some(lcd_reset)) {
@@ -148,7 +148,7 @@ fn main() -> ! {
     rng.read(&mut seed_buffer).unwrap();
 
 
-    app_loop( &mut display, lcd_h_res, lcd_v_res, seed_buffer, icm);
+    app_loop( &mut display, LCD_H_RES, LCD_V_RES, seed_buffer, icm);
     loop {}
 
 }
