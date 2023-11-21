@@ -1,6 +1,6 @@
 use crate::types::ConfiguredPins;
 use embedded_hal::digital::v2::InputPin;
-use spooky_embedded::{ button_keyboard::ButtonKeyboard, embedded_movement_controller::EmbeddedMovementController };
+use spooky_embedded::{ button_keyboard::ButtonKeyboard, controllers::embedded::EmbeddedMovementController };
 use spooky_core;
 
 pub fn setup_button_keyboard<Up: InputPin, Down: InputPin, Left: InputPin, Right: InputPin, Dyn: InputPin, Tel: InputPin>(
