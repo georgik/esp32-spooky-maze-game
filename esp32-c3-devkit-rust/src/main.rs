@@ -35,8 +35,7 @@ use hal::{
 mod app;
 use app::app_loop;
 
-mod constants;
-use constants::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE};
+use spooky_embedded::embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE};
 
 mod accel_movement_controller;
 mod s3box_composite_controller;
