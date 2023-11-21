@@ -25,17 +25,3 @@ shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core", default-features = false, features = ["static_maze"]}
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze", "resolution_320x240" ] }
 spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = ["esp32c3"] }
-
-[features]
-default = [ "esp32c3_ili9341" ]
-system_timer = []
-
-button_controls = []
-imu_controls = []
-
-esp32 = []
-esp32s2 = ["system_timer"]
-esp32s3 = []
-esp32c3 = ["system_timer"]
-
-esp32c3_ili9341 = [ "esp32c3", "imu_controls" ]

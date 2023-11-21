@@ -111,8 +111,6 @@ fn main() -> ! {
         }
     };
 
-    // configured_system_pins.backlight.set_high();
-
     println!("Initializing...");
         Text::new(
             "Initializing...",
@@ -132,9 +130,7 @@ fn main() -> ! {
     );
     println!("I2C ready");
 
-    // #[cfg(any(feature = "imu_controls"))]
     let bus = BusManagerSimple::new(i2c);
-    // #[cfg(any(feature = "imu_controls"))]
     let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
 
     let mut rng = Rng::new(peripherals.RNG);
