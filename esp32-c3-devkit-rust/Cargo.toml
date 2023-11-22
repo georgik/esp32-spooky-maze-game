@@ -23,5 +23,5 @@ mipidsi = "0.7.1"
 panic-halt = "0.2"
 shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core", default-features = false, features = ["static_maze"]}
-spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze", "resolution_320x240" ] }
+spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "esp32c3", "static_maze", "resolution_320x240" ] }
 spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = ["esp32c3"] }
