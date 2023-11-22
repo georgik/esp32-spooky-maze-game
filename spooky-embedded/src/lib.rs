@@ -7,7 +7,7 @@ pub mod controllers {
     pub mod composites {
         #[cfg(any(feature = "esp32s2", feature = "esp32c6"))]
         pub mod ladder_composite;
-        pub mod s3box;
+        pub mod accel_composite;
     }
     pub mod embedded;
     #[cfg(any(feature = "esp32s2", feature = "esp32c6"))]

@@ -4,7 +4,7 @@ use spooky_core::demo_movement_controller::DemoMovementController;
 use crate::controllers::accel::AccelMovementController;
 use icm42670::accelerometer::Accelerometer;
 
-pub struct S3BoxCompositeController<I>
+pub struct AccelCompositeController<I>
 where
     I: Accelerometer,
 {
@@ -15,7 +15,7 @@ where
     last_accel_action: Action,
 }
 
-impl<I> S3BoxCompositeController<I>
+impl<I> AccelCompositeController<I>
 where
     I: Accelerometer,
 {
@@ -30,7 +30,7 @@ where
     }
 }
 
-impl<I> MovementController for S3BoxCompositeController<I>
+impl<I> MovementController for AccelCompositeController<I>
 where
     I: Accelerometer,
 {

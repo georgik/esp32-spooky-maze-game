@@ -35,7 +35,7 @@ use spooky_embedded::app::app_loop;
 
 use spooky_embedded::{
     embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE},
-    controllers::{accel::AccelMovementController, composites::s3box::S3BoxCompositeController}
+    controllers::{accel::AccelMovementController, composites::accel_composite::AccelCompositeController}
 };
 
 use esp_backtrace as _;
@@ -139,7 +139,7 @@ fn main() -> ! {
 
     let accel_movement_controller = AccelMovementController::new(icm, 0.2);
     let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
-    let movement_controller = S3BoxCompositeController::new(demo_movement_controller, accel_movement_controller);
+    let movement_controller = AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
 
     app_loop( &mut display, seed_buffer, movement_controller);
     loop {}
