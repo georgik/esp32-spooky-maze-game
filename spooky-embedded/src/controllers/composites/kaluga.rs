@@ -1,6 +1,6 @@
 use spooky_core::engine::Action;
 use spooky_core::movement_controller::MovementController;
-use crate::ladder_movement_controller::LadderMovementController;
+use crate::controllers::ladder::LadderMovementController;
 use spooky_core::demo_movement_controller::DemoMovementController;
 
 pub struct KalugaCompositeController<'a> {

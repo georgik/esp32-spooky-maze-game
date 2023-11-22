@@ -5,8 +5,10 @@ pub mod controllers {
     pub mod accel;
     pub mod button;
     pub mod composites {
+        pub mod kaluga;
         pub mod s3box;
     }
     pub mod embedded;
+    pub mod ladder;
 }
 pub mod embedded_display;

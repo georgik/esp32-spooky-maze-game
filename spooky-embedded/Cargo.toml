@@ -9,12 +9,27 @@ embedded-hal = { version = "0.2", features = ["unproven"] }
 embedded-graphics = "0.8.0"
 embedded-graphics-framebuf = { version = "0.3.0", git = "https://github.com/georgik/embedded-graphics-framebuf.git", branch = "feature/embedded-graphics-0.8" }
 icm42670 = { git = "https://github.com/jessebraham/icm42670/" }
+log = { version = "0.4.18" }
 mipidsi = "0.7.1"
 spooky-core = { path = "../spooky-core", default-features = false}
 
+esp32-hal = { version = "0.16.0", optional = true }
+esp32c3-hal = { version = "*", optional = true }
+esp32c6-hal = { version = "*", optional = true }
+esp32s2-hal = { version = "0.13.0", optional = true }
+esp32s3-hal = { version = "0.13.0", optional = true }
+
 [features]
 default = [ "dynamic_maze", "resolution_320x240" ]
+
+esp32 = [ "esp32-hal" ]
+esp32c3 = [ "esp32c3-hal" ]
+esp32c6 = [ "esp32c6-hal" ]
+esp32s2 = [ "esp32s2-hal" ]
+esp32s3 = [ "esp32s3-hal" ]
+
 dynamic_maze = ["spooky-core/dynamic_maze"]
 static_maze = ["spooky-core/static_maze"]
+
 resolution_240x240 = []
 resolution_320x240 = []
