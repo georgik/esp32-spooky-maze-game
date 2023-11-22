@@ -31,12 +31,13 @@ use hal::{
     adc::{AdcConfig, Attenuation, ADC, ADC1},
 };
 
-mod devkitc6_composite_controller;
-mod ladder_movement_controller;
-
 use spooky_embedded::{
     app::app_loop,
     embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE},
+    controllers::{
+        composites::ladder_composite::LadderCompositeController,
+        ladder::LadderMovementController
+    },
 };
 
 use esp_backtrace as _;
@@ -123,11 +124,9 @@ fn main() -> ! {
 
     info!("Entering main loop");
 
-    use crate::devkitc6_composite_controller::DevkitC6CompositeController;
-    use crate::ladder_movement_controller::LadderMovementController;
     let ladder_movement_controller = LadderMovementController::new(adc1, adc_pin);
     let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
-    let movement_controller = DevkitC6CompositeController::new(demo_movement_controller, ladder_movement_controller);
+    let movement_controller = LadderCompositeController::new(demo_movement_controller, ladder_movement_controller);
 
     app_loop(&mut display, seed_buffer, movement_controller);
     loop {}

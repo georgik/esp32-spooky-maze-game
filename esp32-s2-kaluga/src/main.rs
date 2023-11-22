@@ -38,7 +38,7 @@ use spooky_embedded::{
     embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE},
     controllers::{
         ladder::LadderMovementController,
-        composites::kaluga::KalugaCompositeController,
+        composites::ladder_composite::LadderCompositeController,
     }
 };
 
@@ -135,7 +135,7 @@ fn main() -> ! {
 
     let ladder_movement_controller = LadderMovementController::new(adc1, adc_pin);
     let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
-    let movement_controller = KalugaCompositeController::new(demo_movement_controller, ladder_movement_controller);
+    let movement_controller = LadderCompositeController::new(demo_movement_controller, ladder_movement_controller);
 
     app_loop( &mut display, seed_buffer, movement_controller);
     loop {}
