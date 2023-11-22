@@ -4,8 +4,7 @@
 #[global_allocator]
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
-// use display_interface_spi::SPIInterfaceNoCS;
-use spi_dma_displayinterface::spi_dma_displayinterface::SPIInterfaceNoCS;
+use spi_dma_displayinterface::spi_dma_displayinterface;
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
@@ -31,17 +30,19 @@ use hal::{
     Delay, Rng, IO,
 };
 
-mod app;
-use app::app_loop;
+use spooky_embedded::{
+    app::app_loop,
+    controllers::{
+        accel::AccelMovementController,
+        composites::accel_composite::AccelCompositeController
+    },
+    embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE},
+};
 
-mod accel_movement_controller;
-mod s3box_composite_controller;
 
 use esp_backtrace as _;
 
-// #[cfg(any(feature = "imu_controls"))]
-use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
-// #[cfg(any(feature = "imu_controls"))]
+use icm42670::{Address, Icm42670};
 use shared_bus::BusManagerSimple;
 
 fn init_psram_heap() {
@@ -64,9 +65,6 @@ fn main() -> ! {
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-
-    let lcd_h_res = 320;
-    let lcd_v_res = 240;
 
     let lcd_sclk = io.pins.gpio7;
     let lcd_mosi = io.pins.gpio6;
@@ -104,7 +102,7 @@ fn main() -> ! {
 
     println!("SPI ready");
 
-    let di = SPIInterfaceNoCS::new(spi, lcd_dc);
+    let di = spi_dma_displayinterface::new_no_cs(LCD_MEMORY_SIZE, spi, lcd_dc);
 
     // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
     // If delay is 250ms, picture will be fuzzy.
@@ -112,7 +110,7 @@ fn main() -> ! {
     delay.delay_ms(500u32);
 
     let mut display = match mipidsi::Builder::ili9342c_rgb565(di)
-        .with_display_size(lcd_h_res, lcd_v_res)
+        .with_display_size(LCD_H_RES, LCD_V_RES)
         .with_orientation(mipidsi::Orientation::PortraitInverted(false))
         .with_color_order(mipidsi::ColorOrder::Bgr)
         .init(&mut delay, Some(lcd_reset))
@@ -147,7 +145,11 @@ fn main() -> ! {
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
+    let accel_movement_controller = AccelMovementController::new(icm, 0.2);
+    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
+    let movement_controller = AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
+
     println!("Entering main loop");
-    app_loop(&mut display, lcd_h_res, lcd_v_res, seed_buffer, icm);
-    panic!();
+    app_loop(&mut display, seed_buffer, movement_controller);
+    loop {}
 }
