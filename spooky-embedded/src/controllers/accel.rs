@@ -37,9 +37,9 @@ where
     fn tick(&mut self) {
         if let Ok(accel_norm) = self.icm.accel_norm() {
             if accel_norm.y > self.accel_threshold {
-                self.last_action = Action::Right;
-            } else if accel_norm.y < -self.accel_threshold {
                 self.last_action = Action::Left;
+            } else if accel_norm.y < -self.accel_threshold {
+                self.last_action = Action::Right;
             } else if accel_norm.x > self.accel_threshold {
                 self.last_action = Action::Down;
             } else if accel_norm.x < -self.accel_threshold {
@@ -81,8 +81,8 @@ where
     fn accel_norm(&mut self) -> Result<icm42670::accelerometer::vector::F32x3, icm42670::accelerometer::Error<Self::Error>> {
         let measurement = self.0.get_acc()?;
         Ok(icm42670::accelerometer::vector::F32x3 {
-            x: measurement.x as f32,
-            y: measurement.y as f32,
+            x: measurement.y as f32, // X and Y are swapped on the MPU6886
+            y: measurement.x as f32,
             z: measurement.z as f32,
         })
     }
