@@ -35,6 +35,11 @@ use hal::{
     IO,
 };
 
+use spooky_embedded::{
+    embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE, LCD_PIXELS},
+    controllers::{accel::AccelMovementController, composites::accel_composite::AccelCompositeController}
+};
+
 mod app;
 
 mod lcdkit_composite_controller;
@@ -129,9 +134,6 @@ fn main() -> ! {
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
     // https://docs.espressif.com/projects/espressif-esp-dev-kits/en/latest/esp32c3/esp32-c3-lcdkit/user_guide.html#gpio-allocation
 
-    let lcd_h_res = 240;
-    let lcd_v_res = 240;
-
     let lcd_sclk = io.pins.gpio1;
     let lcd_mosi = io.pins.gpio0;
     let lcd_miso = io.pins.gpio4;
@@ -168,7 +170,7 @@ fn main() -> ! {
 
     println!("SPI ready");
 
-    let di = spi_dma_displayinterface::new_no_cs(lcd_h_res * lcd_v_res * 2, spi, lcd_dc);
+    let di = spi_dma_displayinterface::new_no_cs(LCD_MEMORY_SIZE, spi, lcd_dc);
 
     // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
     // If delay is 250ms, picture will be fuzzy.
@@ -246,8 +248,8 @@ fn main() -> ! {
     use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe};
     use embedded_graphics_framebuf::FrameBuf;
     use embedded_graphics::prelude::RgbColor;
-    let mut data = [Rgb565::BLACK; 240 * 240];
-    let fbuf = FrameBuf::new(&mut data, 240, 240);
+    let mut data = [Rgb565::BLACK; LCD_PIXELS];
+    let fbuf = FrameBuf::new(&mut data, LCD_H_RES as usize, LCD_V_RES as usize);
     let spritebuf = SpriteBuf::new(fbuf);
 
     let engine = Engine::new(spritebuf, Some(seed_buffer));
@@ -315,7 +317,7 @@ fn main() -> ! {
 
         let pixel_iterator = universe.render_frame().get_pixel_iter();
         // -1 for some reason is necessary otherwise the display is skewed
-        let _ = display.set_pixels(0, 0, (lcd_v_res-1) as u16, lcd_h_res as u16, pixel_iterator);
+        let _ = display.set_pixels(0, 0, LCD_V_RES-1, LCD_H_RES, pixel_iterator);
 
         increment_frame_counter();
 

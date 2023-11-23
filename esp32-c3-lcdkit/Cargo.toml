@@ -27,7 +27,7 @@ mipidsi = { git = "https://github.com/almindor/mipidsi.git", branch = "master" }
 panic-halt = "0.2"
 shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core", default-features = false, features = ["static_maze"]}
-spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze" ] }
+spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze", "resolution_240x240" ] }
 # rotary-encoder-embedded = "0.2.0"
 # rotary-encoder-embedded = { path = "../../rotary-encoder-embedded"  }
 rotary-encoder-embedded = { git = "https://github.com/georgik/rotary-encoder-embedded.git", branch = "feature/poll" }
