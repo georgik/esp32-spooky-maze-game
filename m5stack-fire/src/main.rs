@@ -31,60 +31,26 @@ use esp_backtrace as _;
 
 use mpu9250::{ImuMeasurements, Mpu9250};
 
-use embedded_graphics::pixelcolor::Rgb565;
-
-use spooky_core::{engine::Engine, spritebuf::SpriteBuf, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite }};
 
 use shared_bus::BusManagerSimple;
 
-use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
 
-use spooky_embedded::embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE};
+use shared_bus::I2cProxy;
+use embedded_hal::blocking::i2c::{Write, WriteRead};
 
-pub struct Universe<D> {
-    pub engine: Engine<D>,
-}
+use spooky_embedded::{
+    app::app_loop,
+    controllers::{
+        accel::{
+            AccelMovementController,
+            Mpu9250Wrapper
+        },
+        composites::accel_composite::AccelCompositeController
+    },
+    embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE},
+};
 
-impl<D: embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Universe<D> {
-    pub fn new(_seed: Option<[u8; 32]>, engine: Engine<D>) -> Universe<D> {
-        Universe { engine }
-    }
-
-    pub fn initialize(&mut self) {
-        self.engine.initialize();
-        self.engine.start()
-    }
-
-    pub fn move_up(&mut self) {
-        self.engine.action(Up);
-    }
-
-    pub fn move_down(&mut self) {
-        self.engine.action(Down);
-    }
-
-    pub fn move_left(&mut self) {
-        self.engine.action(Left);
-    }
-
-    pub fn move_right(&mut self) {
-        self.engine.action(Right);
-    }
-
-    pub fn teleport(&mut self) {
-        self.engine.action(Teleport)
-    }
-
-    pub fn place_dynamite(&mut self) {
-        self.engine.action(PlaceDynamite);
-    }
-
-    pub fn render_frame(&mut self) -> &D {
-        self.engine.tick();
-        self.engine.draw()
-    }
-}
 
 #[entry]
 fn main() -> ! {
@@ -163,57 +129,18 @@ fn main() -> ! {
 
     let bus = BusManagerSimple::new(i2c);
 
-    let mut icm = Mpu9250::imu_default(bus.acquire_i2c(), &mut delay).unwrap();
+    let icm_inner = Mpu9250::imu_default(bus.acquire_i2c(), &mut delay).unwrap();
+    let icm = Mpu9250Wrapper::new(icm_inner);
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
-    let mut data = [Rgb565::BLACK; 320 * 240];
-    let fbuf = FrameBuf::new(&mut data, 320, 240);
-    let spritebuf = SpriteBuf::new(fbuf);
-    let engine = Engine::new(spritebuf, Some(seed_buffer));
-    let mut universe = Universe::new(Some(seed_buffer), engine);
-    universe.initialize();
 
-    loop {
-        if button_c.is_low().unwrap() {
-            universe.teleport();
-        }
+    let accel_movement_controller = AccelMovementController::new(icm, 1.0);
+    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
+    let movement_controller = AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
 
-        if button_b.is_low().unwrap() {
-            universe.place_dynamite();
-        }
+    app_loop(&mut display, seed_buffer, movement_controller);
+    loop {}
 
-
-        let accel_threshold = 1.00;
-        let measurement: ImuMeasurements<[f32; 3]> = icm.all().unwrap();
-
-        if measurement.accel[0] > accel_threshold {
-            universe.move_left();
-        }
-
-        if measurement.accel[0] < -accel_threshold {
-            universe.move_right();
-        }
-
-        if measurement.accel[1] > accel_threshold {
-            universe.move_down();
-        }
-
-        if measurement.accel[1] < -accel_threshold {
-            universe.move_up();
-        }
-
-        // Quickly move up to teleport
-        // Quickly move down to place dynamite
-        if measurement.accel[2] < -10.2 {
-            universe.teleport();
-        } else if measurement.accel[2] > 20.5 {
-            universe.place_dynamite();
-        }
-
-        let pixel_iterator = universe.render_frame().get_pixel_iter();
-        let _ = display.set_pixels(0, 0, LCD_H_RES-1, LCD_V_RES, pixel_iterator);
-        // delay.delay_ms(300u32);
-    }
 }

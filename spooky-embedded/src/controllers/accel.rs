@@ -62,14 +62,6 @@ use mpu6886::{Mpu6886, Mpu6886Error};
 #[cfg(feature = "mpu6886")]
 pub struct Mpu6886Wrapper<I>(Mpu6886<I>);
 
-// #[cfg(feature = "mpu6886")]
-// #[derive(Debug, Clone, Copy)]
-// pub struct F32x3 {
-//     pub x: f32,
-//     pub y: f32,
-//     pub z: f32,
-// }
-
 // Existing impl block for AccelDevice
 #[cfg(feature = "mpu6886")]
 impl<I, E> Accelerometer for Mpu6886Wrapper<I>
@@ -102,3 +94,51 @@ where
         Self(inner)
     }
 }
+
+
+
+#[cfg(feature = "mpu9250")]
+use embedded_hal::blocking::i2c::{Write, WriteRead};
+
+#[cfg(feature = "mpu9250")]
+use mpu9250::{Mpu9250, ImuMeasurements, Imu, Releasable};
+
+// Wrapper for Mpu9250
+#[cfg(feature = "mpu9250")]
+
+pub struct Mpu9250Wrapper<DEV>(Mpu9250<DEV, Imu>);
+
+
+#[cfg(feature = "mpu9250")]
+impl<DEV, E> Accelerometer for Mpu9250Wrapper<DEV>
+where
+    DEV: mpu9250::Device<Error = E> + Releasable,
+    E: core::fmt::Debug,
+{
+    type Error = mpu9250::Error<E>;
+
+    fn accel_norm(&mut self) -> Result<icm42670::accelerometer::vector::F32x3, icm42670::accelerometer::Error<Self::Error>> {
+        let measurement: ImuMeasurements<[f32; 3]> = self.0.all().unwrap();
+        Ok(icm42670::accelerometer::vector::F32x3 {
+            x: measurement.accel[0],
+            y: measurement.accel[1],
+            z: measurement.accel[2],
+        })
+    }
+
+    fn sample_rate(&mut self) -> Result<f32, icm42670::accelerometer::Error<Self::Error>> {
+        todo!() // Implement as needed
+    }
+}
+
+
+#[cfg(feature = "mpu9250")]
+impl<DEV, E> Mpu9250Wrapper<DEV>
+where
+    DEV: WriteRead<Error = E> + Write<Error = E>,
+{
+    pub fn new(inner: Mpu9250<DEV, Imu>) -> Self {
+        Self(inner)
+    }
+}
+

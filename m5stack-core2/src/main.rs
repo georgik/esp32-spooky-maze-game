@@ -57,11 +57,6 @@ use shared_bus::BusManagerSimple;
 
 use embedded_hal::digital::v2::OutputPin;
 
-// mod accel_device;
-// mod accel_movement_controller;
-
-// mod m5stack_composite_controller;
-
 use axp192::{ I2CPowerManagementInterface, Axp192 };
 
 pub struct Universe<D> {
@@ -178,13 +173,10 @@ fn main() -> ! {
     rng.read(&mut seed_buffer).unwrap();
 
     let accel_movement_controller = AccelMovementController::new(icm, 0.3);
-
     let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
     let movement_controller = AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
-    // let movement_controller = M5StackCompositeController::new(demo_movement_controller, accel_movement_controller);
 
     app_loop(&mut display, seed_buffer, movement_controller);
-
     loop {}
 
 }
