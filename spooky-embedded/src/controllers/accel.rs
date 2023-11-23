@@ -62,25 +62,25 @@ use mpu6886::{Mpu6886, Mpu6886Error};
 #[cfg(feature = "mpu6886")]
 pub struct Mpu6886Wrapper<I>(Mpu6886<I>);
 
-#[cfg(feature = "mpu6886")]
-#[derive(Debug, Clone, Copy)]
-pub struct AccelNorm {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-}
+// #[cfg(feature = "mpu6886")]
+// #[derive(Debug, Clone, Copy)]
+// pub struct F32x3 {
+//     pub x: f32,
+//     pub y: f32,
+//     pub z: f32,
+// }
 
 // Existing impl block for AccelDevice
 #[cfg(feature = "mpu6886")]
 impl<I, E> Accelerometer for Mpu6886Wrapper<I>
 where
-    I: WriteRead<Error = E> + Write<Error = E>,
+    I: WriteRead<Error = E> + Write<Error = E>, E: core::fmt::Debug
 {
     type Error = Mpu6886Error<E>;
 
-    fn accel_norm(&mut self) -> Result<AccelNorm, Self::Error> {
+    fn accel_norm(&mut self) -> Result<icm42670::accelerometer::vector::F32x3, icm42670::accelerometer::Error<Self::Error>> {
         let measurement = self.0.get_acc()?;
-        Ok(AccelNorm {
+        Ok(icm42670::accelerometer::vector::F32x3 {
             x: measurement.x as f32,
             y: measurement.y as f32,
             z: measurement.z as f32,

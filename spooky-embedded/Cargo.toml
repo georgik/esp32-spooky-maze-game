@@ -23,7 +23,7 @@ esp32s2-hal = { version = "0.13.0", optional = true }
 esp32s3-hal = { version = "0.13.0", optional = true }
 
 [features]
-default = [ "dynamic_maze", "resolution_320x240" ]
+default = [ "esp32", "dynamic_maze", "resolution_320x240", "mpu6886" ]
 
 mpu6886 = [ "dep:mpu6886" ]
 

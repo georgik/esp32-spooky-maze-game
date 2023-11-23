@@ -3,7 +3,7 @@
 
 // https://shop.m5stack.com/products/m5stack-core2-esp32-iot-development-kit
 
-use accel_device::Mpu6886Wrapper;
+// use accel_device::Mpu6886Wrapper;
 
 use spi_dma_displayinterface::spi_dma_displayinterface;
 
@@ -29,11 +29,14 @@ use hal::{
 };
 
 use spooky_embedded::{
-    // app::app_loop,
-    // controllers::{
-        // accel::AccelMovementController,
-        // composites::accel_composite::AccelCompositeController
-    // },
+    app::app_loop,
+    controllers::{
+        accel::{
+            AccelMovementController,
+            Mpu6886Wrapper
+        },
+        composites::accel_composite::AccelCompositeController
+    },
     embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE},
 };
 
@@ -54,12 +57,10 @@ use shared_bus::BusManagerSimple;
 
 use embedded_hal::digital::v2::OutputPin;
 
-mod app;
-use app::app_loop;
-mod accel_device;
-mod accel_movement_controller;
+// mod accel_device;
+// mod accel_movement_controller;
 
-mod m5stack_composite_controller;
+// mod m5stack_composite_controller;
 
 use axp192::{ I2CPowerManagementInterface, Axp192 };
 
@@ -176,7 +177,14 @@ fn main() -> ! {
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
-    app_loop( &mut display, LCD_V_RES, LCD_H_RES, seed_buffer, icm);
+    let accel_movement_controller = AccelMovementController::new(icm, 0.3);
+
+    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
+    let movement_controller = AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
+    // let movement_controller = M5StackCompositeController::new(demo_movement_controller, accel_movement_controller);
+
+    app_loop(&mut display, seed_buffer, movement_controller);
+
     loop {}
 
 }

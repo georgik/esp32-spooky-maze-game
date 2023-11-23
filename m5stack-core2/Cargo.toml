@@ -31,7 +31,7 @@ shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core", default-features = false, features = [
     "static_maze",
 ] }
-spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "esp32", "static_maze", "resolution_320x240" ] }
+spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "esp32", "static_maze", "resolution_320x240", "mpu6886" ] }
 esp-println = { version = "0.7.0", features = [ "esp32", "log" ] }
 log = { version = "0.4.18" }
 axp192 = { git = "https://github.com/georgik/axp192-rs.git", rev = "80e4fd27dfab"}
