@@ -9,10 +9,6 @@ The Teleport spell requires some time to recharge. There are some not friendly s
 
 ![Spooky on ESP32-S2-Kaluga](assets/screenshot/esp32-spooky-s2-kaluga.jpg)
 
-### Creating similar custom ESP32 app from a template
-
-If you'd like to build similar app with multiple targets follow `cargo generate` instructions - https://github.com/georgik/esp32-rust-multi-target-template#generate-new-project .
-
 ## Flashing binary from Releases
 
 Binaries are available in [GitHub Releases](https://github.com/georgik/esp32-spooky-maze-game/releases).
