@@ -11,7 +11,7 @@ embedded-graphics-framebuf = { version = "0.3.0", git = "https://github.com/geor
 
 icm42670 = { git = "https://github.com/jessebraham/icm42670/" }
 mpu6886 = { version = "0.1.0", optional = true }
-mpu9250 = { version = "0.25.0", optional = true, default-features = false, features = [ "i2c" ] }
+# mpu9250 = { version = "0.25.0", optional = true, default-features = false, features = [ "i2c" ] }
 shared-bus = { version = "0.3.0" }
 
 log = { version = "0.4.18" }
@@ -25,11 +25,12 @@ esp32s2-hal = { version = "0.13.0", optional = true }
 esp32s3-hal = { version = "0.13.0", optional = true }
 
 [features]
-# default = [ "esp32", "dynamic_maze", "resolution_320x240", "mpu6886" ]
-default = [ "esp32", "dynamic_maze", "resolution_320x240", "mpu9250" ]
+default = [ "esp32", "dynamic_maze", "resolution_320x240", "mpu6886" ]
+# mpu9550 is not supported, due to limited implementation of I2C
+# default = [ "esp32", "dynamic_maze", "resolution_320x240", "mpu9250" ]
 
 mpu6886 = [ "dep:mpu6886" ]
-mpu9250 = [ "dep:mpu9250" ]
+# mpu9250 = [ "dep:mpu9250" ]
 
 esp32 = [ "esp32-hal" ]
 esp32c3 = [ "esp32c3-hal" ]
