@@ -20,7 +20,10 @@ use hal::{
     dma::DmaPriority,
     gdma::Gdma,
     i2c,
-    peripherals::Peripherals,
+    peripherals::{
+        Peripherals,
+        Interrupt
+    },
     prelude::*,
     spi::{
         master::{prelude::*, Spi},
@@ -28,7 +31,7 @@ use hal::{
     },
     Delay,
     Rng,
-    IO
+    IO, interrupt
 };
 
 use spooky_embedded::app::app_loop;
@@ -49,7 +52,9 @@ fn main() -> ! {
     let system = peripherals.SYSTEM.split();
 
     // With DMA we have sufficient throughput, so we can clock down the CPU to 80MHz
-    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock80MHz).freeze();
+    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
+
+    esp_println::logger::init_logger_from_env();
 
     let mut delay = Delay::new(&clocks);
 
@@ -72,7 +77,6 @@ fn main() -> ! {
 
     let mut descriptors = [0u32; 8 * 3];
     let mut rx_descriptors = [0u32; 8 * 3];
-
 
     let spi = Spi::new(
         peripherals.SPI2,
@@ -121,17 +125,19 @@ fn main() -> ! {
         .unwrap();
 
     println!("Initialized");
+
     let i2c = i2c::I2C::new(
         peripherals.I2C0,
         i2c_sda,
         i2c_scl,
-        100u32.kHz(),
+        2u32.kHz(), // Set just to 2 kHz, it seems that there is an interference on Rust board
         &clocks,
     );
+
     println!("I2C ready");
 
-    let bus = BusManagerSimple::new(i2c);
-    let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
+    // let bus = BusManagerSimple::new(i2c);
+    let icm = Icm42670::new(i2c, Address::Primary).unwrap();
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];

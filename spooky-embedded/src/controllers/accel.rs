@@ -1,6 +1,8 @@
 use spooky_core::engine::Action;
 use spooky_core::movement_controller::MovementController;
 use icm42670::accelerometer::Accelerometer;
+use log::debug;
+
 pub struct AccelMovementController<I>
 where
     I: Accelerometer,
@@ -36,6 +38,7 @@ where
 
     fn tick(&mut self) {
         if let Ok(accel_norm) = self.icm.accel_norm() {
+            debug!("X: {}, Y: {}", accel_norm.x, accel_norm.y);
             if accel_norm.y > self.accel_threshold {
                 self.last_action = Action::Left;
             } else if accel_norm.y < -self.accel_threshold {
@@ -48,6 +51,8 @@ where
                 self.last_action = Action::None;
             }
             // Additional actions for Teleport and PlaceDynamite can be added here
+        } else {
+            debug!("Error reading accelerometer");
         }
     }
 }

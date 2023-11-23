@@ -10,9 +10,9 @@ hal = { package = "esp32c3-hal", version = "0.13.0" }
 esp-backtrace = { version = "0.9.0", features = [
     "esp32c3",
     "panic-handler",
-    "print-rtt",
+    "print-uart",
 ] }
-esp-println = { version = "0.7.0", default-features = false, features = [ "esp32c3",  "rtt" ] }
+esp-println = { version = "0.7.0", default-features = false, features = [ "esp32c3", "log" ] }
 
 [dependencies]
 esp-alloc = "0.3.0"

@@ -25,6 +25,10 @@ rustflags = [
   "--cfg", 'target_has_atomic="ptr"',
 ]
 
+[env]
+# Use clean build after changing ESP_LOGLEVEL
+ESP_LOGLEVEL="DEBUG"
+
 [build]
 target = "riscv32imac-unknown-none-elf"
 

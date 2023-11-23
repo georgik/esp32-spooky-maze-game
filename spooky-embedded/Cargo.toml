@@ -12,7 +12,7 @@ embedded-graphics-framebuf = { version = "0.3.0", git = "https://github.com/geor
 icm42670 = { git = "https://github.com/jessebraham/icm42670/" }
 mpu6886 = { version = "0.1.0", optional = true }
 # mpu9250 = { version = "0.25.0", optional = true, default-features = false, features = [ "i2c" ] }
-shared-bus = { version = "0.3.0" }
+# shared-bus = { version = "0.3.0" }
 
 log = { version = "0.4.18" }
 mipidsi = "0.7.1"

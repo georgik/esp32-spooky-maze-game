@@ -30,7 +30,7 @@ pub struct LadderMovementController<'a> {
 }
 
 impl<'a> LadderMovementController<'a> {
-    pub fn new(adc1: ADC<'a, ADC1>, adc_ladder_pin: AdcPin<GpioPin<Analog, ADC_LADDER_PIN_NUMBER>, ADC1>) -> Self { // Substitute with actual type for the resistor value
+    pub fn new(adc1: ADC<'a, ADC1>, adc_ladder_pin: AdcPin<GpioPin<Analog, ADC_LADDER_PIN_NUMBER>, ADC1>) -> Self {
         Self {
             last_action: Action::None,
             adc1,
