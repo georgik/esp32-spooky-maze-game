@@ -1,6 +1,6 @@
 [package]
 name = "spooky-s3-box"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -18,7 +18,6 @@ esp-println = { version = "0.7.0", features = ["esp32s3"] }
 [dependencies]
 esp-alloc = "0.3.0"
 embedded-graphics = "0.8.0"
-embedded-graphics-framebuf = { version = "0.3.0", git = "https://github.com/georgik/embedded-graphics-framebuf.git", branch = "feature/embedded-graphics-0.8" }
 embedded-hal = "0.2"
 display-interface = "0.4"
 display-interface-spi = "0.4"
@@ -27,14 +26,5 @@ mipidsi = "0.7.1"
 panic-halt = "0.2"
 shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core" }
-spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "dynamic_maze" ] }
+spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "esp32s3", "dynamic_maze", "resolution_320x240" ] }
 spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = [ "esp32s3" ] }
-
-[features]
-default = ["esp32s3_box"]
-
-button_controls = []
-imu_controls = []
-esp32s3 = []
-
-esp32s3_box = [ "esp32s3", "imu_controls" ]

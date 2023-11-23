@@ -2,13 +2,14 @@
 #![no_main]
 
 // https://docs.makerfactory.io/m5stack/core/fire/
+// This implementation does not use the spooky-embedded app loop and it has everything in main,
+// because mpu9250 does not implement Accelerometer interface, without need of dragging I2C type to the crate.
 
-// use display_interface_spi::SPIInterfaceNoCS;
-use spi_dma_displayinterface::spi_dma_displayinterface::SPIInterfaceNoCS;
+use spi_dma_displayinterface::spi_dma_displayinterface;
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
-    prelude::{DrawTarget, Point, RgbColor},
+    prelude::{Point, RgbColor},
     text::Text,
     Drawable,
 };
@@ -27,24 +28,21 @@ use hal::{
     Delay, Rng, IO,
 };
 
-// use panic_halt as _;
 use esp_backtrace as _;
 
-#[cfg(feature = "mpu9250")]
 use mpu9250::{ImuMeasurements, Mpu9250};
-
-#[cfg(feature = "mpu6050")]
-use mpu6050::Mpu6050;
-
 use embedded_graphics::pixelcolor::Rgb565;
 
 use spooky_core::{engine::Engine, spritebuf::SpriteBuf, engine::Action::{ Up, Down, Left, Right, Teleport, PlaceDynamite }};
 
-#[cfg(any(feature = "imu_controls"))]
 use shared_bus::BusManagerSimple;
 
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_hal::digital::v2::OutputPin;
+
+use spooky_embedded::{
+    embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE, LCD_PIXELS},
+};
 
 pub struct Universe<D> {
     pub engine: Engine<D>,
@@ -138,21 +136,12 @@ fn main() -> ! {
 
     lcd_backlight.set_high().unwrap();
 
-    let di = SPIInterfaceNoCS::new(spi, lcd_dc);
+    let di = spi_dma_displayinterface::new_no_cs(LCD_MEMORY_SIZE, spi, lcd_dc);
 
-    #[cfg(feature = "m5stack_fire")]
     let mut display = mipidsi::Builder::ili9341_rgb565(di)
-        .with_display_size(320, 240)
+        .with_display_size(LCD_H_RES, LCD_V_RES)
         .with_color_order(mipidsi::ColorOrder::Bgr)
         .init(&mut delay, Some(lcd_reset))
-        .unwrap();
-
-    #[cfg(feature = "wokwi")]
-    let mut display = mipidsi::Builder::ili9341_rgb565(di)
-        .with_display_size(320, 240)
-        .with_orientation(mipidsi::Orientation::Landscape(false))
-        .with_color_order(mipidsi::ColorOrder::Bgr)
-        .init(&mut delay, Some(reset))
         .unwrap();
 
     Text::new(
@@ -163,22 +152,12 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
-    // let button_a = io.pins.gpio39.into_pull_up_input();
-    #[cfg(feature = "wokwi")]
-    let button_b = io.pins.gpio34.into_pull_up_input();
-    #[cfg(feature = "wokwi")]
-    let button_c = io.pins.gpio35.into_pull_up_input();
-    #[cfg(feature = "m5stack_fire")]
     let button_b = io.pins.gpio38.into_pull_up_input();
-    #[cfg(feature = "m5stack_fire")]
     let button_c = io.pins.gpio37.into_pull_up_input();
 
-    #[cfg(any(feature = "imu_controls"))]
     let sda = io.pins.gpio21;
-    #[cfg(any(feature = "imu_controls"))]
     let scl = io.pins.gpio22;
 
-    #[cfg(any(feature = "imu_controls"))]
     let i2c = I2C::new(
         peripherals.I2C0,
         sda,
@@ -187,112 +166,57 @@ fn main() -> ! {
         &clocks,
     );
 
-    #[cfg(any(feature = "imu_controls"))]
     let bus = BusManagerSimple::new(i2c);
 
-    #[cfg(any(feature = "mpu9250"))]
     let mut icm = Mpu9250::imu_default(bus.acquire_i2c(), &mut delay).unwrap();
 
-    #[cfg(any(feature = "mpu6050"))]
-    let mut icm = Mpu6050::new(bus.acquire_i2c());
-    #[cfg(any(feature = "mpu6050"))]
-    icm.init(&mut delay).unwrap();
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
-    let mut data = [Rgb565::BLACK; 320 * 240];
-    let fbuf = FrameBuf::new(&mut data, 320, 240);
+    let mut data = [Rgb565::BLACK; LCD_PIXELS];
+    let fbuf = FrameBuf::new(&mut data, LCD_H_RES as usize, LCD_V_RES as usize);
     let spritebuf = SpriteBuf::new(fbuf);
     let engine = Engine::new(spritebuf, Some(seed_buffer));
     let mut universe = Universe::new(Some(seed_buffer), engine);
     universe.initialize();
 
     loop {
-        #[cfg(feature = "m5stack_fire")]
-        {
-            if button_c.is_low().unwrap() {
-                universe.teleport();
-            }
-
-            if button_b.is_low().unwrap() {
-                universe.place_dynamite();
-            }
-
+        if button_c.is_low().unwrap() {
+            universe.teleport();
         }
 
-        #[cfg(feature = "wokwi")]
-        {
-            if button_c.is_high().unwrap() {
-                universe.teleport();
-            }
-
-            if button_b.is_high().unwrap() {
-                universe.place_dynamite();
-            }
-
+        if button_b.is_low().unwrap() {
+            universe.place_dynamite();
         }
 
-        #[cfg(feature = "mpu9250")]
-        {
-            let accel_threshold = 1.00;
-            let measurement: ImuMeasurements<[f32; 3]> = icm.all().unwrap();
+        let accel_threshold = 1.00;
+        let measurement: ImuMeasurements<[f32; 3]> = icm.all().unwrap();
 
-            if measurement.accel[0] > accel_threshold {
-                universe.move_left();
-            }
-
-            if measurement.accel[0] < -accel_threshold {
-                universe.move_right();
-            }
-
-            if measurement.accel[1] > accel_threshold {
-                universe.move_down();
-            }
-
-            if measurement.accel[1] < -accel_threshold {
-                universe.move_up();
-            }
-
-            // Quickly move up to teleport
-            // Quickly move down to place dynamite
-            if measurement.accel[2] < -10.2 {
-                universe.teleport();
-            } else if measurement.accel[2] > 20.5 {
-                universe.place_dynamite();
-            }
+        if measurement.accel[0] > accel_threshold {
+            universe.move_left();
         }
 
-        #[cfg(feature = "mpu6050")]
-        {
-            let accel_threshold = 1.00;
-            let measurement = icm.get_acc().unwrap();
-            // let measurement: ImuMeasurements<[f32; 3]> = icm.all().unwrap();
-
-            if measurement.x > accel_threshold {
-                universe.move_left();
-            }
-
-            if measurement.x < -accel_threshold {
-                universe.move_right();
-            }
-
-            if measurement.y > accel_threshold {
-                universe.move_down();
-            }
-
-            if measurement.y < -accel_threshold {
-                universe.move_up();
-            }
-
-            // Quickly move up to teleport
-            // Quickly move down to place dynamite
-            if measurement.z < -10.2 {
-                universe.teleport();
-            } else if measurement.z > 20.5 {
-                universe.place_dynamite();
-            }
+        if measurement.accel[0] < -accel_threshold {
+            universe.move_right();
         }
+
+        if measurement.accel[1] > accel_threshold {
+            universe.move_down();
+        }
+
+        if measurement.accel[1] < -accel_threshold {
+            universe.move_up();
+        }
+
+        // Quickly move up to teleport
+        // Quickly move down to place dynamite
+        if measurement.accel[2] < -10.2 {
+            universe.teleport();
+        } else if measurement.accel[2] > 20.5 {
+            universe.place_dynamite();
+        }
+
         let pixel_iterator = universe.render_frame().get_pixel_iter();
         let _ = display.set_pixels(0, 0, lcd_v_res-1, lcd_h_res, pixel_iterator);
         // delay.delay_ms(300u32);

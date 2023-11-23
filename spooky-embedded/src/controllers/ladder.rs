@@ -1,3 +1,20 @@
+#[cfg(feature = "esp32")]
+use esp32_hal as hal;
+#[cfg(feature = "esp32c3")]
+use esp32c3_hal as hal;
+#[cfg(feature = "esp32c6")]
+use esp32c6_hal as hal;
+#[cfg(feature = "esp32s2")]
+use esp32s2_hal as hal;
+#[cfg(feature = "esp32s3")]
+use esp32s3_hal as hal;
+
+#[cfg(feature = "esp32c6")]
+pub const ADC_LADDER_PIN_NUMBER: u8 = 2;
+
+#[cfg(feature = "esp32s2")]
+pub const ADC_LADDER_PIN_NUMBER: u8 = 6;
+
 use hal::prelude::nb;
 use spooky_core::engine::Action;
 use spooky_core::movement_controller::MovementController;
@@ -9,11 +26,11 @@ use log::debug;
 pub struct LadderMovementController<'a> {
     last_action: Action,
     adc1: ADC<'a, ADC1>,
-    adc_ladder_pin: AdcPin<GpioPin<Analog, 6>, ADC1>,
+    adc_ladder_pin: AdcPin<GpioPin<Analog, ADC_LADDER_PIN_NUMBER>, ADC1>,
 }
 
 impl<'a> LadderMovementController<'a> {
-    pub fn new(adc1: ADC<'a, ADC1>, adc_ladder_pin: AdcPin<GpioPin<Analog, 6>, ADC1>) -> Self { // Substitute with actual type for the resistor value
+    pub fn new(adc1: ADC<'a, ADC1>, adc_ladder_pin: AdcPin<GpioPin<Analog, ADC_LADDER_PIN_NUMBER>, ADC1>) -> Self {
         Self {
             last_action: Action::None,
             adc1,

@@ -3,10 +3,9 @@
 
 // https://shop.m5stack.com/products/m5stack-core2-esp32-iot-development-kit
 
-use accel_device::Mpu6886Wrapper;
+// use accel_device::Mpu6886Wrapper;
 
-// use display_interface_spi::SPIInterfaceNoCS;
-use spi_dma_displayinterface::spi_dma_displayinterface::SPIInterfaceNoCS;
+use spi_dma_displayinterface::spi_dma_displayinterface;
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
@@ -29,6 +28,18 @@ use hal::{
     Delay, Rng, IO,
 };
 
+use spooky_embedded::{
+    app::app_loop,
+    controllers::{
+        accel::{
+            AccelMovementController,
+            Mpu6886Wrapper
+        },
+        composites::accel_composite::AccelCompositeController
+    },
+    embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE},
+};
+
 use esp_backtrace as _;
 use log::debug;
 
@@ -42,20 +53,10 @@ use mpu6050::Mpu6050;
 use mpu6886::Mpu6886;
 
 use spooky_core::engine::Engine;
-
-#[cfg(any(feature = "i2c"))]
 use shared_bus::BusManagerSimple;
 
 use embedded_hal::digital::v2::OutputPin;
 
-mod app;
-use app::app_loop;
-mod accel_device;
-mod accel_movement_controller;
-
-mod m5stack_composite_controller;
-
-#[cfg(any(feature = "axp192"))]
 use axp192::{ I2CPowerManagementInterface, Axp192 };
 
 pub struct Universe<D> {
@@ -90,20 +91,13 @@ fn main() -> ! {
         &clocks,
     );
 
-    #[cfg(any(feature = "i2c"))]
     let bus = BusManagerSimple::new(i2c_bus);
 
-    // Power management - AXP192
-    #[cfg(any(feature = "axp192"))]
-    {
-        let axp_interface = I2CPowerManagementInterface::new(bus.acquire_i2c());
-        let mut axp = Axp192::new(axp_interface);
-        axp.init().unwrap();
-    }
+    let axp_interface = I2CPowerManagementInterface::new(bus.acquire_i2c());
+    let mut axp = Axp192::new(axp_interface);
+    axp.init().unwrap();
 
     // M5Stack CORE 2 - https://docs.m5stack.com/en/core/core2
-    let lcd_h_res = 240;
-    let lcd_v_res = 320;
 
     let lcd_sclk = io.pins.gpio18;
     let lcd_mosi = io.pins.gpio23;
@@ -138,21 +132,12 @@ fn main() -> ! {
 
     lcd_backlight.set_high().unwrap();
 
-    let di = SPIInterfaceNoCS::new(spi, lcd_dc);
+    let di = spi_dma_displayinterface::new_no_cs(LCD_MEMORY_SIZE, spi, lcd_dc);
 
-    #[cfg(feature = "m5stack_core2")]
     let mut display = mipidsi::Builder::ili9342c_rgb565(di)
-        .with_display_size(320, 240)
+        .with_display_size(LCD_H_RES, LCD_V_RES)
         .with_color_order(mipidsi::ColorOrder::Bgr)
         .with_invert_colors(mipidsi::ColorInversion::Inverted)
-        .init(&mut delay, Some(lcd_reset))
-        .unwrap();
-
-    #[cfg(feature = "wokwi")]
-    let mut display = mipidsi::Builder::ili9341_rgb565(di)
-        .with_display_size(320, 240)
-        .with_orientation(mipidsi::Orientation::Landscape(false))
-        .with_color_order(mipidsi::ColorOrder::Bgr)
         .init(&mut delay, Some(lcd_reset))
         .unwrap();
 
@@ -164,10 +149,6 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
-    #[cfg(feature = "wokwi")]
-    let button_b = io.pins.gpio34.into_pull_up_input();
-    #[cfg(feature = "wokwi")]
-    let button_c = io.pins.gpio35.into_pull_up_input();
 
     #[cfg(any(feature = "mpu9250"))]
     let mut icm = Mpu9250::imu_default(bus.acquire_i2c(), &mut delay).unwrap();
@@ -191,7 +172,11 @@ fn main() -> ! {
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
-    app_loop( &mut display, lcd_h_res, lcd_v_res, seed_buffer, icm);
+    let accel_movement_controller = AccelMovementController::new(icm, 0.3);
+    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
+    let movement_controller = AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
+
+    app_loop(&mut display, seed_buffer, movement_controller);
     loop {}
 
 }

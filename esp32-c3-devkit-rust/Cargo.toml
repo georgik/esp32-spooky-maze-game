@@ -1,6 +1,6 @@
 [package]
 name = "spooky-esp32-c3"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -10,35 +10,18 @@ hal = { package = "esp32c3-hal", version = "0.13.0" }
 esp-backtrace = { version = "0.9.0", features = [
     "esp32c3",
     "panic-handler",
-    "print-rtt",
+    "print-uart",
 ] }
-esp-println = { version = "0.7.0", default-features = false, features = [ "esp32c3",  "rtt" ] }
+esp-println = { version = "0.7.0", default-features = false, features = [ "esp32c3", "log" ] }
 
 [dependencies]
 esp-alloc = "0.3.0"
 embedded-graphics = "0.8.0"
-embedded-graphics-framebuf = { version = "0.3.0", git = "https://github.com/georgik/embedded-graphics-framebuf.git", branch = "feature/embedded-graphics-0.8" }
 embedded-hal = "0.2"
-display-interface = "0.4"
-display-interface-spi = "0.4"
 icm42670 = { git = "https://github.com/jessebraham/icm42670/" }
 mipidsi = "0.7.1"
 panic-halt = "0.2"
 shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core", default-features = false, features = ["static_maze"]}
-spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze" ] }
+spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "esp32c3", "static_maze", "resolution_320x240" ] }
 spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = ["esp32c3"] }
-
-[features]
-default = [ "esp32c3_ili9341" ]
-system_timer = []
-
-button_controls = []
-imu_controls = []
-
-esp32 = []
-esp32s2 = ["system_timer"]
-esp32s3 = []
-esp32c3 = ["system_timer"]
-
-esp32c3_ili9341 = [ "esp32c3", "imu_controls" ]

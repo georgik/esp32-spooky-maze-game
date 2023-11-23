@@ -4,8 +4,7 @@
 #[global_allocator]
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
-// use display_interface_spi::SPIInterfaceNoCS;
-use spi_dma_displayinterface::spi_dma_displayinterface::SPIInterfaceNoCS;
+use spi_dma_displayinterface::spi_dma_displayinterface;
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
@@ -21,29 +20,30 @@ use hal::{
     dma::DmaPriority,
     gdma::Gdma,
     i2c,
-    peripherals::Peripherals,
+    peripherals::{
+        Peripherals,
+        Interrupt
+    },
     prelude::*,
     spi::{
         master::{prelude::*, Spi},
-        // master::Spi,
         SpiMode,
     },
     Delay,
     Rng,
-    IO
+    IO, interrupt
 };
 
-mod app;
-use app::app_loop;
+use spooky_embedded::app::app_loop;
 
-mod accel_movement_controller;
-mod s3box_composite_controller;
+use spooky_embedded::{
+    embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE},
+    controllers::{accel::AccelMovementController, composites::accel_composite::AccelCompositeController}
+};
 
 use esp_backtrace as _;
 
-// #[cfg(any(feature = "imu_controls"))]
-use icm42670::{accelerometer::Accelerometer, Address, Icm42670};
-// #[cfg(any(feature = "imu_controls"))]
+use icm42670::{Address, Icm42670};
 use shared_bus::BusManagerSimple;
 
 #[entry]
@@ -52,15 +52,14 @@ fn main() -> ! {
     let system = peripherals.SYSTEM.split();
 
     // With DMA we have sufficient throughput, so we can clock down the CPU to 80MHz
-    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock80MHz).freeze();
+    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
+
+    esp_println::logger::init_logger_from_env();
 
     let mut delay = Delay::new(&clocks);
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-
-    let lcd_h_res = 240;
-    let lcd_v_res = 320;
 
     let lcd_sclk = io.pins.gpio0;
     let lcd_mosi = io.pins.gpio6;
@@ -78,7 +77,6 @@ fn main() -> ! {
 
     let mut descriptors = [0u32; 8 * 3];
     let mut rx_descriptors = [0u32; 8 * 3];
-
 
     let spi = Spi::new(
         peripherals.SPI2,
@@ -98,7 +96,7 @@ fn main() -> ! {
 
     println!("SPI ready");
 
-    let di = SPIInterfaceNoCS::new(spi, lcd_dc);
+    let di = spi_dma_displayinterface::new_no_cs(LCD_MEMORY_SIZE, spi, lcd_dc);
 
     // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
     // If delay is 250ms, picture will be fuzzy.
@@ -106,7 +104,7 @@ fn main() -> ! {
     delay.delay_ms(500u32);
 
     let mut display = match mipidsi::Builder::st7789(di)
-    .with_display_size(lcd_h_res as u16, lcd_v_res as u16)
+    .with_display_size(LCD_H_RES, LCD_V_RES)
     .with_orientation(mipidsi::Orientation::Landscape(true))
     .with_color_order(mipidsi::ColorOrder::Rgb)
         .init(&mut delay, Some(lcd_reset)) {
@@ -116,8 +114,6 @@ fn main() -> ! {
             panic!("Display initialization failed");
         }
     };
-
-    // configured_system_pins.backlight.set_high();
 
     println!("Initializing...");
         Text::new(
@@ -129,26 +125,29 @@ fn main() -> ! {
         .unwrap();
 
     println!("Initialized");
+
     let i2c = i2c::I2C::new(
         peripherals.I2C0,
         i2c_sda,
         i2c_scl,
-        100u32.kHz(),
+        2u32.kHz(), // Set just to 2 kHz, it seems that there is an interference on Rust board
         &clocks,
     );
+
     println!("I2C ready");
 
-    // #[cfg(any(feature = "imu_controls"))]
-    let bus = BusManagerSimple::new(i2c);
-    // #[cfg(any(feature = "imu_controls"))]
-    let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
+    // let bus = BusManagerSimple::new(i2c);
+    let icm = Icm42670::new(i2c, Address::Primary).unwrap();
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer).unwrap();
 
+    let accel_movement_controller = AccelMovementController::new(icm, 0.2);
+    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
+    let movement_controller = AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
 
-    app_loop( &mut display, lcd_h_res, lcd_v_res, seed_buffer, icm);
+    app_loop( &mut display, seed_buffer, movement_controller);
     loop {}
 
 }

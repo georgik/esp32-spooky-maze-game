@@ -1,6 +1,6 @@
 [package]
 name = "spooky-wrover-kit"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -18,7 +18,6 @@ esp-println = { version = "0.7.0", features = ["esp32"] }
 [dependencies]
 esp-alloc = "0.3.0"
 embedded-graphics = "0.8.0"
-embedded-graphics-framebuf = { version = "0.3.0", git = "https://github.com/georgik/embedded-graphics-framebuf.git", branch = "feature/embedded-graphics-0.8" }
 embedded-hal = "0.2"
 display-interface = "0.4"
 display-interface-spi = "0.4"
@@ -26,21 +25,5 @@ mipidsi = "0.7.1"
 panic-halt = "0.2"
 shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core", default-features = false, features = [ "static_maze" ] }
-spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze" ] }
+spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "esp32", "static_maze", "resolution_320x240" ] }
 spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = [ "esp32" ] }
-
-[features]
-default = [ "esp_wrover_kit" ]
-
-system_timer = []
-
-button_controls = []
-imu_controls = []
-
-esp32 = []
-esp32s2 = ["system_timer"]
-esp32s3 = []
-esp32c3 = ["system_timer"]
-
-# Enable this feature in case you have an ESP32 Wrover Kit with ILI9341
-esp_wrover_kit = [ "esp32" ]

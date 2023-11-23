@@ -1,6 +1,6 @@
 [package]
 name = "spooky-s3-usb-otg"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"

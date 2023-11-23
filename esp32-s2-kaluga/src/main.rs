@@ -4,8 +4,7 @@
 // Main board: https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/hw-reference/esp32s2/user-guide-esp32-s2-kaluga-1-kit.html
 // Buttons - Lyra extension board: https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/hw-reference/esp32s2/user-guide-esp-lyrat-8311a_v1.3.html
 
-// use display_interface_spi::SPIInterfaceNoCS;
-use spi_dma_displayinterface::spi_dma_displayinterface::SPIInterfaceNoCS;
+use spi_dma_displayinterface::spi_dma_displayinterface;
 
 use embedded_graphics::{
     prelude::{Point, RgbColor},
@@ -34,11 +33,14 @@ use hal::{
 };
 use log::info;
 
-mod app;
-use app::app_loop;
-
-mod kaluga_composite_controller;
-mod ladder_movement_controller;
+use spooky_embedded::{
+    app::app_loop,
+    embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE},
+    controllers::{
+        ladder::LadderMovementController,
+        composites::ladder_composite::LadderCompositeController,
+    }
+};
 
 use esp_backtrace as _;
 
@@ -59,9 +61,6 @@ fn main() -> ! {
     // Backlight is on GPIO6 in version 1.2, version 1.3 has display always on
     // let mut backlight = io.pins.gpio6.into_push_pull_output();
     // backlight.set_high().unwrap();
-
-    let lcd_h_res = 240;
-    let lcd_v_res = 320;
 
     let lcd_sclk = io.pins.gpio15;
     let lcd_mosi = io.pins.gpio9;
@@ -95,14 +94,14 @@ fn main() -> ! {
         DmaPriority::Priority0,
     ));
 
-    let di = SPIInterfaceNoCS::new(spi, lcd_dc);
+    let di = spi_dma_displayinterface::new_no_cs(LCD_MEMORY_SIZE, spi, lcd_dc);
 
     let mut delay = Delay::new(&clocks);
     delay.delay_ms(500u32);
 
     info!("Initializing display");
     let mut display = match mipidsi::Builder::ili9341_rgb565(di)
-        .with_display_size(320, 240)
+        .with_display_size(LCD_H_RES, LCD_V_RES)
         .with_orientation(mipidsi::Orientation::Landscape(true))
         .with_color_order(mipidsi::ColorOrder::Rgb)
         .init(&mut delay, Some(lcd_reset)) {
@@ -133,6 +132,11 @@ fn main() -> ! {
     let adc1 = ADC::<ADC1>::adc(analog.adc1, adc1_config).unwrap();
 
     info!("Entering main loop");
-    app_loop(&mut  display, lcd_h_res, lcd_v_res, adc1, adc_pin,  seed_buffer);
+
+    let ladder_movement_controller = LadderMovementController::new(adc1, adc_pin);
+    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
+    let movement_controller = LadderCompositeController::new(demo_movement_controller, ladder_movement_controller);
+
+    app_loop( &mut display, seed_buffer, movement_controller);
     loop {}
 }

@@ -1,16 +1,16 @@
 use spooky_core::engine::Action;
 use spooky_core::movement_controller::MovementController;
-use crate::ladder_movement_controller::LadderMovementController;
+use crate::controllers::ladder::LadderMovementController;
 use spooky_core::demo_movement_controller::DemoMovementController;
 
-pub struct DevkitC6CompositeController<'a> {
+pub struct LadderCompositeController<'a> {
     demo_controller: DemoMovementController,
     ladder_controller: LadderMovementController<'a>,
     active_index: usize, // 0 for demo_controller, 1 for ladder_controller
     last_action: Action,
 }
 
-impl<'a> DevkitC6CompositeController<'a> {
+impl<'a> LadderCompositeController<'a> {
     pub fn new(demo_controller: DemoMovementController, ladder_controller: LadderMovementController<'a>) -> Self {
         Self {
             demo_controller,
@@ -21,7 +21,7 @@ impl<'a> DevkitC6CompositeController<'a> {
     }
 }
 
-impl MovementController for DevkitC6CompositeController<'_> {
+impl MovementController for LadderCompositeController<'_> {
     fn tick(&mut self) {
         self.last_action = Action::None;
 
@@ -30,7 +30,7 @@ impl MovementController for DevkitC6CompositeController<'_> {
                 self.demo_controller.tick();
                 self.last_action = self.demo_controller.get_movement();
 
-                // self.ladder_controller.tick();
+                self.ladder_controller.tick();
                 let ladder_action = self.ladder_controller.get_movement();
                 if ladder_action != Action::None {
                     self.set_active(1);

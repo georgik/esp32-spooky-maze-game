@@ -1,6 +1,6 @@
 [package]
 name = "spooky-m5stack-core2"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -31,29 +31,15 @@ shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core", default-features = false, features = [
     "static_maze",
 ] }
+spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "esp32", "static_maze", "resolution_320x240", "mpu6886" ] }
 esp-println = { version = "0.7.0", features = [ "esp32", "log" ] }
 log = { version = "0.4.18" }
-axp192 = { git = "https://github.com/georgik/axp192-rs.git", rev = "80e4fd27dfab", optional = true }
+axp192 = { git = "https://github.com/georgik/axp192-rs.git", rev = "80e4fd27dfab"}
 #axp192 = { path = "../../axp192", optional = true }
 spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = [ "esp32" ] }
 
 [features]
-default = ["m5stack_core2"]
-system_timer = []
-
-i2c = []
-
-button_controls = []
-imu_controls = [ "i2c" ]
-
-esp32 = []
-
-mpu6050 = ["imu_controls", "dep:mpu6050"]
-mpu6886 = ["imu_controls", "dep:mpu6886"]
-mpu9250 = ["imu_controls", "dep:mpu9250"]
-
-axp192 = ["i2c", "dep:axp192"]
-
-wokwi = [ "esp32", "mpu6050" ]
-
-m5stack_core2 = [ "esp32", "mpu6886", "axp192" ]
+default = [ "mpu6886" ]
+mpu6050 = ["dep:mpu6050"]
+mpu6886 = ["dep:mpu6886"]
+mpu9250 = ["dep:mpu9250"]
