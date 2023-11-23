@@ -39,7 +39,6 @@ axp192 = { git = "https://github.com/georgik/axp192-rs.git", rev = "80e4fd27dfab
 spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = [ "esp32" ] }
 
 [features]
-
 default = [ "mpu6886" ]
 mpu6050 = ["dep:mpu6050"]
 mpu6886 = ["dep:mpu6886"]
