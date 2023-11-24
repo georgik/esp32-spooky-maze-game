@@ -6,8 +6,7 @@ edition = "2021"
 license = "MIT"
 
 [target.xtensa-esp32s3-none-elf.dependencies]
-xtensa-atomic-emulation-trap = "0.4.0"
-hal = { package = "esp32s3-hal", version = "0.13.0" , features = ["opsram-8m"] }
+hal = { package = "esp32s3-hal", version = "0.13.0" , features = ["opsram-8m", "eh1"] }
 esp-backtrace = { version = "0.9.0", features = [
     "esp32s3",
     "panic-handler",
@@ -22,9 +21,11 @@ embedded-hal = "0.2"
 display-interface = "0.4"
 display-interface-spi = "0.4"
 icm42670 = { git = "https://github.com/jessebraham/icm42670/" }
+log = "0.4.14"
 mipidsi = "0.7.1"
 panic-halt = "0.2"
 shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core" }
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "esp32s3", "dynamic_maze", "resolution_320x240" ] }
 spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = [ "esp32s3" ] }
+es8311 = { git = "https://github.com/bjoernQ/es8311-rs", default-features = false }
