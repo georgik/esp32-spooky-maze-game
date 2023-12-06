@@ -1,6 +1,6 @@
 [package]
 name = "spooky-m5stack-core2"
-version = "0.9.0"
+version = "0.10.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -34,8 +34,7 @@ spooky-core = { path = "../spooky-core", default-features = false, features = [
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "esp32", "static_maze", "resolution_320x240", "mpu6886" ] }
 esp-println = { version = "0.7.0", features = [ "esp32", "log" ] }
 log = { version = "0.4.18" }
-axp192 = { git = "https://github.com/georgik/axp192-rs.git", rev = "80e4fd27dfab"}
-#axp192 = { path = "../../axp192", optional = true }
+axp192 = { version = "0.1.1" }
 spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = [ "esp32" ] }
 
 [features]
