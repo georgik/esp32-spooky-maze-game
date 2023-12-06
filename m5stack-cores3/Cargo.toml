@@ -32,10 +32,10 @@ shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core", default-features = false, features = [
     "static_maze",
 ] }
-heapless = { version = "0.7.14", default-features = false }
-esp-println = { version = "0.6.0", features = [ "esp32s3" ] }
-axp2101 = { git = "https://github.com/georgik/axp2101-rs.git", optional = true }
-# axp2101 = { path = "../../axp2101-rs", optional = true }
+heapless = { version = "0.8.0", default-features = false }
+esp-println = { version = "0.7.1", features = [ "esp32s3", "log" ] }
+axp2101 = { git = "https://github.com/georgik/axp2101-rs.git" }
+aw9523 = { git = "https://github.com/georgik/aw9523-rs.git" }
 
 [features]
 default = ["m5stack_cores3"]
@@ -55,6 +55,4 @@ mpu6050 = ["imu_controls", "dep:mpu6050"]
 mpu6886 = ["imu_controls", "dep:mpu6886"]
 mpu9250 = ["imu_controls", "dep:mpu9250"]
 
-axp2101 = ["i2c", "dep:axp2101"]
-
-m5stack_cores3 = [ "esp32s3", "mpu6886", "axp2101" ]
+m5stack_cores3 = [ "esp32s3", "mpu6886", "i2c" ]

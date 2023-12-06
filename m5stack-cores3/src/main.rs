@@ -47,8 +47,8 @@ mod accel_movement_controller;
 
 mod m5stack_composite_controller;
 
-#[cfg(any(feature = "axp2101"))]
 use axp2101::{ I2CPowerManagementInterface, Axp2101 };
+use aw9523::I2CGpioExpanderInterface;
 
 pub struct Universe<D> {
     pub engine: Engine<D>,
@@ -61,6 +61,8 @@ fn main() -> ! {
 
     let mut system = peripherals.SYSTEM.split();
     let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock240MHz).freeze();
+
+    esp_println::logger::init_logger_from_env();
 
     let mut delay = Delay::new(&clocks);
 
@@ -82,13 +84,15 @@ fn main() -> ! {
     #[cfg(any(feature = "i2c"))]
     let bus = BusManagerSimple::new(i2c_bus);
 
-    // Power management - AXP2101
-    #[cfg(any(feature = "axp2101"))]
-    {
-        let axp_interface = I2CPowerManagementInterface::new(bus.acquire_i2c());
-        let mut axp = Axp2101::new(axp_interface);
-        axp.init().unwrap();
-    }
+    info!("Initializing AXP2101");
+    let axp_interface = I2CPowerManagementInterface::new(bus.acquire_i2c());
+    let mut axp = Axp2101::new(axp_interface);
+    axp.init().unwrap();
+
+    info!("Initializing GPIO Expander");
+    let aw_interface = I2CGpioExpanderInterface::new(bus.acquire_i2c());
+    let mut aw = aw9523::Aw9523::new(aw_interface);
+    aw.init().unwrap();
 
     // M5Stack CORE 2 - https://docs.m5stack.com/en/core/core2
     // let mut backlight = io.pins.gpio3.into_push_pull_output();
