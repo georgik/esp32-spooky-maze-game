@@ -66,18 +66,19 @@ Each directory contains implementation specific for the HW.
 
 Overview:
 
-| Name                 | Chip     | Display  | Controls                              | PMU     |
-|----------------------|----------|----------|---------------------------------------|---------|
-| esp-wrover-kit       | esp32    | ili9341  | 6 push-button controls, separate PINs |         |
-| esp32-c3-devkit-rust | esp32-c3 | st7789   | icm42670 accelerometer                |         |
-| esp32-c3-lcdkit      | esp32-c3 | gc9a01   | rotary encoder                        |         |
-| esp32-c6-devkit      | esp32-c6 | ili9341  | resistor ladder with push buttons     |         |
-| esp32-s2-kaluga      | esp32-s2 | ili9341  | resistor ladder with push buttons     |         |
-| esp32-s3-box         | esp32-s3 | ili9342c | icm42670 accelerometer                |         |
-| esp32-s3-box-lite    | esp32-s3 | st7789   | no controls                           |         |
-| esp32-s3-usb-otg     | esp32-s3 | st7789   | 5 push-buttons on the board           |         |
-| m5stack-core2        | esp32    | ili9341  | mpu6886 accelerometer                 | AXP192  |
-| m5stack-fire         | esp32    | ili9342c | mpu9250 accelerometer                 | AXP2101 |
+| Name                 | Chip     | Display  | Controls                              | PMU     | GPIO Expander |
+|----------------------|----------|----------|---------------------------------------|---------|---------------|
+| esp-wrover-kit       | esp32    | ili9341  | 6 push-button controls, separate PINs |         |               |
+| esp32-c3-devkit-rust | esp32-c3 | st7789   | icm42670 accelerometer                |         |               |
+| esp32-c3-lcdkit      | esp32-c3 | gc9a01   | rotary encoder                        |         |               |
+| esp32-c6-devkit      | esp32-c6 | ili9341  | resistor ladder with push buttons     |         |               |
+| esp32-s2-kaluga      | esp32-s2 | ili9341  | resistor ladder with push buttons     |         |               |
+| esp32-s3-box         | esp32-s3 | ili9342c | icm42670 accelerometer                |         |               |
+| esp32-s3-box-lite    | esp32-s3 | st7789   | no controls                           |         |               |
+| esp32-s3-usb-otg     | esp32-s3 | st7789   | 5 push-buttons on the board           |         |               |
+| m5stack-core2        | esp32    | ili9341  | mpu6886 accelerometer                 | axp192  |               |
+| m5stack-cores32      | esp32-s3 | ili9342c | bmi279 accelerometer                  | axp2101 | aw9523        |
+| m5stack-fire         | esp32    | ili9342c | mpu9250 accelerometer                 |         |               |
 
 
 ### Build for ESP32-S3-BOX with ILI9486
