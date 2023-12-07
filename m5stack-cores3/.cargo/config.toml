@@ -1,0 +1,20 @@
+[target.'cfg(target_arch = "xtensa")']
+runner = "espflash flash --monitor"
+rustflags = [
+  "-C", "link-arg=-Tlinkall.x",
+  "-C", "link-arg=-nostartfiles",
+]
+
+[env]
+# Use clean build after changing ESP_LOGLEVEL
+ESP_LOGLEVEL="DEBUG"
+
+[build]
+# Uncomment the target if you'd like to use automatic code hinting in your IDE
+#target = "xtensa-esp32-none-elf"
+# target = "xtensa-esp32s2-none-elf"
+target = "xtensa-esp32s3-none-elf"
+# target = "riscv32imac-unknown-none-elf"
+
+[unstable]
+build-std = [ "core", "alloc" ]
