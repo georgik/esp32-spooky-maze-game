@@ -30,7 +30,7 @@ rustflags = [
 ESP_LOGLEVEL="DEBUG"
 
 [build]
-target = "riscv32imac-unknown-none-elf"
+target = "riscv32imc-unknown-none-elf"
 
 [unstable]
 build-std = [ "core", "alloc" ]
