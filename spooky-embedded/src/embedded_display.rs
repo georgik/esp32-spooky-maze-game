@@ -2,7 +2,7 @@
 #[cfg(feature = "resolution_320x240")]
 pub const LCD_H_RES: u16 = 320;
 #[cfg(feature = "resolution_240x240")]
-pub const LCD_H_RES: u16 = 320;
+pub const LCD_H_RES: u16 = 240;
 
 pub const LCD_V_RES: u16 = 240;
 pub const COLOR_DEPTH_BYTES: usize = core::mem::size_of::<embedded_graphics::pixelcolor::Rgb565>(); // = 2

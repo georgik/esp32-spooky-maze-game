@@ -80,13 +80,14 @@ fn main() -> ! {
 
     let spi = Spi::new(
         peripherals.SPI2,
-        lcd_sclk,
-        lcd_mosi,
-        lcd_miso,
-        lcd_cs,
         60u32.MHz(),
         SpiMode::Mode0,
         &clocks
+    ).with_pins(
+        Some(lcd_sclk),
+        Some(lcd_mosi),
+        Some(lcd_miso),
+        Some(lcd_cs),
     ).with_dma(dma_channel.configure(
         false,
         &mut descriptors,
