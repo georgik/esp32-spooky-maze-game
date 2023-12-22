@@ -133,8 +133,8 @@ fn main() -> ! {
     let mut rx_descriptors = [0u32; 8 * 3];
 
     let spi = Spi::new(
-        peripherals.SPI2,
-        60u32.MHz(),
+        peripherals.SPI3,
+        40u32.MHz(),
         SpiMode::Mode0,
         &clocks
     ).with_pins(
@@ -157,7 +157,6 @@ fn main() -> ! {
 
     let mut display = mipidsi::Builder::st7789(di)
         .with_display_size(lcd_h_res, lcd_v_res)
-        .with_orientation(mipidsi::Orientation::PortraitInverted(false))
         .with_invert_colors(mipidsi::ColorInversion::Inverted)
         .init(&mut delay, Some(lcd_reset)).unwrap();
 
