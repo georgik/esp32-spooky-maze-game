@@ -111,7 +111,7 @@ cargo run --release --monitor
 - Random maze generator
 - IMU Accelerometer control
 
-### Build for dekstop
+### Build for desktop
 
 Control: keyboard
 - press arrows or W,A,S,D to move the character
