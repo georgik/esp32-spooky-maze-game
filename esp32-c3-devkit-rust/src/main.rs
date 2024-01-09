@@ -80,7 +80,7 @@ fn main() -> ! {
 
     let spi = Spi::new(
         peripherals.SPI2,
-        60u32.MHz(),
+        40u32.MHz(),
         SpiMode::Mode0,
         &clocks,
     ).with_pins(
