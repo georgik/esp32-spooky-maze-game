@@ -7,17 +7,17 @@ license = "MIT"
 
 [target.xtensa-esp32-none-elf.dependencies]
 hal = { package = "esp32-hal", version = "0.17.0", features = ["psram-8m"] }
-esp-backtrace = { version = "0.9.0", features = [
+esp-backtrace = { version = "0.10.0", features = [
     "esp32",
     "panic-handler",
     "print-uart",
 ] }
-esp-println = { version = "0.7.0", features = ["esp32"] }
+esp-println = { version = "0.8.0", features = ["esp32"] }
 
 [dependencies]
 esp-alloc = "0.3.0"
 embedded-graphics = "0.8.0"
-embedded-hal = "0.2"
+embedded-hal = "1.0.0"
 display-interface = "0.4"
 display-interface-spi = "0.4"
 mipidsi = "0.7.1"
