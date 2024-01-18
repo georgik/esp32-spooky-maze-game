@@ -42,6 +42,8 @@ use spooky_embedded::{
 
 use esp_backtrace as _;
 
+use esp_bsp::lcd_gpios;
+
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take();
@@ -56,13 +58,7 @@ fn main() -> ! {
     info!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
-    let lcd_sclk = io.pins.gpio6;
-    let lcd_mosi = io.pins.gpio7;
-    let lcd_cs = io.pins.gpio20;
-    let lcd_miso = io.pins.gpio0; // random unused pin
-    let lcd_dc = io.pins.gpio21.into_push_pull_output();
-    let _lcd_backlight = io.pins.gpio4.into_push_pull_output();
-    let lcd_reset = io.pins.gpio3.into_push_pull_output();
+    let (lcd_sclk, lcd_mosi, lcd_cs, lcd_miso, lcd_dc, _lcd_backlight, lcd_reset) = lcd_gpios!(BoardType::ESP32C6DevKitC1, io);
 
     let adc_pin = io.pins.gpio2.into_analog();
 
