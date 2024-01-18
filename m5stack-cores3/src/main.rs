@@ -56,7 +56,7 @@ use spooky_embedded::{
 use axp2101::{ I2CPowerManagementInterface, Axp2101 };
 use aw9523::I2CGpioExpanderInterface;
 
-use esp_bsp::{lcd_gpios, BoardType};
+use esp_bsp::lcd_gpios;
 
 #[entry]
 fn main() -> ! {

@@ -7,7 +7,7 @@ license = "MIT"
 
 [target.xtensa-esp32s3-none-elf.dependencies]
 hal = { package = "esp32s3-hal", version = "0.14.0" }
-esp-backtrace = { version = "0.9.0", features = [
+esp-backtrace = { version = "0.10.0", features = [
     "esp32s3",
     "panic-handler",
     "print-uart",
@@ -33,7 +33,7 @@ spooky-core = { path = "../spooky-core", default-features = false, features = [
 ] }
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "esp32s3", "static_maze", "resolution_320x240" ] }
 heapless = { version = "0.8.0", default-features = false }
-esp-println = { version = "0.7.1", features = [ "esp32s3", "log" ] }
+esp-println = { version = "0.8.0", features = [ "esp32s3", "log" ] }
 axp2101 = { git = "https://github.com/georgik/axp2101-rs.git" }
 aw9523 = { git = "https://github.com/georgik/aw9523-rs.git" }
 spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = [ "esp32s3" ] }
