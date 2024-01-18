@@ -45,6 +45,8 @@ use esp_backtrace as _;
 use icm42670::{Address, Icm42670};
 use shared_bus::BusManagerSimple;
 
+use esp_bsp::lcd_gpios;
+
 fn init_psram_heap() {
     unsafe {
         ALLOCATOR.init(psram::psram_vaddr_start() as *mut u8, psram::PSRAM_BYTES);
@@ -59,20 +61,15 @@ fn main() -> ! {
     init_psram_heap();
 
     let system = peripherals.SYSTEM.split();
-    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
+    // Slowing down CPU to 80MHz to reduce seed of game, in future this should be handled by timed task
+    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock80MHz).freeze();
 
     let mut delay = Delay::new(&clocks);
 
     println!("About to initialize the SPI LED driver");
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
-    let lcd_sclk = io.pins.gpio7;
-    let lcd_mosi = io.pins.gpio6;
-    let lcd_cs = io.pins.gpio5;
-    let lcd_miso = io.pins.gpio2; // random unused pin
-    let lcd_dc = io.pins.gpio4.into_push_pull_output();
-    let mut lcd_backlight = io.pins.gpio45.into_push_pull_output();
-    let lcd_reset = io.pins.gpio48.into_push_pull_output();
+    let (lcd_sclk, lcd_mosi, lcd_cs, lcd_miso, lcd_dc, mut lcd_backlight, lcd_reset) = lcd_gpios!(BoardType::ESP32S3Box, io);
 
     let i2c_sda = io.pins.gpio8;
     let i2c_scl = io.pins.gpio18;
