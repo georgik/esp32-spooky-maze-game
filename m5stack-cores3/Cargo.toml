@@ -37,6 +37,7 @@ esp-println = { version = "0.7.1", features = [ "esp32s3", "log" ] }
 axp2101 = { git = "https://github.com/georgik/axp2101-rs.git" }
 aw9523 = { git = "https://github.com/georgik/aw9523-rs.git" }
 spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = [ "esp32s3" ] }
+esp-bsp = "0.1.0"
 
 [features]
 default = []

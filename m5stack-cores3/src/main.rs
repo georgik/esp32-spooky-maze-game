@@ -56,6 +56,8 @@ use spooky_embedded::{
 use axp2101::{ I2CPowerManagementInterface, Axp2101 };
 use aw9523::I2CGpioExpanderInterface;
 
+use esp_bsp::{lcd_gpios, BoardType};
+
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take();
@@ -69,13 +71,7 @@ fn main() -> ! {
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
-
-    let lcd_sclk = io.pins.gpio36;
-    let lcd_mosi = io.pins.gpio37;
-    let lcd_cs = io.pins.gpio3;
-    let lcd_miso = io.pins.gpio17; // random unused pin
-    let lcd_dc = io.pins.gpio35.into_push_pull_output();
-    let lcd_reset = io.pins.gpio15.into_push_pull_output();
+    let (lcd_sclk, lcd_mosi, lcd_cs, lcd_miso, lcd_dc, _lcd_backlight, lcd_reset) = lcd_gpios!(BoardType::M5StackCoreS3, io);
 
     // I2C
     let sda = io.pins.gpio12;
