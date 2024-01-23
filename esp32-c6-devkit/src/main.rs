@@ -4,7 +4,7 @@
 #[global_allocator]
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
-use spi_dma_displayinterface::spi_dma_displayinterface;
+use esp_display_interface_spi_dma::display_interface_spi_dma;
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
@@ -85,7 +85,7 @@ fn main() -> ! {
         DmaPriority::Priority0,
     ));
 
-    let di = spi_dma_displayinterface::new_no_cs(LCD_MEMORY_SIZE, spi, lcd_dc);
+    let di = display_interface_spi_dma::new_no_cs(LCD_MEMORY_SIZE, spi, lcd_dc);
 
     let mut delay = Delay::new(&clocks);
 
