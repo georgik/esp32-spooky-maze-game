@@ -4,8 +4,7 @@
 #[global_allocator]
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
-// use display_interface_spi::SPIInterfaceNoCS;
-use spi_dma_displayinterface::spi_dma_displayinterface;
+use esp_display_interface_spi_dma::display_interface_spi_dma;
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
@@ -37,10 +36,9 @@ use hal::{
 
 use spooky_embedded::{
     embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE, LCD_PIXELS},
-    controllers::{accel::AccelMovementController, composites::accel_composite::AccelCompositeController}
 };
 
-mod app;
+use mipidsi::options::{ColorInversion, ColorOrder, Orientation};
 
 mod lcdkit_composite_controller;
 mod rotary_movement_controller;
@@ -171,7 +169,7 @@ fn main() -> ! {
 
     println!("SPI ready");
 
-    let di = spi_dma_displayinterface::new_no_cs(LCD_MEMORY_SIZE, spi, lcd_dc);
+    let di = display_interface_spi_dma::new_no_cs(LCD_MEMORY_SIZE, spi, lcd_dc);
 
     // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
     // If delay is 250ms, picture will be fuzzy.
@@ -180,9 +178,9 @@ fn main() -> ! {
     let mut display = match mipidsi::Builder::gc9a01(di)
         // let mut display = match mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(240 as u16, 240 as u16)
-        .with_orientation(mipidsi::Orientation::Portrait(false))
-        .with_color_order(mipidsi::ColorOrder::Bgr)
-        .with_invert_colors(mipidsi::ColorInversion::Inverted)
+        .with_orientation(Orientation::Portrait(false))
+        .with_color_order(ColorOrder::Bgr)
+        .with_invert_colors(ColorInversion::Inverted)
         .init(&mut delay, Some(lcd_reset))
     {
         Ok(disp) => disp,
