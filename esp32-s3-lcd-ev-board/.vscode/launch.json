@@ -1,0 +1,17 @@
+
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Wokwi GDB",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/lvgl_demos.elf",
+      "cwd": "${workspaceFolder}",
+      "MIMode": "gdb",
+      "miDebuggerPath": "${userHome}/.espressif/tools/xtensa-esp32s3-elf/esp-2021r2-patch3-8.4.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-gdb",
+      "miDebuggerServerAddress": "localhost:3333"
+    }
+  ]
+}
+
