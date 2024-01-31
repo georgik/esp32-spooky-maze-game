@@ -13,7 +13,7 @@ esp-println = { version = "0.8.0", features = [ "esp32c6", "log" ] }
 [dependencies]
 esp-alloc = "0.3.0"
 embedded-graphics = "0.8.1"
-embedded-hal = "0.2"
+embedded-hal = "1.0.0"
 display-interface = "0.4"
 display-interface-spi = "0.4"
 log = { version = "0.4.18" }
@@ -27,5 +27,5 @@ petgraph = { git = "https://github.com/zendurix/petgraph.git", branch = "better_
 shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core", default-features = false, features = [ "static_maze"]}
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "esp32c6", "static_maze", "resolution_320x240" ] }
-esp-display-interface-spi-dma = { git = "https://github.com/georgik/esp-display-interface-spi-dma.git", features = [ "esp32c6" ] }
-esp-bsp = "0.1.0"
+esp-display-interface-spi-dma = { version = "0.1.0", features = [ "esp32c6" ] }
+esp-bsp = "0.2.0"

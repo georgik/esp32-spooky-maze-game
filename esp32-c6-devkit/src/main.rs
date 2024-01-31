@@ -91,7 +91,7 @@ fn main() -> ! {
 
     let mut display = match mipidsi::Builder::ili9341_rgb565(di)
         .with_display_size(LCD_H_RES, LCD_V_RES)
-        .with_orientation(mipidsi::Orientation::Landscape(true))
+        .with_orientation(mipidsi::Orientation::Landscape(false))
         .with_color_order(mipidsi::ColorOrder::Rgb)
         .init(&mut delay, Some(lcd_reset)) {
             Ok(disp) => { disp },
