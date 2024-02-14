@@ -20,8 +20,8 @@
       }
     ],
     "connections": [
-      [ "esp:TX0", "$serialMonitor:RX", "", [] ],
-      [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+      [ "esp:TX", "$serialMonitor:RX", "", [] ],
+      [ "esp:RX", "$serialMonitor:TX", "", [] ],
       [ "esp:3V3", "lcd1:VCC", "green", [] ],
       [ "esp:GND.1", "lcd1:GND", "black", [] ],
       [ "esp:7", "lcd1:SCK", "blue", [] ],
