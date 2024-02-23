@@ -8,7 +8,7 @@
       "id": "esp",
       "top": -67.14,
       "left": -202.99,
-      "attrs": { "builder": "rust-std-esp32" }
+      "attrs": { "builder": "rust-nostd-esp" }
     },
     {
       "type": "wokwi-ili9341",
