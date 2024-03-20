@@ -4,16 +4,7 @@
 
 use core::cell::RefCell;
 
-#[cfg(feature = "esp32")]
-use esp32_hal as hal;
-#[cfg(feature = "esp32c3")]
-use esp32c3_hal as hal;
-#[cfg(feature = "esp32c6")]
-use esp32c6_hal as hal;
-#[cfg(feature = "esp32s2")]
-use esp32s2_hal as hal;
-#[cfg(feature = "esp32s3")]
-use esp32s3_hal as hal;
+use esp_hal as hal;
 
 use byte_slice_cast::AsByteSlice;
 use display_interface::{DataFormat, DisplayError, WriteOnlyDataCommand};
