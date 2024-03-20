@@ -5,7 +5,6 @@
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
 // use display_interface_spi::SPIInterfaceNoCS;
-// use display_interface_spi::SPIInterfaceNoCS;
 use spi_dma_displayinterface::spi_dma_displayinterface;
 
 use embedded_graphics::{
