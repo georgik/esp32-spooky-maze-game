@@ -6,7 +6,7 @@ edition = "2021"
 license = "MIT"
 
 [target.riscv32imc-unknown-none-elf.dependencies]
-hal = { package = "esp32c3-hal", version = "0.14.0" }
+hal = { package = "esp-hal", version = "0.16", features = ["esp32c3", "eh1"] }
 esp-backtrace = { version = "0.9.0", features = [
     "esp32c3",
     "panic-handler",
@@ -18,21 +18,18 @@ esp-println = { version = "0.7.0", features = [ "esp32c3" ] }
 esp-alloc = "0.3.0"
 embedded-graphics = "0.8.0"
 embedded-graphics-framebuf = { version = "0.3.0", git = "https://github.com/georgik/embedded-graphics-framebuf.git", branch = "feature/embedded-graphics-0.8" }
-embedded-hal = "0.2"
-display-interface = "0.4"
-display-interface-spi = "0.4"
+embedded-hal = "1.0.0"
+display-interface = "0.5.0"
+display-interface-spi = "0.5.0"
 icm42670 = { git = "https://github.com/jessebraham/icm42670/" }
-#mipidsi = "0.7.1"
 mipidsi = { git = "https://github.com/almindor/mipidsi.git", branch = "master" }
 panic-halt = "0.2"
 shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core", default-features = false, features = ["static_maze"]}
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze", "resolution_240x240" ] }
-# rotary-encoder-embedded = "0.2.0"
-# rotary-encoder-embedded = { path = "../../rotary-encoder-embedded"  }
 rotary-encoder-embedded = { git = "https://github.com/georgik/rotary-encoder-embedded.git", branch = "feature/poll" }
 critical-section = "1.1.2"
-spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = [ "esp32c3" ] }
+spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = ["esp32c3"] }
 
 [features]
 default = [ "esp32c3_ili9341" ]
