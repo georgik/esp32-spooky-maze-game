@@ -21,7 +21,7 @@ embedded-graphics-framebuf = { version = "0.3.0", git = "https://github.com/geor
 embedded-hal = "0.2"
 display-interface = "0.4"
 display-interface-spi = "0.4"
-icm42670 = { git = "https://github.com/jessebraham/icm42670/" }
+icm42670 = { version = "0.1.1" }
 #mipidsi = "0.7.1"
 mipidsi = { git = "https://github.com/almindor/mipidsi.git", branch = "master" }
 panic-halt = "0.2"
