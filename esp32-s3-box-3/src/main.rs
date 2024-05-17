@@ -138,7 +138,6 @@ fn main() -> ! {
 
     let mut display = match mipidsi::Builder::ili9342c_rgb565(di)
         .with_display_size(LCD_H_RES, LCD_V_RES)
-        .with_orientation(mipidsi::Orientation::PortraitInverted(false))
         .with_color_order(mipidsi::ColorOrder::Bgr)
         .init(&mut delay,  None::<NoPin>)
     {
@@ -148,6 +147,9 @@ fn main() -> ! {
             panic!("Display initialization failed");
         }
     };
+
+    // For some reason it's necessary to call set rotation outside of the builder
+    display.set_orientation(mipidsi::Orientation::PortraitInverted(false)).unwrap();
 
     let _ = lcd_backlight.set_high();
 
