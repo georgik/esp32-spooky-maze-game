@@ -18,7 +18,7 @@ esp-println = { version = "0.7.0", default-features = false, features = [ "esp32
 esp-alloc = "0.3.0"
 embedded-graphics = "0.8.0"
 embedded-hal = "0.2"
-icm42670 = { git = "https://github.com/jessebraham/icm42670/" }
+icm42670 = { version = "0.1.1" }
 mipidsi = "0.7.1"
 panic-halt = "0.2"
 shared-bus = { version = "0.3.0" }

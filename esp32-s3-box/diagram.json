@@ -1,36 +1,16 @@
 {
-    "version": 1,
-    "author": "Juraj Michálek",
-    "editor": "wokwi",
-    "parts": [
-      {
-        "type": "board-esp32-s3-devkitc-1",
-        "id": "esp",
-        "top": -494.32,
-        "left": -455.03,
-        "attrs": { "builder": "rust-std-esp32" }
-      },
-      {
-        "type": "wokwi-ili9341",
-        "id": "lcd1",
-        "top": -546.22,
-        "left": -134.92,
-        "rotate": 90,
-        "attrs": {}
-      }
-    ],
-    "connections": [
-      [ "esp:TX", "$serialMonitor:RX", "", [] ],
-      [ "esp:RX", "$serialMonitor:TX", "", [] ],
-      [ "esp:3V3", "lcd1:VCC", "green", [] ],
-      [ "esp:GND.1", "lcd1:GND", "black", [] ],
-      [ "esp:7", "lcd1:SCK", "blue", [] ],
-      [ "esp:6", "lcd1:MOSI", "orange", [] ],
-      [ "esp:GND.1", "lcd1:CS", "red", [] ],
-      [ "esp:4", "lcd1:D/C", "magenta", [] ],
-      [ "esp:48", "lcd1:RST", "yellow", [] ],
-      [ "lcd1:LED", "esp:3V3", "white", [] ]
-    ],
-    "serialMonitor": { "display": "terminal" },
-    "dependencies": {}
-  }
+  "version": 1,
+  "author": "Uri Shaked",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-s3-box",
+      "id": "esp32",
+      "top": -24.91,
+      "left": -388.54,
+      "attrs": { "psramSize": "16", "flashSize": "16" }
+    }
+  ],
+  "connections": [ [ "$serialMonitor:RX", "esp32:G43", "", [] ], [ "$serialMonitor:TX", "esp32:G44", "", [] ] ],
+  "dependencies": {}
+}
