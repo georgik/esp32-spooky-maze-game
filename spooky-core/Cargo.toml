@@ -7,12 +7,12 @@ edition = "2021"
 embedded-graphics = "0.8.0"
 embedded-graphics-framebuf = { version = "0.3.0", git = "https://github.com/georgik/embedded-graphics-framebuf.git", branch = "feature/embedded-graphics-0.8" }
 #embedded-graphics-framebuf = "0.2.0"
-tinybmp = "0.5.0"
+tinybmp = "0.6.0"
 rand = { version = "0.8.5", default-features = false }
 rand_chacha = { version = "0.3.1", default-features = false }
 petgraph = { git = "https://github.com/zendurix/petgraph.git", branch = "better_no_std", default-features = false, features = ["graphmap"], optional = true }
 maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "feature/no_std", default-features = false, features = [ "recursive_backtracking"], optional = true }
-heapless = { version = "0.7.14", default-features = false }
+heapless = { version = "0.8.0", default-features = false }
 
 [features]
 default = [ "dynamic_maze" ]
