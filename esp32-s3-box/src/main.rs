@@ -54,12 +54,6 @@ use esp_backtrace as _;
 use icm42670::{Address, Icm42670};
 use shared_bus::BusManagerSimple;
 
-// fn init_psram_heap() {
-//     unsafe {
-//         ALLOCATOR.init(psram:: psram_vaddr_start() as *mut u8, psram::PSRAM_BYTES);
-//     }
-// }
-
 #[entry]
 fn main() -> ! {
     let peripherals = esp_hal::init({
@@ -68,9 +62,19 @@ fn main() -> ! {
         config
     });
 
+    let psram_config = psram::PsramConfig {
+        size: psram::PsramSize::AutoDetect,
+        ..Default::default()
+    };
 
-    // psram::init_psram(peripherals.PSRAM);
-    // init_psram_heap();
+    // Initialize PSRAM
+
+    let (psram_start, psram_size) = psram::init_psram(peripherals.PSRAM, psram_config);
+
+    unsafe {
+        // Initialize the heap with the start address and size of the PSRAM
+        ALLOCATOR.init(psram_start, psram_size);
+    }
 
     // let system = peripherals.SYSTEM.split();
     // let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
