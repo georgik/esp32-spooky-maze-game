@@ -58,10 +58,12 @@ where
 }
 
 #[cfg(feature = "mpu6886")]
-use embedded_hal::blocking::i2c::{Write, WriteRead};
+use embedded_hal::i2c::I2c;
 
 #[cfg(feature = "mpu6886")]
-use mpu6886::{Mpu6886, Mpu6886Error};
+use mpu6886::Mpu6886;
+#[cfg(feature = "mpu6886")]
+use mpu6886::error::Mpu6886Error;
 
 // Wrapper for Mpu6886
 #[cfg(feature = "mpu6886")]
@@ -71,7 +73,8 @@ pub struct Mpu6886Wrapper<I>(Mpu6886<I>);
 #[cfg(feature = "mpu6886")]
 impl<I, E> Accelerometer for Mpu6886Wrapper<I>
 where
-    I: WriteRead<Error = E> + Write<Error = E>, E: core::fmt::Debug
+    I: I2c<Error = E>,
+    E: core::fmt::Debug,
 {
     type Error = Mpu6886Error<E>;
 
@@ -93,7 +96,7 @@ where
 #[cfg(feature = "mpu6886")]
 impl<I, E> Mpu6886Wrapper<I>
 where
-    I: WriteRead<Error = E> + Write<Error = E>,
+    I: I2c<Error = E>,
 {
     pub fn new(inner: Mpu6886<I>) -> Self {
         Self(inner)

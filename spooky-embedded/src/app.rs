@@ -4,7 +4,7 @@ use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe, move
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_graphics::prelude::RgbColor;
 use display_interface::WriteOnlyDataCommand;
-use embedded_hal::digital::v2::OutputPin;
+use embedded_hal::digital::OutputPin;
 use mipidsi::models::Model;
 
 pub fn app_loop<DI, M, RST, MC>(
