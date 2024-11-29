@@ -7,24 +7,22 @@ use display_interface::WriteOnlyDataCommand;
 use embedded_hal::digital::OutputPin;
 use mipidsi::models::Model;
 
-pub fn app_loop<DI, M, RST, MC>(
+pub fn app_loop<DI, M, RST>(
     display: &mut mipidsi::Display<DI, M, RST>,
     seed_buffer: [u8; 32],
-    movement_controller: MC
 ) where
     DI: WriteOnlyDataCommand,
     M: Model<ColorFormat = Rgb565>,
     RST: OutputPin,
-    MC: MovementController,
 {
 
     let mut data = [Rgb565::BLACK; LCD_PIXELS];
     let fbuf = FrameBuf::new(&mut data, LCD_H_RES as usize, LCD_V_RES as usize);
     let spritebuf = SpriteBuf::new(fbuf);
-
+    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
     let engine = Engine::new(spritebuf, Some(seed_buffer));
 
-    let mut universe = Universe::new_with_movement_controller(engine, movement_controller);
+    let mut universe = Universe::new_with_movement_controller(engine, demo_movement_controller);
 
     universe.initialize();
 

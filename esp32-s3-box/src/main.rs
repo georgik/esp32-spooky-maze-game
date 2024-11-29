@@ -4,7 +4,11 @@
 #[global_allocator]
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
-use spi_dma_displayinterface::spi_dma_displayinterface;
+mod spi_dma_displayinterface;
+
+use esp_hal::rng::Rng;
+use display_interface_spi;
+use mipidsi::options::Orientation;
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
@@ -12,22 +16,27 @@ use embedded_graphics::{
     text::Text,
     Drawable,
 };
-
+use embedded_hal::delay::DelayNs;
 use esp_println::println;
 
-use hal::{
-    clock::{ClockControl, CpuClock},
-    dma::DmaPriority,
-    gdma::Gdma,
-    i2c,
-    peripherals::Peripherals,
+use esp_hal::{
+    delay::Delay,
+    dma::{Dma},
     prelude::*,
+    spi::master::Spi,
     psram,
+    gpio::{Event, Input, Io, Level, Output, Pull},
+};
+use esp_hal::{
+    clock::{CpuClock},
+
+    dma::DmaPriority,
+    i2c::master::I2c,
+    peripherals::Peripherals,
+
     spi::{
-        master::{prelude::*, Spi},
         SpiMode,
     },
-    Delay, Rng, IO,
 };
 
 use spooky_embedded::{
@@ -45,61 +54,63 @@ use esp_backtrace as _;
 use icm42670::{Address, Icm42670};
 use shared_bus::BusManagerSimple;
 
-fn init_psram_heap() {
-    unsafe {
-        ALLOCATOR.init(psram::psram_vaddr_start() as *mut u8, psram::PSRAM_BYTES);
-    }
-}
+// fn init_psram_heap() {
+//     unsafe {
+//         ALLOCATOR.init(psram:: psram_vaddr_start() as *mut u8, psram::PSRAM_BYTES);
+//     }
+// }
 
 #[entry]
 fn main() -> ! {
-    let peripherals = Peripherals::take();
+    let peripherals = esp_hal::init({
+        let mut config = esp_hal::Config::default();
+        config.cpu_clock = CpuClock::max();
+        config
+    });
 
-    psram::init_psram(peripherals.PSRAM);
-    init_psram_heap();
 
-    let system = peripherals.SYSTEM.split();
-    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
+    // psram::init_psram(peripherals.PSRAM);
+    // init_psram_heap();
 
-    let mut delay = Delay::new(&clocks);
+    // let system = peripherals.SYSTEM.split();
+    // let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
+
+    let mut delay = Delay::new();
 
     println!("About to initialize the SPI LED driver");
-    let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
+    let mut io = Io::new(peripherals.IO_MUX);
 
-    let lcd_sclk = io.pins.gpio7;
-    let lcd_mosi = io.pins.gpio6;
-    let lcd_cs = io.pins.gpio5;
-    let lcd_miso = io.pins.gpio2; // random unused pin
-    let lcd_dc = io.pins.gpio4.into_push_pull_output();
-    let mut lcd_backlight = io.pins.gpio45.into_push_pull_output();
-    let lcd_reset = io.pins.gpio48.into_push_pull_output();
+    let lcd_sclk = peripherals.GPIO7;
+    let lcd_mosi = peripherals.GPIO6;
+    let lcd_cs = peripherals.GPIO5;
+    let lcd_miso = peripherals.GPIO2; // random unused pin
+    let lcd_dc = Output::new(peripherals.GPIO4, Level::Low);
+    let mut lcd_backlight = Output::new(peripherals.GPIO45, Level::Low);
+    let lcd_reset = Output::new(peripherals.GPIO48, Level::Low);
 
-    let i2c_sda = io.pins.gpio8;
-    let i2c_scl = io.pins.gpio18;
+    let i2c_sda = peripherals.GPIO8;
+    let i2c_scl = peripherals.GPIO18;
 
-    let dma = Gdma::new(peripherals.DMA);
+    let dma = Dma::new(peripherals.DMA);
     let dma_channel = dma.channel0;
 
     let mut descriptors = [0u32; 8 * 3];
     let mut rx_descriptors = [0u32; 8 * 3];
 
-    let spi = Spi::new(
+    let spi = Spi::new_with_config(
         peripherals.SPI2,
-        40u32.MHz(),
-        SpiMode::Mode0,
-        &clocks,
-    ).with_pins(
-        Some(lcd_sclk),
-        Some(lcd_mosi),
-        Some(lcd_miso),
-        Some(lcd_cs),
+        esp_hal::spi::master::Config {
+            frequency: 40u32.MHz(),
+            ..esp_hal::spi::master::Config::default()
+        },
     )
-    .with_dma(dma_channel.configure(
-        false,
-        &mut descriptors,
-        &mut rx_descriptors,
-        DmaPriority::Priority0,
-    ));
+        .with_sck(lcd_sclk)
+        .with_mosi(lcd_mosi)
+        .with_miso(lcd_miso)
+        .with_cs(lcd_cs)
+
+        .with_dma(dma_channel.configure(false, DmaPriority::Priority0));
+
 
     println!("SPI ready");
 
@@ -108,20 +119,29 @@ fn main() -> ! {
     // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
     // If delay is 250ms, picture will be fuzzy.
     // If there is no delay, display is blank
-    delay.delay_ms(500u32);
 
-    let mut display = match mipidsi::Builder::ili9342c_rgb565(di)
-        .with_display_size(LCD_H_RES, LCD_V_RES)
-        .with_orientation(mipidsi::Orientation::PortraitInverted(false))
-        .with_color_order(mipidsi::ColorOrder::Bgr)
-        .init(&mut delay, Some(lcd_reset))
-    {
-        Ok(display) => display,
-        Err(_e) => {
-            // Handle the error and possibly exit the application
-            panic!("Display initialization failed");
-        }
-    };
+    delay.delay_ns(500_000u32);
+
+    let mut display = mipidsi::Builder::new(mipidsi::models::ILI9341Rgb565, di)
+        .display_size(240, 320)
+        .orientation(mipidsi::options::Orientation::new())
+        .color_order(mipidsi::options::ColorOrder::Bgr)
+        .reset_pin(lcd_reset)
+        .init(&mut delay)
+        .unwrap();
+
+    // let mut display = match mipidsi::Builder::ili9342c_rgb565(di)
+    //     .with_display_size(LCD_H_RES, LCD_V_RES)
+    //     // .with_orientation(mipidsi::)
+    //     // .with_color_order(mipidsi::ColorOrder::Bgr)
+    //     .init(&mut delay, Some(lcd_reset))
+    // {
+    //     Ok(display) => display,
+    //     Err(_e) => {
+    //         // Handle the error and possibly exit the application
+    //         panic!("Display initialization failed");
+    //     }
+    // };
 
     let _ = lcd_backlight.set_high();
 
@@ -135,22 +155,26 @@ fn main() -> ! {
     .unwrap();
 
     // #[cfg(any(feature = "imu_controls"))]
-    let i2c = i2c::I2C::new(peripherals.I2C0, i2c_sda, i2c_scl, 100u32.kHz(), &clocks);
+    // let i2c = I2c::new(peripherals.I2C0, i2c_sda, i2c_scl, 100u32.kHz(), &clocks);
+    let i2c = I2c::new(peripherals.I2C0, esp_hal::i2c::master::Config::default())
+        .with_scl(i2c_scl)
+        .with_sda(i2c_sda);
 
     // #[cfg(any(feature = "imu_controls"))]
     let bus = BusManagerSimple::new(i2c);
     // #[cfg(any(feature = "imu_controls"))]
-    let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
+    // let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
-    rng.read(&mut seed_buffer).unwrap();
+    rng.read(&mut seed_buffer);
 
-    let accel_movement_controller = AccelMovementController::new(icm, 0.2);
+    // let accel_movement_controller = AccelMovementController::new(icm, 0.2);
     let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
-    let movement_controller = AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
+    // let demo_movement_controller2 = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
+    // let movement_controller = AccelCompositeController::new(demo_movement_controller);
 
     println!("Entering main loop");
-    app_loop(&mut display, seed_buffer, movement_controller);
+    app_loop(&mut display, seed_buffer);
     loop {}
 }
