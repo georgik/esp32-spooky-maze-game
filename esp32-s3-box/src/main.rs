@@ -1,10 +1,10 @@
 #![no_std]
 #![no_main]
 
-#[global_allocator]
-static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
+// https://github.com/esp-rs/esp-hal/blob/v0.22.0/examples/src/bin/psram_octal.rs
+use esp_alloc as _;
 
-mod spi_dma_displayinterface;
+use esp_display_interface_spi_dma::display_interface_spi_dma;
 
 use esp_hal::rng::Rng;
 use display_interface_spi;
@@ -48,6 +48,15 @@ use spooky_embedded::{
     embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE},
 };
 
+fn init_psram_heap(start: *mut u8, size: usize) {
+    unsafe {
+        esp_alloc::HEAP.add_region(esp_alloc::HeapRegion::new(
+            start,
+            size,
+            esp_alloc::MemoryCapability::External.into(),
+        ));
+    }
+}
 
 use esp_backtrace as _;
 
@@ -58,7 +67,7 @@ use shared_bus::BusManagerSimple;
 fn main() -> ! {
     let peripherals = esp_hal::init({
         let mut config = esp_hal::Config::default();
-        config.cpu_clock = CpuClock::max();
+        config.cpu_clock = CpuClock::Clock160MHz;
         config
     });
 
@@ -69,12 +78,8 @@ fn main() -> ! {
 
     // Initialize PSRAM
 
-    let (psram_start, psram_size) = psram::init_psram(peripherals.PSRAM, psram_config);
-
-    unsafe {
-        // Initialize the heap with the start address and size of the PSRAM
-        ALLOCATOR.init(psram_start, psram_size);
-    }
+    let (start, size) = psram::init_psram(peripherals.PSRAM, psram::PsramConfig::default());
+    init_psram_heap(start, size);
 
     // let system = peripherals.SYSTEM.split();
     // let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
@@ -118,7 +123,7 @@ fn main() -> ! {
 
     println!("SPI ready");
 
-    let di = spi_dma_displayinterface::new_no_cs(LCD_MEMORY_SIZE, spi, lcd_dc);
+    let di = display_interface_spi_dma::new_no_cs(LCD_MEMORY_SIZE, spi, lcd_dc);
 
     // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
     // If delay is 250ms, picture will be fuzzy.

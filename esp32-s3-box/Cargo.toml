@@ -17,18 +17,18 @@ esp-backtrace = { version = "0.14.2", features = [
 ] }
 esp-println = { version = "0.12.0", features = ["esp32s3"] }
 
-esp-alloc = "0.4.0"
+esp-alloc = "0.5.0"
 embedded-graphics = "0.8.0"
 embedded-hal = "1.0.0"
 display-interface = "0.5.0"
 display-interface-spi = "0.5.0"
 icm42670 = { version = "0.2.0" }
 mipidsi = "0.8.0"
-panic-halt = "0.2"
+panic-halt = "1.0.0"
 shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core" }
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "dynamic_maze", "resolution_320x240" ] }
-#spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = [ "esp32s3" ] }
+esp-display-interface-spi-dma = { path = "../../esp-display-interface-spi-dma" }
 #ili9431_esp32s3_test = {  path = "../../rust-esp32s3-ili9341" }
 byte-slice-cast = { version = "1.2.2", default-features = false }
 num-traits = { version = "0.2.19", default-features = false }
