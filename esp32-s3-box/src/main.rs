@@ -77,12 +77,8 @@ fn main() -> ! {
     };
 
     // Initialize PSRAM
-
     let (start, size) = psram::init_psram(peripherals.PSRAM, psram::PsramConfig::default());
     init_psram_heap(start, size);
-
-    // let system = peripherals.SYSTEM.split();
-    // let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
 
     let mut delay = Delay::new();
 
@@ -113,13 +109,12 @@ fn main() -> ! {
             ..esp_hal::spi::master::Config::default()
         },
     )
-        .with_sck(lcd_sclk)
-        .with_mosi(lcd_mosi)
-        .with_miso(lcd_miso)
-        .with_cs(lcd_cs)
+    .with_sck(lcd_sclk)
+    .with_mosi(lcd_mosi)
+    .with_miso(lcd_miso)
+    .with_cs(lcd_cs)
 
-        .with_dma(dma_channel.configure(false, DmaPriority::Priority0));
-
+    .with_dma(dma_channel.configure(false, DmaPriority::Priority0));
 
     println!("SPI ready");
 
@@ -128,29 +123,15 @@ fn main() -> ! {
     // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
     // If delay is 250ms, picture will be fuzzy.
     // If there is no delay, display is blank
-
     delay.delay_ns(500_000u32);
 
     let mut display = mipidsi::Builder::new(mipidsi::models::ILI9341Rgb565, di)
         .display_size(240, 320)
-        .orientation(mipidsi::options::Orientation::new())
+        .orientation(mipidsi::options::Orientation::new().flip_vertical().flip_horizontal())
         .color_order(mipidsi::options::ColorOrder::Bgr)
         .reset_pin(lcd_reset)
         .init(&mut delay)
         .unwrap();
-
-    // let mut display = match mipidsi::Builder::ili9342c_rgb565(di)
-    //     .with_display_size(LCD_H_RES, LCD_V_RES)
-    //     // .with_orientation(mipidsi::)
-    //     // .with_color_order(mipidsi::ColorOrder::Bgr)
-    //     .init(&mut delay, Some(lcd_reset))
-    // {
-    //     Ok(display) => display,
-    //     Err(_e) => {
-    //         // Handle the error and possibly exit the application
-    //         panic!("Display initialization failed");
-    //     }
-    // };
 
     let _ = lcd_backlight.set_high();
 

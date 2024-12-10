@@ -28,7 +28,7 @@ panic-halt = "1.0.0"
 shared-bus = { version = "0.3.0" }
 spooky-core = { path = "../spooky-core" }
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "dynamic_maze", "resolution_320x240" ] }
-esp-display-interface-spi-dma = { path = "../../esp-display-interface-spi-dma" }
+esp-display-interface-spi-dma = "0.2.0"
 #ili9431_esp32s3_test = {  path = "../../rust-esp32s3-ili9341" }
 byte-slice-cast = { version = "1.2.2", default-features = false }
 num-traits = { version = "0.2.19", default-features = false }
