@@ -8,7 +8,6 @@ use esp_display_interface_spi_dma::display_interface_spi_dma;
 
 use esp_hal::rng::Rng;
 use display_interface_spi;
-use mipidsi::options::Orientation;
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
@@ -47,38 +46,15 @@ use spooky_embedded::{
     },
     embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE},
 };
-
-fn init_psram_heap(start: *mut u8, size: usize) {
-    unsafe {
-        esp_alloc::HEAP.add_region(esp_alloc::HeapRegion::new(
-            start,
-            size,
-            esp_alloc::MemoryCapability::External.into(),
-        ));
-    }
-}
-
 use esp_backtrace as _;
 
-use icm42670::{Address, Icm42670};
+use icm42670::{Address, Icm42670, prelude::*};
 use shared_bus::BusManagerSimple;
 
 #[entry]
 fn main() -> ! {
-    let peripherals = esp_hal::init({
-        let mut config = esp_hal::Config::default();
-        config.cpu_clock = CpuClock::Clock160MHz;
-        config
-    });
-
-    let psram_config = psram::PsramConfig {
-        size: psram::PsramSize::AutoDetect,
-        ..Default::default()
-    };
-
-    // Initialize PSRAM
-    let (start, size) = psram::init_psram(peripherals.PSRAM, psram::PsramConfig::default());
-    init_psram_heap(start, size);
+    let peripherals = esp_hal::init(esp_hal::Config::default());
+    esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram);
 
     let mut delay = Delay::new();
 
@@ -95,6 +71,13 @@ fn main() -> ! {
 
     let i2c_sda = peripherals.GPIO8;
     let i2c_scl = peripherals.GPIO18;
+    // #[cfg(any(feature = "imu_controls"))]
+    // let i2c = I2c::new(peripherals.I2C0, i2c_sda, i2c_scl, 100u32.kHz(), &clocks);
+    let i2c = I2c::new(peripherals.I2C0, esp_hal::i2c::master::Config::default())
+    //     // let i2c = I2c::new(peripherals.I2C0, esp_hal::i2c::master::Config::default())
+        .with_sda(i2c_sda)
+    .with_scl(i2c_scl);
+
 
     let dma = Dma::new(peripherals.DMA);
     let dma_channel = dma.channel0;
@@ -144,27 +127,23 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
-    // #[cfg(any(feature = "imu_controls"))]
-    // let i2c = I2c::new(peripherals.I2C0, i2c_sda, i2c_scl, 100u32.kHz(), &clocks);
-    let i2c = I2c::new(peripherals.I2C0, esp_hal::i2c::master::Config::default())
-        .with_scl(i2c_scl)
-        .with_sda(i2c_sda);
 
     // #[cfg(any(feature = "imu_controls"))]
-    let bus = BusManagerSimple::new(i2c);
+    // let bus = BusManagerSimple::new(i2c);
     // #[cfg(any(feature = "imu_controls"))]
-    // let icm = Icm42670::new(bus.acquire_i2c(), Address::Primary).unwrap();
+    // let i2c_proxy = bus.acquire_i2c();
+    let icm = Icm42670::new(i2c, Address::Primary).unwrap();
+    // let icm = Icm42670::new(i2c, Address::Primary).unwrap();
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer);
 
-    // let accel_movement_controller = AccelMovementController::new(icm, 0.2);
+    let accel_movement_controller = AccelMovementController::new(icm, 0.2);
     let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
-    // let demo_movement_controller2 = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
-    // let movement_controller = AccelCompositeController::new(demo_movement_controller);
+    let movement_controller = AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
 
     println!("Entering main loop");
-    app_loop(&mut display, seed_buffer);
+    app_loop(&mut display, seed_buffer, movement_controller);
     loop {}
 }
