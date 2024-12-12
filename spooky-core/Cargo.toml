@@ -1,6 +1,6 @@
 [package]
 name = "spooky-core"
-version = "0.6.0"
+version = "0.7.0"
 edition = "2021"
 
 [dependencies]
@@ -20,3 +20,7 @@ std = []
 wasm = [ "std" ]
 static_maze = []
 dynamic_maze = [ "dep:petgraph", "dep:maze_generator" ]
+system_timer = []
+
+esp32s2 = []
+esp32c6 = []

@@ -1,4 +1,4 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+#![no_std]
 pub mod app;
 pub mod button_keyboard;
 pub mod controllers {

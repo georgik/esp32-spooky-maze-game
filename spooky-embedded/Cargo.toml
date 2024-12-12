@@ -1,6 +1,6 @@
 [package]
 name = "spooky-embedded"
-version = "0.10.0"
+version = "0.11.0"
 edition = "2021"
 
 [dependencies]
@@ -35,3 +35,6 @@ static_maze = ["spooky-core/static_maze"]
 
 resolution_240x240 = []
 resolution_320x240 = []
+
+esp32s2 = []
+esp32c6 = []
