@@ -9,8 +9,6 @@ on:
       - "m5stack-cores3/**"
       - "spooky-core/**"
       - "spooky-embedded/**"
-    paths-ignore:
-      - "**/README.md"
   pull_request:
     # Same directories for PR triggers
     paths:
