@@ -2,7 +2,6 @@ name: Continuous Integration
 
 on:
   push:
-    # Trigger only if changes occur in these directories or shared code.
     paths:
       - "esp32-s3-box/**"
       - "esp32-s3-box-3/**"
@@ -10,7 +9,6 @@ on:
       - "spooky-core/**"
       - "spooky-embedded/**"
   pull_request:
-    # Same directories for PR triggers
     paths:
       - "esp32-s3-box/**"
       - "esp32-s3-box-3/**"
@@ -31,13 +29,6 @@ jobs:
       fail-fast: false
       matrix:
         project: [ "esp32-s3-box", "esp32-s3-box-3", "m5stack-cores3" ]
-        action:
-          - command: build
-            args: --release
-          - command: fmt
-            args: --all -- --check --color always
-          - command: clippy
-            args: --all-features --workspace -- -D warnings
 
     steps:
       - name: Checkout repository
@@ -53,10 +44,18 @@ jobs:
       - name: Enable caching
         uses: Swatinem/rust-cache@v2
 
-      - name: Run command
+      - name: Run checks sequentially within each job
         run: |
           cd ${{ matrix.project }}
-          cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
+          # Format check
+          cargo fmt --all -- --check --color always
+          
+          # Clippy linting (with release mode if desired)
+          cargo clippy --release --all-features --workspace -- -D warnings
+          
+          # Build (Release)
+          cargo build --release
+
 
 
 #name: Build ESP32 Rust Binaries in Docker image espressif/idf-rust:all_... and upload to Releases
