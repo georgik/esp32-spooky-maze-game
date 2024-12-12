@@ -335,7 +335,7 @@ impl<D: embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine<D> {
             Point::new(x, y),
             MonoTextStyle::new(&FONT_8X13, Rgb565::WHITE),
         )
-            .draw(&mut self.display);
+        .draw(&mut self.display);
     }
 
     pub fn draw_main_scene(&mut self) -> &mut D {

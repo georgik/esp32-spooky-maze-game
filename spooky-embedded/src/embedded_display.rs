@@ -1,4 +1,3 @@
-
 #[cfg(feature = "resolution_320x240")]
 pub const LCD_H_RES: u16 = 320;
 #[cfg(feature = "resolution_240x240")]

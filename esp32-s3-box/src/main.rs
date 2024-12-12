@@ -1,13 +1,12 @@
 #![no_std]
 #![no_main]
 
-// https://github.com/esp-rs/esp-hal/blob/v0.22.0/examples/src/bin/psram_octal.rs
-use esp_alloc as _;
-
 use esp_display_interface_spi_dma::display_interface_spi_dma;
 
+#[allow(unused_imports)]
+use esp_backtrace as _;
+
 use esp_hal::rng::Rng;
-use display_interface_spi;
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
@@ -20,36 +19,23 @@ use esp_println::println;
 
 use esp_hal::{
     delay::Delay,
-    dma::{Dma},
+    dma::Dma,
+    dma::DmaPriority,
+    gpio::{Level, Output},
+    i2c::master::I2c,
     prelude::*,
     spi::master::Spi,
-    psram,
-    gpio::{Event, Input, Io, Level, Output, Pull},
-};
-use esp_hal::{
-    clock::{CpuClock},
-
-    dma::DmaPriority,
-    i2c::master::I2c,
-    peripherals::Peripherals,
-
-    spi::{
-        SpiMode,
-    },
 };
 
 use spooky_embedded::{
     app::app_loop,
     controllers::{
-        accel::AccelMovementController,
-        composites::accel_composite::AccelCompositeController
+        accel::AccelMovementController, composites::accel_composite::AccelCompositeController,
     },
-    embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE},
+    embedded_display::LCD_MEMORY_SIZE,
 };
-use esp_backtrace as _;
 
-use icm42670::{Address, Icm42670, prelude::*};
-use shared_bus::BusManagerSimple;
+use icm42670::{Address, Icm42670};
 
 #[entry]
 fn main() -> ! {
@@ -59,7 +45,6 @@ fn main() -> ! {
     let mut delay = Delay::new();
 
     println!("About to initialize the SPI LED driver");
-    let mut io = Io::new(peripherals.IO_MUX);
 
     let lcd_sclk = peripherals.GPIO7;
     let lcd_mosi = peripherals.GPIO6;
@@ -71,19 +56,12 @@ fn main() -> ! {
 
     let i2c_sda = peripherals.GPIO8;
     let i2c_scl = peripherals.GPIO18;
-    // #[cfg(any(feature = "imu_controls"))]
-    // let i2c = I2c::new(peripherals.I2C0, i2c_sda, i2c_scl, 100u32.kHz(), &clocks);
     let i2c = I2c::new(peripherals.I2C0, esp_hal::i2c::master::Config::default())
-    //     // let i2c = I2c::new(peripherals.I2C0, esp_hal::i2c::master::Config::default())
         .with_sda(i2c_sda)
-    .with_scl(i2c_scl);
-
+        .with_scl(i2c_scl);
 
     let dma = Dma::new(peripherals.DMA);
     let dma_channel = dma.channel0;
-
-    let mut descriptors = [0u32; 8 * 3];
-    let mut rx_descriptors = [0u32; 8 * 3];
 
     let spi = Spi::new_with_config(
         peripherals.SPI2,
@@ -96,7 +74,6 @@ fn main() -> ! {
     .with_mosi(lcd_mosi)
     .with_miso(lcd_miso)
     .with_cs(lcd_cs)
-
     .with_dma(dma_channel.configure(false, DmaPriority::Priority0));
 
     println!("SPI ready");
@@ -110,7 +87,11 @@ fn main() -> ! {
 
     let mut display = mipidsi::Builder::new(mipidsi::models::ILI9341Rgb565, di)
         .display_size(240, 320)
-        .orientation(mipidsi::options::Orientation::new().flip_vertical().flip_horizontal())
+        .orientation(
+            mipidsi::options::Orientation::new()
+                .flip_vertical()
+                .flip_horizontal(),
+        )
         .color_order(mipidsi::options::ColorOrder::Bgr)
         .reset_pin(lcd_reset)
         .init(&mut delay)
@@ -127,21 +108,17 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
-
-    // #[cfg(any(feature = "imu_controls"))]
-    // let bus = BusManagerSimple::new(i2c);
-    // #[cfg(any(feature = "imu_controls"))]
-    // let i2c_proxy = bus.acquire_i2c();
     let icm = Icm42670::new(i2c, Address::Primary).unwrap();
-    // let icm = Icm42670::new(i2c, Address::Primary).unwrap();
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer);
 
     let accel_movement_controller = AccelMovementController::new(icm, 0.2);
-    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
-    let movement_controller = AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
+    let demo_movement_controller =
+        spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
+    let movement_controller =
+        AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
 
     println!("Entering main loop");
     app_loop(&mut display, seed_buffer, movement_controller);

@@ -1,7 +1,7 @@
-use spooky_core::engine::Action;
-use spooky_core::movement_controller::MovementController;
 use icm42670::accelerometer::Accelerometer;
 use log::debug;
+use spooky_core::engine::Action;
+use spooky_core::movement_controller::MovementController;
 
 pub struct AccelMovementController<I>
 where
@@ -29,8 +29,7 @@ impl<I> MovementController for AccelMovementController<I>
 where
     I: Accelerometer,
 {
-    fn set_active(&mut self, _index:usize) {
-    }
+    fn set_active(&mut self, _index: usize) {}
 
     fn get_movement(&self) -> Action {
         self.last_action
@@ -61,9 +60,9 @@ where
 use embedded_hal::i2c::I2c;
 
 #[cfg(feature = "mpu6886")]
-use mpu6886::Mpu6886;
-#[cfg(feature = "mpu6886")]
 use mpu6886::error::Mpu6886Error;
+#[cfg(feature = "mpu6886")]
+use mpu6886::Mpu6886;
 
 // Wrapper for Mpu6886
 #[cfg(feature = "mpu6886")]
@@ -78,7 +77,10 @@ where
 {
     type Error = Mpu6886Error<E>;
 
-    fn accel_norm(&mut self) -> Result<icm42670::accelerometer::vector::F32x3, icm42670::accelerometer::Error<Self::Error>> {
+    fn accel_norm(
+        &mut self,
+    ) -> Result<icm42670::accelerometer::vector::F32x3, icm42670::accelerometer::Error<Self::Error>>
+    {
         let measurement = self.0.get_acc()?;
         Ok(icm42670::accelerometer::vector::F32x3 {
             x: measurement.y as f32, // X and Y are swapped on the MPU6886
