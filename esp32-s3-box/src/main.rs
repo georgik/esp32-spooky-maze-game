@@ -97,7 +97,7 @@ fn main() -> ! {
         .init(&mut delay)
         .unwrap();
 
-    let _ = lcd_backlight.set_high();
+    lcd_backlight.set_high();
 
     println!("Initializing...");
     Text::new(
@@ -122,5 +122,4 @@ fn main() -> ! {
 
     println!("Entering main loop");
     app_loop(&mut display, seed_buffer, movement_controller);
-    loop {}
 }

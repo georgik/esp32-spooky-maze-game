@@ -14,7 +14,8 @@ pub fn app_loop<DI, M, RST, MC>(
     display: &mut mipidsi::Display<DI, M, RST>,
     seed_buffer: [u8; 32],
     movement_controller: MC,
-) where
+) -> !
+where
     DI: WriteOnlyDataCommand,
     M: Model<ColorFormat = Rgb565>,
     RST: OutputPin,
