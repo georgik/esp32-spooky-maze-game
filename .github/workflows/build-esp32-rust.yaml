@@ -8,13 +8,6 @@ on:
       - "m5stack-cores3/**"
       - "spooky-core/**"
       - "spooky-embedded/**"
-  pull_request:
-    paths:
-      - "esp32-s3-box/**"
-      - "esp32-s3-box-3/**"
-      - "m5stack-cores3/**"
-      - "spooky-core/**"
-      - "spooky-embedded/**"
   workflow_dispatch:
 
 env:

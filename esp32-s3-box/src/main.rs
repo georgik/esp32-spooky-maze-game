@@ -49,7 +49,6 @@ fn main() -> ! {
     let lcd_sclk = peripherals.GPIO7;
     let lcd_mosi = peripherals.GPIO6;
     let lcd_cs = peripherals.GPIO5;
-    let lcd_miso = peripherals.GPIO2; // random unused pin
     let lcd_dc = Output::new(peripherals.GPIO4, Level::Low);
     let mut lcd_backlight = Output::new(peripherals.GPIO45, Level::Low);
     let lcd_reset = Output::new(peripherals.GPIO48, Level::Low);
@@ -72,7 +71,6 @@ fn main() -> ! {
     )
     .with_sck(lcd_sclk)
     .with_mosi(lcd_mosi)
-    .with_miso(lcd_miso)
     .with_cs(lcd_cs)
     .with_dma(dma_channel.configure(false, DmaPriority::Priority0));
 
