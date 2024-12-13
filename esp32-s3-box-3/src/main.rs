@@ -50,7 +50,6 @@ fn main() -> ! {
     let lcd_sclk = peripherals.GPIO7;
     let lcd_mosi = peripherals.GPIO6;
     let lcd_cs = peripherals.GPIO5;
-    // let lcd_miso = peripherals.GPIO2; // random unused pin
     let lcd_dc = Output::new(peripherals.GPIO4, Level::Low);
     let mut lcd_backlight = Output::new(peripherals.GPIO47, Level::Low);
     let lcd_reset = Output::new(peripherals.GPIO48, Level::Low);
@@ -71,11 +70,10 @@ fn main() -> ! {
             ..esp_hal::spi::master::Config::default()
         },
     )
-        .with_sck(lcd_sclk)
-        .with_mosi(lcd_mosi)
-        // .with_miso(lcd_miso)
-        .with_cs(lcd_cs)
-        .with_dma(dma_channel.configure(false, DmaPriority::Priority0));
+    .with_sck(lcd_sclk)
+    .with_mosi(lcd_mosi)
+    .with_cs(lcd_cs)
+    .with_dma(dma_channel.configure(false, DmaPriority::Priority0));
 
     println!("SPI ready");
 
@@ -106,8 +104,9 @@ fn main() -> ! {
         Point::new(80, 110),
         MonoTextStyle::new(&FONT_8X13, RgbColor::WHITE),
     )
-        .draw(&mut display)
-        .unwrap();
+    .draw(&mut display)
+    .unwrap();
+    delay.delay_ms(1500u32);
 
     let icm = Icm42670::new(i2c, Address::Primary).unwrap();
 
