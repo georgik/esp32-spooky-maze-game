@@ -1,5 +1,5 @@
 use crate::button_keyboard::{ButtonEvent, ButtonKeyboard};
-use embedded_hal::digital::v2::InputPin;
+use embedded_hal::digital::InputPin;
 use spooky_core::demo_movement_controller::DemoMovementController;
 use spooky_core::engine::Action;
 use spooky_core::movement_controller::MovementController;

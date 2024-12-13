@@ -1,4 +1,4 @@
-use embedded_hal::digital::v2::InputPin;
+use embedded_hal::digital::InputPin;
 
 #[derive(PartialEq)]
 pub enum ButtonEvent {
@@ -54,7 +54,7 @@ where
         }
     }
 
-    pub fn poll(&self) -> ButtonEvent {
+    pub fn poll(&mut self) -> ButtonEvent {
         if self.up_button.is_low().unwrap_or(false) {
             ButtonEvent::UpPressed
         } else if self.down_button.is_low().unwrap_or(false) {

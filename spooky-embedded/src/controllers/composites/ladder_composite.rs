@@ -1,7 +1,7 @@
-use spooky_core::engine::Action;
-use spooky_core::movement_controller::MovementController;
 use crate::controllers::ladder::LadderMovementController;
 use spooky_core::demo_movement_controller::DemoMovementController;
+use spooky_core::engine::Action;
+use spooky_core::movement_controller::MovementController;
 
 pub struct LadderCompositeController<'a> {
     demo_controller: DemoMovementController,
@@ -11,7 +11,10 @@ pub struct LadderCompositeController<'a> {
 }
 
 impl<'a> LadderCompositeController<'a> {
-    pub fn new(demo_controller: DemoMovementController, ladder_controller: LadderMovementController<'a>) -> Self {
+    pub fn new(
+        demo_controller: DemoMovementController,
+        ladder_controller: LadderMovementController<'a>,
+    ) -> Self {
         Self {
             demo_controller,
             ladder_controller,
@@ -36,11 +39,11 @@ impl MovementController for LadderCompositeController<'_> {
                     self.set_active(1);
                     self.last_action = Action::Start;
                 }
-            },
+            }
             1 => {
                 self.ladder_controller.tick();
                 self.last_action = self.ladder_controller.get_movement();
-            },
+            }
             _ => {}
         }
     }

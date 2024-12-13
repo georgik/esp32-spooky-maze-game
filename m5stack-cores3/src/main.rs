@@ -1,9 +1,14 @@
 #![no_std]
 #![no_main]
 
-// https://shop.m5stack.com/products/m5stack-cores3-esp32s3-lotdevelopment-kit
+use aw9523::I2CGpioExpanderInterface;
+use axp2101::{Axp2101, I2CPowerManagementInterface};
+use esp_display_interface_spi_dma::display_interface_spi_dma;
 
-use spi_dma_displayinterface::spi_dma_displayinterface;
+#[allow(unused_imports)]
+use esp_backtrace as _;
+
+use esp_hal::rng::Rng;
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
@@ -11,90 +16,50 @@ use embedded_graphics::{
     text::Text,
     Drawable,
 };
+use embedded_hal::delay::DelayNs;
+use esp_println::println;
 
-use hal::{
-    clock::{ClockControl, CpuClock},
+use esp_hal::{
+    delay::Delay,
+    dma::Dma,
     dma::DmaPriority,
-    gdma::Gdma,
-    i2c,
-    peripherals::Peripherals,
+    gpio::{Level, Output},
+    i2c::master::I2c,
     prelude::*,
-    spi::{
-        master::{prelude::*, Spi},
-        SpiMode,
-    },
-    Delay, Rng, IO, gpio::PushPull,
+    spi::master::Spi,
 };
 
-use esp_backtrace as _;
 use log::info;
-
-#[cfg(feature = "mpu9250")]
-use mpu9250::{ImuMeasurements, Mpu9250};
-
-#[cfg(feature = "mpu6050")]
-use mpu6050::Mpu6050;
-
-#[cfg(feature = "mpu6886")]
-use mpu6886::Mpu6886;
-
-use spooky_core::engine::Engine;
-
+use mipidsi::options::ColorInversion;
 use shared_bus::BusManagerSimple;
-
-use embedded_hal::digital::v2::OutputPin;
-
 use spooky_embedded::{
     app::app_loop,
-    controllers::{
-        accel::AccelMovementController,
-        composites::accel_composite::AccelCompositeController
-    },
-    embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE},
+    /*controllers::{
+        accel::AccelMovementController, composites::accel_composite::AccelCompositeController,
+    },*/
+    embedded_display::LCD_MEMORY_SIZE,
 };
-
-use axp2101::{ I2CPowerManagementInterface, Axp2101 };
-use aw9523::I2CGpioExpanderInterface;
 
 #[entry]
 fn main() -> ! {
-    let peripherals = Peripherals::take();
+    let peripherals = esp_hal::init(esp_hal::Config::default());
+    esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram);
 
-    let system = peripherals.SYSTEM.split();
-    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock160MHz).freeze();
+    let mut delay = Delay::new();
 
-    esp_println::logger::init_logger_from_env();
+    info!("About to initialize the SPI LED driver");
 
-    let mut delay = Delay::new(&clocks);
+    let lcd_sclk = peripherals.GPIO36;
+    let lcd_mosi = peripherals.GPIO37;
+    let lcd_cs = peripherals.GPIO3;
+    let lcd_dc = Output::new(peripherals.GPIO35, Level::Low);
+    let lcd_reset = Output::new(peripherals.GPIO15, Level::Low);
 
-    let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-
-
-    let lcd_sclk = io.pins.gpio36;
-    let lcd_mosi = io.pins.gpio37;
-    let lcd_cs = io.pins.gpio3;
-    let lcd_miso = io.pins.gpio17; // random unused pin
-    let lcd_dc = io.pins.gpio35.into_push_pull_output();
-    let lcd_reset = io.pins.gpio15.into_push_pull_output();
-
-    // I2C
-    let sda = io.pins.gpio12;
-    let scl = io.pins.gpio11;
-
-    let dma = Gdma::new(peripherals.DMA);
-    let dma_channel = dma.channel0;
-
-    let mut descriptors = [0u32; 8 * 3];
-    let mut rx_descriptors = [0u32; 8 * 3];
-
-    let i2c_bus = i2c::I2C::new(
-        peripherals.I2C0,
-        sda,
-        scl,
-        400u32.kHz(),
-        &clocks,
-    );
-
+    let i2c_sda = peripherals.GPIO12;
+    let i2c_scl = peripherals.GPIO11;
+    let i2c_bus = I2c::new(peripherals.I2C0, esp_hal::i2c::master::Config::default())
+        .with_sda(i2c_sda)
+        .with_scl(i2c_scl);
     let bus = BusManagerSimple::new(i2c_bus);
 
     info!("Initializing AXP2101");
@@ -107,41 +72,43 @@ fn main() -> ! {
     let mut aw = aw9523::Aw9523::new(aw_interface);
     aw.init().unwrap();
 
-    // M5Stack CORE 2 - https://docs.m5stack.com/en/core/core2
-    // let mut backlight = io.pins.gpio3.into_push_pull_output();
-    delay.delay_ms(500u32);
-    info!("About to initialize the SPI LED driver");
+    let dma = Dma::new(peripherals.DMA);
+    let dma_channel = dma.channel0;
 
-    let spi = Spi::new(
-        peripherals.SPI3,
-        20u32.MHz(),
-        SpiMode::Mode0,
-        &clocks,
-    ).with_pins(
-        Some(lcd_sclk),
-        Some(lcd_mosi),
-        Some(lcd_miso),
-        Some(lcd_cs),
-    ).with_dma(dma_channel.configure(
-        false,
-        &mut descriptors,
-        &mut rx_descriptors,
-        DmaPriority::Priority0,
-    ));
+    let spi = Spi::new_with_config(
+        peripherals.SPI2,
+        esp_hal::spi::master::Config {
+            frequency: 40u32.MHz(),
+            ..esp_hal::spi::master::Config::default()
+        },
+    )
+    .with_sck(lcd_sclk)
+    .with_mosi(lcd_mosi)
+    .with_cs(lcd_cs)
+    .with_dma(dma_channel.configure(false, DmaPriority::Priority0));
 
-    delay.delay_ms(500u32);
-    // backlight.set_high().unwrap();
+    info!("SPI ready");
 
-    //https://github.com/m5stack/M5CoreS3/blob/main/src/utility/Config.h#L8
-    let di = spi_dma_displayinterface::new_no_cs(LCD_MEMORY_SIZE, spi, lcd_dc);
+    let di = display_interface_spi_dma::new_no_cs(LCD_MEMORY_SIZE, spi, lcd_dc);
 
-    let mut display = mipidsi::Builder::ili9342c_rgb565(di)
-        .with_display_size(320, 240)
-        .with_color_order(mipidsi::ColorOrder::Bgr)
-        .with_invert_colors(mipidsi::ColorInversion::Inverted)
-        .init(&mut delay, Some(lcd_reset))
+    // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
+    // If delay is 250ms, picture will be fuzzy.
+    // If there is no delay, display is blank
+    delay.delay_ns(500_000u32);
+
+    let mut display = mipidsi::Builder::new(mipidsi::models::ILI9341Rgb565, di)
+        .display_size(240, 320)
+        .orientation(
+            mipidsi::options::Orientation::new()
+                .flip_vertical()
+                .flip_horizontal(),
+        )
+        .color_order(mipidsi::options::ColorOrder::Bgr)
+        .invert_colors(ColorInversion::Inverted)
+        .reset_pin(lcd_reset)
+        .init(&mut delay)
         .unwrap();
-    delay.delay_ms(500u32);
+
     info!("Initializing...");
     Text::new(
         "Initializing...",
@@ -151,30 +118,19 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
-
-    // #[cfg(any(feature = "mpu9250"))]
-    // let mut icm = Mpu9250::imu_default(bus.acquire_i2c(), &mut delay).unwrap();
-
-    // #[cfg(any(feature = "mpu6050"))]
-    // let mut icm = Mpu6050::new(bus.acquire_i2c());
-
-    // let icm_inner = Mpu6886::new(bus.acquire_i2c());
-    // let icm = Mpu6886Wrapper::new(icm_inner);
-    // let is_imu_enabled = match icm.init(&mut delay) {
-    //     Ok(_) => true,
-    //     Err(_) => false,
-    // };
-
+    // let icm = Icm42670::new(i2c, Address::Primary).unwrap();
 
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
-    rng.read(&mut seed_buffer).unwrap();
+    rng.read(&mut seed_buffer);
 
-    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
+    // let accel_movement_controller = AccelMovementController::new(icm, 0.2);
+    let demo_movement_controller =
+        spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
     let movement_controller = demo_movement_controller;
+    // let movement_controller =
+    //     AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
 
-    info!("Entering main loop");
+    println!("Entering main loop");
     app_loop(&mut display, seed_buffer, movement_controller);
-    loop {}
-
 }

@@ -1,8 +1,8 @@
-use spooky_core::engine::Action;
-use spooky_core::movement_controller::MovementController;
-use spooky_core::demo_movement_controller::DemoMovementController;
 use crate::controllers::accel::AccelMovementController;
 use icm42670::accelerometer::Accelerometer;
+use spooky_core::demo_movement_controller::DemoMovementController;
+use spooky_core::engine::Action;
+use spooky_core::movement_controller::MovementController;
 
 pub struct AccelCompositeController<I>
 where
@@ -19,7 +19,10 @@ impl<I> AccelCompositeController<I>
 where
     I: Accelerometer,
 {
-    pub fn new(demo_controller: DemoMovementController, accel_controller: AccelMovementController<I>) -> Self {
+    pub fn new(
+        demo_controller: DemoMovementController,
+        accel_controller: AccelMovementController<I>,
+    ) -> Self {
         Self {
             demo_controller,
             accel_controller,
@@ -49,7 +52,7 @@ where
                     self.set_active(1);
                 }
                 self.demo_controller.tick()
-            },
+            }
             1 => self.accel_controller.tick(),
             _ => {}
         }

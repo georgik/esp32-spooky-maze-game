@@ -7,8 +7,9 @@ use embedded_graphics::{
     Drawable,
 };
 
+use core::fmt::Write;
+
 use crate::{assets::Assets, maze::Maze};
-use heapless::String;
 use tinybmp::Bmp;
 
 pub enum GameState {
@@ -325,7 +326,10 @@ impl<D: embedded_graphics::draw_target::DrawTarget<Color = Rgb565>> Engine<D> {
     }
 
     fn draw_status_number(&mut self, value: u32, x: i32, y: i32) {
-        let value_message: String<5> = String::from(value);
+        let mut value_message: heapless::String<5> = heapless::String::new();
+        // Convert the u32 to a string and store it in `value_message`.
+        let _ = write!(value_message, "{}", value);
+
         let _ = Text::new(
             &value_message,
             Point::new(x, y),

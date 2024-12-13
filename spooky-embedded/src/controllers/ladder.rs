@@ -15,13 +15,13 @@ pub const ADC_LADDER_PIN_NUMBER: u8 = 2;
 #[cfg(feature = "esp32s2")]
 pub const ADC_LADDER_PIN_NUMBER: u8 = 6;
 
+use embedded_hal::adc::OneShot;
+use hal::adc::{AdcPin, ADC, ADC1};
+use hal::gpio::{Analog, GpioPin};
 use hal::prelude::nb;
+use log::debug;
 use spooky_core::engine::Action;
 use spooky_core::movement_controller::MovementController;
-use hal::adc::{ADC1, AdcPin, ADC};
-use hal::gpio::{GpioPin, Analog};
-use embedded_hal::adc::OneShot;
-use log::debug;
 
 pub struct LadderMovementController<'a> {
     last_action: Action,
@@ -30,7 +30,10 @@ pub struct LadderMovementController<'a> {
 }
 
 impl<'a> LadderMovementController<'a> {
-    pub fn new(adc1: ADC<'a, ADC1>, adc_ladder_pin: AdcPin<GpioPin<Analog, ADC_LADDER_PIN_NUMBER>, ADC1>) -> Self {
+    pub fn new(
+        adc1: ADC<'a, ADC1>,
+        adc_ladder_pin: AdcPin<GpioPin<Analog, ADC_LADDER_PIN_NUMBER>, ADC1>,
+    ) -> Self {
         Self {
             last_action: Action::None,
             adc1,

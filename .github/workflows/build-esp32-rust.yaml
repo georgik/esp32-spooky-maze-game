@@ -1,108 +1,161 @@
-name: Build ESP32 Rust Binaries in Docker image espressif/idf-rust:all_... and upload to Releases
+name: Continuous Integration
 
 on:
+  push:
+    paths:
+      - "esp32-s3-box/**"
+      - "esp32-s3-box-3/**"
+      - "m5stack-cores3/**"
+      - "spooky-core/**"
+      - "spooky-embedded/**"
   workflow_dispatch:
-    inputs:
-      release_tag:
-        description: "Upload to specific release"
-        required: true
-        default: 'v0.6.1'
-      skip_projects:
-        description: "Skip projects during build (e.g. esp32-c3-devkit-rust)"
-        required: false
-        default: ''
+
+env:
+  CARGO_TERM_COLOR: always
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  get_release:
-    name: Get release
+  rust-checks:
+    name: Rust Checks
     runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.get_upload_url.outputs.url }}
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [ "esp32-s3-box", "esp32-s3-box-3", "m5stack-cores3" ]
+
     steps:
-      - uses: octokit/request-action@v2.x
-        id: get_release
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust (Xtensa)
+        uses: esp-rs/xtensa-toolchain@v1.5
         with:
-          route: GET /repos/{owner}/{repo}/releases/tags/${{ github.event.inputs.release_tag }}
-          owner: georgik
-          repo: esp32-spooky-maze-game
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: get upload url
-        id: get_upload_url
+          default: true
+          buildtargets: esp32s3
+          ldproxy: false
+
+      - name: Enable caching
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run checks sequentially within each job
         run: |
-          url=$(echo "$response" | jq -r '.upload_url' | sed 's/{?name,label}//')
-          echo "::set-output name=url::$url"
-        env:
-          response: ${{ steps.get_release.outputs.data }}
+          cd ${{ matrix.project }}
+          # Format check
+          cargo fmt --all -- --check --color always
+          
+          # Clippy linting (with release mode if desired)
+          cargo clippy --release --all-features --workspace -- -D warnings
+          
+          # Build (Release)
+          cargo build --release
 
-  build:
-    runs-on: ubuntu-20.04
-    container:
-      image: espressif/idf-rust:all_1.73.0.0
-      options: --user esp --workdir /home/esp
-    needs: get_release
-    steps:
-      - name: Clone repository with specific branch
-        run: |
-          export HOME=/home/esp
-          cd /home/esp
-          curl -L https://wokwi.com/ci/install.sh | sh
-          pwd
-          git clone --depth 1 --branch ${{ github.ref_name }} https://github.com/georgik/esp32-spooky-maze-game.git project
-      - name: Build and upload binaries
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WOKWI_CLI_TOKEN: ${{ secrets.WOKWI_CLI_TOKEN }}
-        run: |
-          # Workaround GitHub issue with setting HOME in container https://github.com/actions/runner/issues/863
-          export HOME=/home/esp
-          cd /home/esp
-          . /home/esp/.bashrc
-          . /home/esp/export-esp.sh
-          # Upload loop for each binary
-          cd project
-          for FIRMWARE_DIR in `ls -d esp* m5stack*`; do
 
-            # If FIRMWARE_DIR is a substring in SKIP_PROJECTS, skip it
-            if echo "${{ github.event.inputs.skip_projects }}" | grep -q "${FIRMWARE_DIR}"; then
-              echo "Skipping $FIRMWARE_DIR"
-              continue
-            fi
 
-            cd $FIRMWARE_DIR
-            echo "Building $FIRMWARE_DIR"
-            VERSION=$(grep '^version =' Cargo.toml | cut -d '"' -f2)
-            CHIP=$(grep 'hal = { package =' Cargo.toml | cut -d '"' -f2 | cut -d '-' -f1)
-
-            cargo espflash save-image --chip ${CHIP} --release --merge --skip-padding spooky-maze-${FIRMWARE_DIR}.bin
-
-            # If skip-wokwi-test.toml exists, skip Wokwi test
-            #if [ -f "skip-wokwi-test.toml" ]; then
-            #  echo "Skipping Wokwi test for $FIRMWARE_DIR"
-            #else
-            #  /home/esp/bin/wokwi-cli --timeout 5000 --timeout-exit-code 0 --screenshot-part "lcd1" --screenshot-time 5000 --screenshot-file "screenshot.png" "."
-            #fi
-
-            asset_path="/home/esp/project/${FIRMWARE_DIR}/spooky-maze-${FIRMWARE_DIR}.bin"
-            asset_name="spooky-maze-${FIRMWARE_DIR}-${{ github.event.inputs.release_tag }}.bin"
-            curl \
-              --request POST \
-              --header "authorization: Bearer $GITHUB_TOKEN" \
-              --header "Content-Type: application/octet-stream" \
-              --data-binary "@$asset_path" \
-              --url "${{ needs.get_release.outputs.upload_url }}?name=${asset_name}"
-
-            # If skip-wokwi-test.toml exists, skip Wokwi test
-            #if [ ! -f "skip-wokwi-test.toml" ]; then
-            #    asset_path="/home/esp/project/${FIRMWARE_DIR}/screenshot.png"
-            #    asset_name="spooky-maze-${FIRMWARE_DIR}-${{ github.event.inputs.release_tag }}.png"
-            #    curl \
-            #    --request POST \
-            #    --header "authorization: Bearer $GITHUB_TOKEN" \
-            #    --header "Content-Type: application/octet-stream" \
-            #    --data-binary "@$asset_path" \
-            #    --url "${{ needs.get_release.outputs.upload_url }}?name=${asset_name}"
-            #fi
-
-            cd -
-          done
+#name: Build ESP32 Rust Binaries in Docker image espressif/idf-rust:all_... and upload to Releases
+#
+#on:
+#  workflow_dispatch:
+#    inputs:
+#      release_tag:
+#        description: "Upload to specific release"
+#        required: true
+#        default: 'v0.6.1'
+#      skip_projects:
+#        description: "Skip projects during build (e.g. esp32-c3-devkit-rust)"
+#        required: false
+#        default: ''
+#
+#jobs:
+#  get_release:
+#    name: Get release
+#    runs-on: ubuntu-latest
+#    outputs:
+#      upload_url: ${{ steps.get_upload_url.outputs.url }}
+#    steps:
+#      - uses: octokit/request-action@v2.x
+#        id: get_release
+#        with:
+#          route: GET /repos/{owner}/{repo}/releases/tags/${{ github.event.inputs.release_tag }}
+#          owner: georgik
+#          repo: esp32-spooky-maze-game
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - name: get upload url
+#        id: get_upload_url
+#        run: |
+#          url=$(echo "$response" | jq -r '.upload_url' | sed 's/{?name,label}//')
+#          echo "::set-output name=url::$url"
+#        env:
+#          response: ${{ steps.get_release.outputs.data }}
+#
+#  build:
+#    runs-on: ubuntu-20.04
+#    container:
+#      image: espressif/idf-rust:all_1.73.0.0
+#      options: --user esp --workdir /home/esp
+#    needs: get_release
+#    steps:
+#      - name: Clone repository with specific branch
+#        run: |
+#          export HOME=/home/esp
+#          cd /home/esp
+#          curl -L https://wokwi.com/ci/install.sh | sh
+#          pwd
+#          git clone --depth 1 --branch ${{ github.ref_name }} https://github.com/georgik/esp32-spooky-maze-game.git project
+#      - name: Build and upload binaries
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          WOKWI_CLI_TOKEN: ${{ secrets.WOKWI_CLI_TOKEN }}
+#        run: |
+#          # Workaround GitHub issue with setting HOME in container https://github.com/actions/runner/issues/863
+#          export HOME=/home/esp
+#          cd /home/esp
+#          . /home/esp/.bashrc
+#          . /home/esp/export-esp.sh
+#          # Upload loop for each binary
+#          cd project
+#          for FIRMWARE_DIR in `ls -d esp* m5stack*`; do
+#
+#            # If FIRMWARE_DIR is a substring in SKIP_PROJECTS, skip it
+#            if echo "${{ github.event.inputs.skip_projects }}" | grep -q "${FIRMWARE_DIR}"; then
+#              echo "Skipping $FIRMWARE_DIR"
+#              continue
+#            fi
+#
+#            cd $FIRMWARE_DIR
+#            echo "Building $FIRMWARE_DIR"
+#            VERSION=$(grep '^version =' Cargo.toml | cut -d '"' -f2)
+#            CHIP=$(grep 'hal = { package =' Cargo.toml | cut -d '"' -f2 | cut -d '-' -f1)
+#
+#            cargo espflash save-image --chip ${CHIP} --release --merge --skip-padding spooky-maze-${FIRMWARE_DIR}.bin
+#
+#            # If skip-wokwi-test.toml exists, skip Wokwi test
+#            #if [ -f "skip-wokwi-test.toml" ]; then
+#            #  echo "Skipping Wokwi test for $FIRMWARE_DIR"
+#            #else
+#            #  /home/esp/bin/wokwi-cli --timeout 5000 --timeout-exit-code 0 --screenshot-part "lcd1" --screenshot-time 5000 --screenshot-file "screenshot.png" "."
+#            #fi
+#
+#            asset_path="/home/esp/project/${FIRMWARE_DIR}/spooky-maze-${FIRMWARE_DIR}.bin"
+#            asset_name="spooky-maze-${FIRMWARE_DIR}-${{ github.event.inputs.release_tag }}.bin"
+#            curl \
+#              --request POST \
+#              --header "authorization: Bearer $GITHUB_TOKEN" \
+#              --header "Content-Type: application/octet-stream" \
+#              --data-binary "@$asset_path" \
+#              --url "${{ needs.get_release.outputs.upload_url }}?name=${asset_name}"
+#
+#            # If skip-wokwi-test.toml exists, skip Wokwi test
+#            #if [ ! -f "skip-wokwi-test.toml" ]; then
+#            #    asset_path="/home/esp/project/${FIRMWARE_DIR}/screenshot.png"
+#            #    asset_name="spooky-maze-${FIRMWARE_DIR}-${{ github.event.inputs.release_tag }}.png"
+#            #    curl \
+#            #    --request POST \
+#            #    --header "authorization: Bearer $GITHUB_TOKEN" \
+#            #    --header "Content-Type: application/octet-stream" \
+#            #    --data-binary "@$asset_path" \
+#            #    --url "${{ needs.get_release.outputs.upload_url }}?name=${asset_name}"
+#            #fi
+#
+#            cd -
+#          done
