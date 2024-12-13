@@ -6,7 +6,7 @@ edition = "2021"
 license = "MIT"
 
 [dependencies]
-esp-hal = { version = "0.22.0", features = [ "esp32s3", "octal-psram" ] }
+esp-hal = { version = "0.22.0", features = [ "esp32s3", "quad-psram" ] }
 esp-backtrace = { version = "0.14.2", features = [
     "esp32s3",
     "panic-handler",
@@ -17,9 +17,9 @@ esp-println = { version = "0.12.0", features = ["esp32s3"] }
 esp-alloc = "0.5.0"
 embedded-graphics = "0.8.0"
 embedded-hal = "1.0.0"
-mpu9250 = { version = "0.25.0", default-features = false, features = [
-    "i2c",
-], optional = true }
+#mpu9250 = { version = "0.25.0", default-features = false, features = [
+#    "i2c",
+#], optional = true }
 axp2101 = { git = "https://github.com/georgik/axp2101-rs.git" }
 aw9523 = { git = "https://github.com/georgik/aw9523-rs.git" }
 mipidsi = "0.8.0"

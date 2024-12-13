@@ -1,73 +1,6 @@
 #![no_std]
 #![no_main]
 
-// let lcd_sclk = io.pins.gpio36;
-// let lcd_mosi = io.pins.gpio37;
-// let lcd_cs = io.pins.gpio3;
-// let lcd_miso = io.pins.gpio17; // random unused pin
-// let lcd_dc = io.pins.gpio35.into_push_pull_output();
-// let lcd_reset = io.pins.gpio15.into_push_pull_output();
-//
-// // I2C
-// let sda = io.pins.gpio12;
-// let scl = io.pins.gpio11;
-// let bus = BusManagerSimple::new(i2c_bus);
-//
-// info!("Initializing AXP2101");
-// let axp_interface = I2CPowerManagementInterface::new(bus.acquire_i2c());
-// let mut axp = Axp2101::new(axp_interface);
-// axp.init().unwrap();
-//
-// info!("Initializing GPIO Expander");
-// let aw_interface = I2CGpioExpanderInterface::new(bus.acquire_i2c());
-// let mut aw = aw9523::Aw9523::new(aw_interface);
-// aw.init().unwrap();
-//
-// // M5Stack CORE 2 - https://docs.m5stack.com/en/core/core2
-// // let mut backlight = io.pins.gpio3.into_push_pull_output();
-// delay.delay_ms(500u32);
-// info!("About to initialize the SPI LED driver");
-
-//
-// let mut display = mipidsi::Builder::ili9342c_rgb565(di)
-//     .with_display_size(320, 240)
-//     .with_color_order(mipidsi::ColorOrder::Bgr)
-//     .with_invert_colors(mipidsi::ColorInversion::Inverted)
-//     .init(&mut delay, Some(lcd_reset))
-//     .unwrap();
-// delay.delay_ms(500u32);
-// info!("Initializing...");
-// Text::new(
-//     "Initializing...",
-//     Point::new(80, 110),
-//     MonoTextStyle::new(&FONT_8X13, RgbColor::WHITE),
-// )
-// .draw(&mut display)
-// .unwrap();
-
-// #[cfg(any(feature = "mpu9250"))]
-// let mut icm = Mpu9250::imu_default(bus.acquire_i2c(), &mut delay).unwrap();
-
-// #[cfg(any(feature = "mpu6050"))]
-// let mut icm = Mpu6050::new(bus.acquire_i2c());
-
-// let icm_inner = Mpu6886::new(bus.acquire_i2c());
-// let icm = Mpu6886Wrapper::new(icm_inner);
-// let is_imu_enabled = match icm.init(&mut delay) {
-//     Ok(_) => true,
-//     Err(_) => false,
-// };
-
-// let mut rng = Rng::new(peripherals.RNG);
-// let mut seed_buffer = [0u8; 32];
-// rng.read(&mut seed_buffer).unwrap();
-//
-// let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
-//
-// let movement_controller = demo_movement_controller;
-// info!("Entering main loop");
-// app_loop(&mut display, seed_buffer, movement_controller);
-
 use aw9523::I2CGpioExpanderInterface;
 use axp2101::{Axp2101, I2CPowerManagementInterface};
 use esp_display_interface_spi_dma::display_interface_spi_dma;
@@ -97,12 +30,13 @@ use esp_hal::{
 };
 
 use log::info;
+use mipidsi::options::ColorInversion;
 use shared_bus::BusManagerSimple;
 use spooky_embedded::{
     app::app_loop,
-    controllers::{
+    /*controllers::{
         accel::AccelMovementController, composites::accel_composite::AccelCompositeController,
-    },
+    },*/
     embedded_display::LCD_MEMORY_SIZE,
 };
 
@@ -170,6 +104,7 @@ fn main() -> ! {
                 .flip_horizontal(),
         )
         .color_order(mipidsi::options::ColorOrder::Bgr)
+        .invert_colors(ColorInversion::Inverted)
         .reset_pin(lcd_reset)
         .init(&mut delay)
         .unwrap();
@@ -196,6 +131,6 @@ fn main() -> ! {
     // let movement_controller =
     //     AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
 
-    info!("Entering main loop");
+    println!("Entering main loop");
     app_loop(&mut display, seed_buffer, movement_controller);
 }
