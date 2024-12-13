@@ -1,8 +1,8 @@
-use spooky_core::movement_controller::MovementController;
 use crate::keyboard_movement_controller::KeyboardMovementController;
+use embedded_graphics_simulator::sdl2::Keycode;
 use spooky_core::demo_movement_controller::DemoMovementController;
 use spooky_core::engine::Action;
-use embedded_graphics_simulator::sdl2::Keycode;
+use spooky_core::movement_controller::MovementController;
 
 pub struct DesktopMovementControllerBuilder {
     pub demo_movement_controller: DemoMovementController,
@@ -12,7 +12,10 @@ pub struct DesktopMovementControllerBuilder {
 }
 
 impl DesktopMovementControllerBuilder {
-    pub fn new(demo_movement_controller: DemoMovementController, keyboard_movement_controller: KeyboardMovementController) -> Self {
+    pub fn new(
+        demo_movement_controller: DemoMovementController,
+        keyboard_movement_controller: KeyboardMovementController,
+    ) -> Self {
         Self {
             demo_movement_controller,
             keyboard_movement_controller,
@@ -31,8 +34,7 @@ impl DesktopMovementControllerBuilder {
 }
 
 impl MovementController for DesktopMovementControllerBuilder {
-
-    fn set_active(&mut self, index:usize) {
+    fn set_active(&mut self, index: usize) {
         self.active_index = index;
 
         // match self.active_index {

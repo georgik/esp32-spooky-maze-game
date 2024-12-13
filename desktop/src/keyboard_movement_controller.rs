@@ -1,6 +1,6 @@
+use embedded_graphics_simulator::sdl2::Keycode;
 use spooky_core::engine::Action;
 use spooky_core::movement_controller::MovementController;
-use embedded_graphics_simulator::sdl2::Keycode;
 
 pub struct KeyboardMovementController {
     last_action: Action,
@@ -31,14 +31,11 @@ impl KeyboardMovementController {
 }
 
 impl MovementController for KeyboardMovementController {
-
-    fn set_active(&mut self, _index:usize) {
-    }
+    fn set_active(&mut self, _index: usize) {}
 
     fn get_movement(&self) -> Action {
         self.last_action
     }
 
-    fn tick(&mut self) {
-    }
+    fn tick(&mut self) {}
 }

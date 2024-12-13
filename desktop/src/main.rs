@@ -1,12 +1,12 @@
 use embedded_graphics::{
     pixelcolor::Rgb565,
-    prelude::*, mono_font::{MonoTextStyle, ascii::FONT_8X13}, text::Text,
-};
-use embedded_graphics_simulator::{
-    SimulatorDisplay, SimulatorEvent, Window, OutputSettingsBuilder,
+    prelude::*,
 };
 use embedded_graphics_framebuf::FrameBuf;
-use spooky_core::{spritebuf::SpriteBuf, engine::Engine, universe::Universe};
+use embedded_graphics_simulator::{
+    OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
+};
+use spooky_core::{engine::Engine, spritebuf::SpriteBuf, universe::Universe};
 use std::time::{Duration, Instant};
 
 mod desktop_movement_controller;
@@ -39,13 +39,18 @@ fn main() -> Result<(), core::convert::Infallible> {
 
     let demo_movement_controller = DemoMovementController::new(get_seed_buffer().unwrap());
     let keyboard_movement_controller = KeyboardMovementController::new();
-    let desktop_movement_controller = DesktopMovementControllerBuilder::new(demo_movement_controller, keyboard_movement_controller);
+    let desktop_movement_controller = DesktopMovementControllerBuilder::new(
+        demo_movement_controller,
+        keyboard_movement_controller,
+    );
 
     let mut universe = Universe::new_with_movement_controller(engine, desktop_movement_controller);
     universe.initialize();
 
     let mut display = SimulatorDisplay::new(Size::new(320, 200));
-    display.draw_iter(universe.render_frame().into_iter()).unwrap();
+    display
+        .draw_iter(universe.render_frame().into_iter())
+        .unwrap();
     window.update(&display);
 
     let mut is_demo = true;
@@ -63,11 +68,15 @@ fn main() -> Result<(), core::convert::Infallible> {
                         main_controller.set_active(1);
                         is_demo = false;
                     }
-                },
-                SimulatorEvent::KeyUp { keycode, keymod, repeat } => {
+                }
+                SimulatorEvent::KeyUp {
+                    keycode: _keycode,
+                    keymod: _keymod,
+                    repeat: _repeat,
+                } => {
                     let main_controller = universe.get_movement_controller_mut();
                     main_controller.stop_movement();
-                 },
+                }
                 _ => {}
             }
         }
@@ -78,7 +87,9 @@ fn main() -> Result<(), core::convert::Infallible> {
             is_demo = true;
         }
 
-        display.draw_iter(universe.render_frame().into_iter()).unwrap();
+        display
+            .draw_iter(universe.render_frame().into_iter())
+            .unwrap();
 
         window.update(&display);
         std::thread::sleep(Duration::from_millis(50));
