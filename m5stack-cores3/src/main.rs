@@ -4,7 +4,8 @@
 use esp_display_interface_spi_dma::display_interface_spi_dma;
 use aw9523::I2CGpioExpanderInterface;
 use axp2101::{Axp2101, I2CPowerManagementInterface};
-use esp_bsp::boards::m5stackcores3::{lcd_dma_spi, lcd_display, lcd_display_interface, i2c_init, lcd_reset_pin};
+
+use esp_bsp::prelude::*;
 
 #[allow(unused_imports)]
 use esp_backtrace as _;
@@ -62,21 +63,24 @@ fn main() -> ! {
     let mut aw = aw9523::Aw9523::new(aw_interface);
     aw.init().unwrap();
 
-    // Initialize DMA and SPI for LCD
-    let spi = lcd_dma_spi!(peripherals);
+
+    println!("Initializing SPI LCD driver for ESP32S3Box");
+
+    // Use the `lcd_i2c_init` macro to initialize I2C for accelerometer
+    // let i2c = i2c_init!(peripherals);
+
+    // Use the `lcd_spi` macro to initialize the SPI interface
+    let spi = lcd_spi!(peripherals);
 
     println!("SPI ready");
 
-    // Initialize the display interface
+    // Use the `lcd_display_interface` macro to create the display interface
     let di = lcd_display_interface!(peripherals, spi);
 
-    // Delay to let the display power up
+    // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
     delay.delay_ns(500_000u32);
 
-
-    // Initialize the display using the builder pattern macro
     let mut display = lcd_display!(peripherals, di)
-        .invert_colors(ColorInversion::Inverted)
         .init(&mut delay)
         .unwrap();
 

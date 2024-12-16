@@ -2,9 +2,7 @@
 #![no_main]
 
 use esp_display_interface_spi_dma::display_interface_spi_dma;
-use esp_bsp::boards::esp32s3box3::{lcd_dma_spi, lcd_display_interface, lcd_reset_pin, lcd_backlight_init,
-                                  i2c_init, lcd_display
-};
+use esp_bsp::prelude::*;
 
 #[allow(unused_imports)]
 use esp_backtrace as _;
@@ -54,7 +52,7 @@ fn main() -> ! {
     let i2c = i2c_init!(peripherals);
 
     // Use the `lcd_spi` macro to initialize the SPI interface
-    let spi = lcd_dma_spi!(peripherals);
+    let spi = lcd_spi!(peripherals);
 
     println!("SPI ready");
 
