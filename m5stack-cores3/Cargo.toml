@@ -28,6 +28,7 @@ spooky-embedded = { path = "../spooky-embedded", default-features = false, featu
 esp-display-interface-spi-dma = "0.2.0"
 shared-bus = { version = "0.3.0" }
 log = "0.4.22"
+esp-bsp = { path = "../../esp-bsp-rs", features = ["m5stackcores3"] }
 
 [profile.dev]
 # Rust debug is too slow.
