@@ -22,7 +22,7 @@ mipidsi = "0.8.0"
 spooky-core = { path = "../spooky-core" }
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "dynamic_maze", "resolution_320x240" ] }
 esp-display-interface-spi-dma = "0.2.0"
-esp-bsp = { path = "../../esp-bsp-rs" }
+esp-bsp = { path = "../../esp-bsp-rs", features = ["esp32s3box"] }
 
 [profile.dev]
 # Rust debug is too slow.
