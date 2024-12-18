@@ -37,6 +37,8 @@ use spooky_embedded::{
 };
 
 use icm42670::{Address, Icm42670};
+use esp_hal::gpio::OutputOpenDrain;
+use esp_hal::gpio::Pull;
 
 #[entry]
 fn main() -> ! {
