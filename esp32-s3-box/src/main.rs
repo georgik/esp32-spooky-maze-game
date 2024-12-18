@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 
+use esp_bsp::prelude::*;
 use esp_display_interface_spi_dma::display_interface_spi_dma;
 
 #[allow(unused_imports)]
@@ -39,65 +40,36 @@ use icm42670::{Address, Icm42670};
 
 #[entry]
 fn main() -> ! {
+    // Initialize peripherals
     let peripherals = esp_hal::init(esp_hal::Config::default());
     esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram);
 
     let mut delay = Delay::new();
 
-    println!("About to initialize the SPI LED driver");
+    println!("Initializing SPI LCD driver for ESP32S3Box");
 
-    let lcd_sclk = peripherals.GPIO7;
-    let lcd_mosi = peripherals.GPIO6;
-    let lcd_cs = peripherals.GPIO5;
-    let lcd_dc = Output::new(peripherals.GPIO4, Level::Low);
-    let mut lcd_backlight = Output::new(peripherals.GPIO45, Level::Low);
-    let lcd_reset = Output::new(peripherals.GPIO48, Level::Low);
+    // Use the `lcd_i2c_init` macro to initialize I2C for accelerometer
+    let i2c = i2c_init!(peripherals);
 
-    let i2c_sda = peripherals.GPIO8;
-    let i2c_scl = peripherals.GPIO18;
-    let i2c = I2c::new(peripherals.I2C0, esp_hal::i2c::master::Config::default())
-        .with_sda(i2c_sda)
-        .with_scl(i2c_scl);
-
-    let dma = Dma::new(peripherals.DMA);
-    let dma_channel = dma.channel0;
-
-    let spi = Spi::new_with_config(
-        peripherals.SPI2,
-        esp_hal::spi::master::Config {
-            frequency: 40u32.MHz(),
-            ..esp_hal::spi::master::Config::default()
-        },
-    )
-    .with_sck(lcd_sclk)
-    .with_mosi(lcd_mosi)
-    .with_cs(lcd_cs)
-    .with_dma(dma_channel.configure(false, DmaPriority::Priority0));
+    // Use the `lcd_spi` macro to initialize the SPI interface
+    let spi = lcd_spi!(peripherals);
 
     println!("SPI ready");
 
-    let di = display_interface_spi_dma::new_no_cs(LCD_MEMORY_SIZE, spi, lcd_dc);
+    // Use the `lcd_display_interface` macro to create the display interface
+    let di = lcd_display_interface!(peripherals, spi);
 
     // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
-    // If delay is 250ms, picture will be fuzzy.
-    // If there is no delay, display is blank
     delay.delay_ns(500_000u32);
 
-    let mut display = mipidsi::Builder::new(mipidsi::models::ILI9341Rgb565, di)
-        .display_size(240, 320)
-        .orientation(
-            mipidsi::options::Orientation::new()
-                .flip_vertical()
-                .flip_horizontal(),
-        )
-        .color_order(mipidsi::options::ColorOrder::Bgr)
-        .reset_pin(lcd_reset)
-        .init(&mut delay)
-        .unwrap();
+    let mut display = lcd_display!(peripherals, di).init(&mut delay).unwrap();
 
-    lcd_backlight.set_high();
+    // Use the `lcd_backlight_init` macro to turn on the backlight
+    lcd_backlight_init!(peripherals);
 
     println!("Initializing...");
+
+    // Render an "Initializing..." message on the display
     Text::new(
         "Initializing...",
         Point::new(80, 110),
@@ -106,12 +78,15 @@ fn main() -> ! {
     .draw(&mut display)
     .unwrap();
 
+    // Initialize the accelerometer
     let icm = Icm42670::new(i2c, Address::Primary).unwrap();
 
+    // Initialize the random number generator
     let mut rng = Rng::new(peripherals.RNG);
     let mut seed_buffer = [0u8; 32];
     rng.read(&mut seed_buffer);
 
+    // Initialize the movement controllers
     let accel_movement_controller = AccelMovementController::new(icm, 0.2);
     let demo_movement_controller =
         spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
@@ -119,5 +94,7 @@ fn main() -> ! {
         AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
 
     println!("Entering main loop");
+
+    // Enter the application loop
     app_loop(&mut display, seed_buffer, movement_controller);
 }

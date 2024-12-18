@@ -1,0 +1,51 @@
+name: Continuous Integration for ESP32-S3
+
+on:
+  push:
+    paths:
+      - "esp32-s3-box/**"
+      - "esp32-s3-box-3/**"
+      - "m5stack-cores3/**"
+      - "spooky-core/**"
+      - "spooky-embedded/**"
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  rust-checks:
+    name: Rust Checks
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [ "esp32-s3-box", "esp32-s3-box-3", "m5stack-cores3" ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust (Xtensa)
+        uses: esp-rs/xtensa-toolchain@v1.5
+        with:
+          default: true
+          version: '1.82.0'
+          buildtargets: esp32s3
+          ldproxy: false
+
+      - name: Enable caching
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run checks sequentially within each job
+        run: |
+          cd ${{ matrix.project }}
+          # Format check
+          cargo fmt --all -- --check --color always
+          
+          # Clippy linting (with release mode if desired)
+          cargo clippy --release --all-features --workspace -- -D warnings
+          
+          # Build (Release)
+          cargo build --release

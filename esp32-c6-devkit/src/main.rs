@@ -1,10 +1,14 @@
 #![no_std]
 #![no_main]
 
-#[global_allocator]
-static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
+use esp_bsp::prelude::*;
+use esp_display_interface_spi_dma::display_interface_spi_dma;
+extern crate alloc;
 
-use spi_dma_displayinterface::spi_dma_displayinterface;
+#[allow(unused_imports)]
+use esp_backtrace as _;
+
+use esp_hal::rng::Rng;
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle},
@@ -12,123 +16,76 @@ use embedded_graphics::{
     text::Text,
     Drawable,
 };
-
+use embedded_hal::delay::DelayNs;
 use log::info;
 
-use hal::{
-    clock::{ClockControl, CpuClock},
+use esp_hal::{
+    delay::Delay,
+    dma::Dma,
     dma::DmaPriority,
-    gdma::Gdma,
-    peripherals::Peripherals,
+    gpio::{Level, Output},
+    // i2c::master::I2c,
     prelude::*,
-    spi::{
-        master::{prelude::*, Spi},
-        SpiMode,
-    },
-    Delay,
-    Rng,
-    IO,
-    adc::{AdcConfig, Attenuation, ADC, ADC1},
+    spi::master::Spi,
 };
 
-use spooky_embedded::{
-    app::app_loop,
-    embedded_display::{LCD_H_RES, LCD_V_RES, LCD_MEMORY_SIZE},
-    controllers::{
-        composites::ladder_composite::LadderCompositeController,
-        ladder::LadderMovementController
-    },
-};
-
-use esp_backtrace as _;
+use spooky_embedded::{app::app_loop, embedded_display::LCD_MEMORY_SIZE};
 
 #[entry]
 fn main() -> ! {
-    let peripherals = Peripherals::take();
+    // Initialize peripherals
+    let peripherals = esp_hal::init(esp_hal::Config::default());
+    esp_alloc::heap_allocator!(280 * 1024);
+    // esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram);
 
-    let system = peripherals.SYSTEM.split();
+    let mut delay = Delay::new();
 
-    // With DMA we have sufficient throughput, so we can clock down the CPU to 80MHz
-    let clocks = ClockControl::configure(system.clock_control, CpuClock::Clock80MHz).freeze();
+    info!("Initializing SPI LCD driver for ESP32S3Box");
 
-    esp_println::logger::init_logger_from_env();
+    // Use the `lcd_i2c_init` macro to initialize I2C for accelerometer
+    // let i2c = i2c_init!(peripherals);
 
-    info!("About to initialize the SPI LED driver");
-    let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
+    // Use the `lcd_spi` macro to initialize the SPI interface
+    let spi = lcd_spi!(peripherals);
 
-    let lcd_sclk = io.pins.gpio6;
-    let lcd_mosi = io.pins.gpio7;
-    let lcd_cs = io.pins.gpio20;
-    let lcd_miso = io.pins.gpio0; // random unused pin
-    let lcd_dc = io.pins.gpio21.into_push_pull_output();
-    let _lcd_backlight = io.pins.gpio4.into_push_pull_output();
-    let lcd_reset = io.pins.gpio3.into_push_pull_output();
+    info!("SPI ready");
 
-    let adc_pin = io.pins.gpio2.into_analog();
+    // Use the `lcd_display_interface` macro to create the display interface
+    let di = lcd_display_interface!(peripherals, spi);
 
-    let dma = Gdma::new(peripherals.DMA);
-    let dma_channel = dma.channel0;
+    // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
+    delay.delay_ns(500_000u32);
 
-    let mut descriptors = [0u32; 8 * 3];
-    let mut rx_descriptors = [0u32; 8 * 3];
+    let mut display = lcd_display!(peripherals, di).init(&mut delay).unwrap();
 
-    let spi = Spi::new(
-        peripherals.SPI2,
-        40u32.MHz(),
-        SpiMode::Mode0,
-        &clocks
-    ).with_pins(
-        Some(lcd_sclk),
-        Some(lcd_mosi),
-        Some(lcd_miso),
-        Some(lcd_cs),
-    ).with_dma(dma_channel.configure(
-        false,
-        &mut descriptors,
-        &mut rx_descriptors,
-        DmaPriority::Priority0,
-    ));
+    // Use the `lcd_backlight_init` macro to turn on the backlight
+    lcd_backlight_init!(peripherals);
 
-    let di = spi_dma_displayinterface::new_no_cs(LCD_MEMORY_SIZE, spi, lcd_dc);
+    info!("Initializing...");
 
-    let mut delay = Delay::new(&clocks);
-
-    let mut display = match mipidsi::Builder::ili9341_rgb565(di)
-        .with_display_size(LCD_H_RES, LCD_V_RES)
-        .with_orientation(mipidsi::Orientation::Landscape(true))
-        .with_color_order(mipidsi::ColorOrder::Rgb)
-        .init(&mut delay, Some(lcd_reset)) {
-            Ok(disp) => { disp },
-            Err(_) => { panic!() },
-    };
-
-    info!("Display initialized");
-
+    // Render an "Initializing..." message on the display
     Text::new(
         "Initializing...",
         Point::new(80, 110),
-        MonoTextStyle::new(&FONT_8X13, RgbColor::BLACK),
+        MonoTextStyle::new(&FONT_8X13, RgbColor::WHITE),
     )
     .draw(&mut display)
     .unwrap();
 
+    // Initialize the random number generator
     let mut rng = Rng::new(peripherals.RNG);
-    let mut seed_buffer = [1u8; 32];
-    rng.read(&mut seed_buffer).unwrap();
+    let mut seed_buffer = [0u8; 32];
+    rng.read(&mut seed_buffer);
 
-    info!("Initializing the ADC");
-    let mut adc1_config = AdcConfig::new();
-    let adc_pin = adc1_config.enable_pin(adc_pin, Attenuation::Attenuation11dB);
-
-    let analog = peripherals.APB_SARADC.split();
-    let adc1 = ADC::<ADC1>::adc(analog.adc1, adc1_config).unwrap();
+    // Initialize the movement controllers
+    // let accel_movement_controller = AccelMovementController::new(icm, 0.2);
+    let demo_movement_controller =
+        spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
+    // let movement_controller =
+    //     AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
 
     info!("Entering main loop");
 
-    let ladder_movement_controller = LadderMovementController::new(adc1, adc_pin);
-    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
-    let movement_controller = LadderCompositeController::new(demo_movement_controller, ladder_movement_controller);
-
-    app_loop(&mut display, seed_buffer, movement_controller);
-    loop {}
+    // Enter the application loop
+    app_loop(&mut display, seed_buffer, demo_movement_controller);
 }
