@@ -32,7 +32,6 @@ use esp_hal::{
 };
 
 use log::info;
-use mipidsi::options::ColorInversion;
 use shared_bus::BusManagerSimple;
 use spooky_embedded::{
     app::app_loop,
