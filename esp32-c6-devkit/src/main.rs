@@ -24,7 +24,7 @@ use esp_hal::{
     dma::Dma,
     dma::DmaPriority,
     gpio::{Level, Output},
-    i2c::master::I2c,
+    // i2c::master::I2c,
     prelude::*,
     spi::master::Spi,
 };
