@@ -1,9 +1,9 @@
 #![no_std]
 #![no_main]
 
-use esp_display_interface_spi_dma::display_interface_spi_dma;
 use aw9523::I2CGpioExpanderInterface;
 use axp2101::{Axp2101, I2CPowerManagementInterface};
+use esp_display_interface_spi_dma::display_interface_spi_dma;
 
 use esp_bsp::prelude::*;
 
@@ -33,10 +33,7 @@ use esp_hal::{
 
 use log::info;
 use shared_bus::BusManagerSimple;
-use spooky_embedded::{
-    app::app_loop,
-    embedded_display::LCD_MEMORY_SIZE,
-};
+use spooky_embedded::{app::app_loop, embedded_display::LCD_MEMORY_SIZE};
 
 #[entry]
 fn main() -> ! {
@@ -62,7 +59,6 @@ fn main() -> ! {
     let mut aw = aw9523::Aw9523::new(aw_interface);
     aw.init().unwrap();
 
-
     println!("Initializing SPI LCD driver for ESP32S3Box");
 
     // Use the `lcd_i2c_init` macro to initialize I2C for accelerometer
@@ -79,9 +75,7 @@ fn main() -> ! {
     // ESP32-S3-BOX display initialization workaround: Wait for the display to power up.
     delay.delay_ns(500_000u32);
 
-    let mut display = lcd_display!(peripherals, di)
-        .init(&mut delay)
-        .unwrap();
+    let mut display = lcd_display!(peripherals, di).init(&mut delay).unwrap();
 
     println!("Initializing display...");
     Text::new(
@@ -89,8 +83,8 @@ fn main() -> ! {
         Point::new(80, 110),
         MonoTextStyle::new(&FONT_8X13, RgbColor::WHITE),
     )
-        .draw(&mut display)
-        .unwrap();
+    .draw(&mut display)
+    .unwrap();
 
     // Initialize RNG
     let mut rng = Rng::new(peripherals.RNG);
