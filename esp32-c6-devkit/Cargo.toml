@@ -1,30 +1,44 @@
 [package]
 name = "spooky-esp32-c6"
-version = "0.10.0"
+version = "0.11.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
 
-[target.riscv32imac-unknown-none-elf.dependencies]
-hal = { package = "esp32c6-hal", version = "0.7.0" }
-esp-backtrace = { version = "0.9.0", features = ["esp32c6", "panic-handler", "exception-handler", "print-uart"] }
-esp-println = { version = "0.7.0", features = [ "esp32c6", "log" ] }
-
 [dependencies]
-esp-alloc = "0.3.0"
-embedded-graphics = "0.8.0"
-embedded-hal = "0.2"
-display-interface = "0.4"
-display-interface-spi = "0.4"
-log = { version = "0.4.18" }
-mipidsi = "0.7.1"
-panic-halt = "0.2"
-rand = { version = "0.8.5", default-features = false }
-rand_chacha = { version = "0.3.1", default-features = false }
-petgraph = { git = "https://github.com/zendurix/petgraph.git", branch = "better_no_std", default-features = false, features = [
-    "graphmap",
+esp-backtrace = { version = "0.14.2", features = [
+    "esp32c6",
+    "exception-handler",
+    "panic-handler",
+    "println",
+]}
+
+esp-hal = { version = "0.22.0", features = [
+    "esp32c6",
 ] }
-shared-bus = { version = "0.3.0" }
-spooky-core = { path = "../spooky-core", default-features = false, features = [ "static_maze"]}
-spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "esp32c6", "static_maze", "resolution_320x240" ] }
-spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = [ "esp32c6" ] }
+esp-println = { version = "0.12.0", features = ["esp32c6", "log"] }
+log = { version = "0.4.21" }
+critical-section = "1.2.0"
+
+esp-alloc = "0.5.0"
+embedded-graphics = "0.8.0"
+embedded-hal = "1.0.0"
+mipidsi = "0.8.0"
+spooky-core = { path = "../spooky-core", default-features = false, features = [ "static_maze"] }
+spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze", "resolution_320x240" ] }
+esp-display-interface-spi-dma = "0.2.0"
+esp-bsp = { path = "../../esp-bsp-rs", features = [ "esp32c6devkitc1" ] }
+
+[profile.dev]
+# Rust debug is too slow.
+# For debug builds always builds with some optimization
+opt-level = "s"
+
+[profile.release]
+codegen-units = 1        # LLVM can perform better optimizations using a single thread
+debug = 2
+debug-assertions = false
+incremental = false
+lto = 'fat'
+opt-level = 's'
+overflow-checks = false
