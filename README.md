@@ -14,15 +14,13 @@ The Teleport spell requires some time to recharge. There are some not friendly s
 Binaries are available in [GitHub Releases](https://github.com/georgik/esp32-spooky-maze-game/releases).
 
 Binaries can be flashed by:
-  - GUI [esp-helm](https://github.com/georgik/esp-helm)
   - CLI [espflash](https://github.com/esp-rs/espflash) `espflash write-bin 0x0 spooky-maze-esp-wrover-kit.bin`
-  - Web browser (experimental) [ESP-Launchpad](https://georgik.rocks/wp-content/html5/esp-launchpad/?flashConfigURL=https://georgik.rocks/wp-content/esp32/esp32-spooky-maze-game/esp-launchpad.toml).
 
 ## IDE support
 
-### CLion
+### Rust Rover
 
-Recommendation: Open only sub-directory with specific target with specific toolchain in CLion, because only one toolchain is supported for resolving code dependencies. Opening whole workspace works, just some code dependencies might not be resolved. This is also limitation of cargo, which supports only one toolchain per build.
+Recommendation: Open whole project and attach to particular Cargo.toml for specific target.
 
 ## Build and flash
 
@@ -79,6 +77,7 @@ Overview:
 | m5stack-core2        | esp32    | ili9341  | mpu6886 accelerometer                 | axp192  |               |
 | m5stack-cores32      | esp32-s3 | ili9342c | bmi279 accelerometer                  | axp2101 | aw9523        |
 | m5stack-fire         | esp32    | ili9342c | mpu9250 accelerometer                 |         |               |
+| waveshare-c6-lcd-1-47| esp32c6  | ili9341  |                                       |         |               |
 
 
 ### Build for ESP32-S3-BOX with ILI9486
@@ -229,13 +228,22 @@ Note for older version 1.2 - GPIO6 is used to control backlight.
 
 HW: https://docs.espressif.com/projects/espressif-esp-dev-kits/en/latest/esp32c6/esp32-c6-devkitc-1/index.html
 
-Important: Requires `espflash 2.x` - install with `cargo install espflash --git https://github.com/esp-rs/espflash.git`
+Controls: not implemented
+
+```
+cd esp32-c6
+cargo run --release --features esp32-c6-devkitc-1
+```
+
+### Build for Waveshare C6 LCD 1.47inch
+
+HW: https://www.waveshare.com/esp32-c6-lcd-1.47.htm
 
 Controls: not implemented
 
 ```
-cd esp32-c6-devkit
-cargo espflash flash --release --monitor
+cd esp32-c6
+cargo run --release --features waveshare-esp32-c6-lcd-1-47
 ```
 
 ### Build for ESP Wrover Kit
@@ -250,23 +258,3 @@ Control: 6 push buttons
 cd esp-wrover-kit
 cargo run --release --monitor
 ```
-
-## Development
-
-Following steps are useful for IDE integration, so that IDE can recognize which is your current target and fature set.
-
-Check `target` configurad in the file `.cargo/config.toml`.
-It should be one of following values:
-```
-target = "xtensa-esp32-none-elf"
-target = "xtensa-esp32s2-none-elf"
-target = "xtensa-esp32s3-none-elf"
-target = "riscv32imac-unknown-none-elf"
-```
-
-If no value is selected, make sure to specify target on command line.
-
-Check default `features` in `Cargo.toml`. Make sure that default set contains your board and display combinations.
-
-If no value is selected, make sure to specify features on command line.
-

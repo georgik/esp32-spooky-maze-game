@@ -27,7 +27,13 @@ mipidsi = "0.8.0"
 spooky-core = { path = "../spooky-core", default-features = false, features = [ "static_maze"] }
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze", "resolution_320x240" ] }
 esp-display-interface-spi-dma = "0.2.0"
-esp-bsp = { version = "0.3.0", features = [ "esp32c6devkitc1" ] }
+esp-bsp = { path = "../../esp-bsp-rs" }
+
+[features]
+default = [  ]
+
+esp32-c6-devkitc-1 = [ "esp-bsp/esp32-c6-devkitc-1"]
+waveshare-esp32-c6-lcd-1-47 = [ "esp-bsp/waveshare-esp32-c6-lcd-1-47" ]
 
 [profile.dev]
 # Rust debug is too slow.
