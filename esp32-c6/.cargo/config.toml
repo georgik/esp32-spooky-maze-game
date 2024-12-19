@@ -11,6 +11,7 @@ rustflags = [
   "-C", "force-frame-pointers",
 ]
 
+# ESP32-C6
 target = "riscv32imac-unknown-none-elf"
 
 [unstable]

@@ -99,8 +99,8 @@ Control: IMU
 - tilt board to move character
 
 ```
-cd esp32-c3-devkit-rust
-cargo run --release --monitor
+cd esp32-c3
+cargo run --release --features esp32-c3-devkit-rust
 ```
 
 #### Features
@@ -109,6 +109,17 @@ cargo run --release --monitor
 - Framebuffer
 - Random maze generator
 - IMU Accelerometer control
+
+### Build for ESP32-C3-LcdKit
+
+Control: rotary encoder
+- rotate encoder to move the character
+- press the encoder to switch the direction
+
+```
+cd esp32-c3
+cargo run --release --features esp32-c3-lcdkit
+```
 
 ### Build for desktop
 
