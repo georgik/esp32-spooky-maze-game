@@ -35,6 +35,8 @@ use spooky_embedded::{app::app_loop, embedded_display::LCD_MEMORY_SIZE};
 fn main() -> ! {
     // Initialize peripherals
     let peripherals = esp_hal::init(esp_hal::Config::default());
+    esp_println::logger::init_logger_from_env();
+
     esp_alloc::heap_allocator!(280 * 1024);
     // esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram);
 

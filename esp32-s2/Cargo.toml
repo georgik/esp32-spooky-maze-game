@@ -1,31 +1,46 @@
 [package]
-name = "spooky-s2-kaluga"
-version = "0.10.0"
+name = "spooky-esp32-s2"
+version = "0.11.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
 license = "MIT"
 
-[target.xtensa-esp32s2-none-elf.dependencies]
-hal = { package = "esp32s2-hal", version = "0.14.0" }
-esp-backtrace = { version = "0.9.0", features = [
-    "esp32s2",
-    "panic-handler",
-    "print-uart",
-] }
-esp-println = { version = "0.7.0", features = ["esp32s2", "log"] }
-
 [dependencies]
-esp-alloc = "0.3.0"
+esp-backtrace = { version = "0.14.2", features = [
+    "exception-handler",
+    "panic-handler",
+    "println",
+]}
+
+esp-hal = "0.22.0"
+esp-println = { version = "0.12.0", features = [ "log" ] }
+log = { version = "0.4.21" }
+critical-section = "1.2.0"
+
+esp-alloc = "0.5.0"
 embedded-graphics = "0.8.0"
-embedded-hal = "0.2"
-log = { version = "0.4.18" }
-mipidsi = "0.7.1"
-panic-halt = "0.2"
-rand = { version = "0.8.5", default-features = false }
-rand_chacha = { version = "0.3.1", default-features = false }
-shared-bus = { version = "0.3.0" }
-spooky-core = { path = "../spooky-core", default-features = false, features = [
-    "static_maze",
-] }
-spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "esp32s2", "static_maze", "resolution_320x240" ] }
-spi-dma-displayinterface = { path = "../spi-dma-displayinterface", features = [ "esp32s2" ] }
+embedded-hal = "1.0.0"
+mipidsi = "0.8.0"
+spooky-core = { path = "../spooky-core", default-features = false, features = [ "static_maze"] }
+spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze" ] }
+esp-display-interface-spi-dma = "0.2.0"
+esp-bsp = { path = "../../esp-bsp-rs" }
+
+[features]
+default = [  "esp-hal/esp32s2", "esp-backtrace/esp32s2", "esp-println/esp32s2", "esp32-s2-kaluga" ]
+
+esp32-s2-kaluga = [ "esp-bsp/esp32-s2-kaluga", "spooky-embedded/resolution_320x240" ]
+
+[profile.dev]
+# Rust debug is too slow.
+# For debug builds always builds with some optimization
+opt-level = "s"
+
+[profile.release]
+codegen-units = 1        # LLVM can perform better optimizations using a single thread
+debug = 2
+debug-assertions = false
+incremental = false
+lto = 'fat'
+opt-level = 's'
+overflow-checks = false
