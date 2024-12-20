@@ -1,4 +1,4 @@
-name: Continuous Integration for ESP32-S3
+name: CI for ESP32-S3
 
 on:
   push:
@@ -33,6 +33,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run checks sequentially for all boards
+        working-directory: esp32-s3
         run: |
           # Define the list of boards to build
           boards=("esp32-s3-box" "esp32-s3-box-3" "esp32-s3-usb-otg" "m5stack-cores3")

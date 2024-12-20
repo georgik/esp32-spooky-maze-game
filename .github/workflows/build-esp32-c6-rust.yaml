@@ -1,9 +1,9 @@
-name: Continuous Integration for ESP32-C6
+name: CI for ESP32-C6
 
 on:
   push:
     paths:
-      - "../../esp32-c6/**"
+      - "esp32-c3/**"
       - "spooky-core/**"
       - "spooky-embedded/**"
   workflow_dispatch:
@@ -16,10 +16,6 @@ jobs:
   rust-checks:
     name: Rust Checks
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        project: [ "esp32-c6-devkit" ]
 
     steps:
       - name: Checkout repository
@@ -36,14 +32,19 @@ jobs:
       - name: Enable caching
         uses: Swatinem/rust-cache@v2
 
-      - name: Run checks sequentially within each job
+      - name: Run checks sequentially for all boards
+        working-directory: esp32-c6
         run: |
-          cd ${{ matrix.project }}
-          # Format check
+          # Define the list of boards to build
+          boards=("esp32-c6-devkitc-1" "waveshare-esp32-c6-lcd-1-47")
+
+          # Perform common checks
+          echo "Running common checks"
           cargo fmt --all -- --check --color always
-          
-          # Clippy linting (with release mode if desired)
           cargo clippy --release --all-features --workspace -- -D warnings
-          
-          # Build (Release)
-          cargo build --release
+
+          # Iterate through each board and build
+          for board in "${boards[@]}"; do
+            echo "Building for board: $board"
+            cargo build --release --features "$board"
+          done
