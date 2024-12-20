@@ -1,5 +1,5 @@
 [package]
-name = "spooky-esp32-c6"
+name = "spooky-esp32"
 version = "0.11.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2021"
@@ -27,10 +27,11 @@ esp-display-interface-spi-dma = "0.2.0"
 esp-bsp = { path = "../../esp-bsp-rs" }
 
 [features]
-default = [ "esp-hal/esp32c6", "esp-backtrace/esp32c6", "esp-println/esp32c6" ]
+default = [ "esp-hal/esp32", "esp-backtrace/esp32", "esp-println/esp32" ]
 
-esp32-c6-devkitc-1 = [ "esp-bsp/esp32-c6-devkitc-1", "spooky-embedded/resolution_320x240" ]
-waveshare-esp32-c6-lcd-1-47 = [ "esp-bsp/waveshare-esp32-c6-lcd-1-47", "spooky-embedded/resolution_320x240" ]
+esp32-wrover-kit = [ "esp-bsp/esp32-wrover-kit", "spooky-embedded/resolution_320x240" ]
+m5stack-core2 = [ "esp-bsp/m5stack-core2", "spooky-embedded/resolution_320x240" ]
+m5stack-fire = [ "esp-bsp/m5stack-fire", "spooky-embedded/resolution_320x240" ]
 
 [profile.dev]
 # Rust debug is too slow.

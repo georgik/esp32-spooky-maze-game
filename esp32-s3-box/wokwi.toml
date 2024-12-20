@@ -1,6 +1,0 @@
-
-
-[wokwi]
-version = 1
-elf = "target/xtensa-esp32s3-none-elf/release/spooky-s3-box"
-firmware = "target/xtensa-esp32s3-none-elf/release/spooky-s3-box"

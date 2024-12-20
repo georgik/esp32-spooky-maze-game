@@ -37,7 +37,7 @@ fn main() -> ! {
     let peripherals = esp_hal::init(esp_hal::Config::default());
     esp_println::logger::init_logger_from_env();
 
-    esp_alloc::heap_allocator!(280 * 1024);
+    esp_alloc::heap_allocator!(150 * 1024);
     // esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram);
 
     let mut delay = Delay::new();

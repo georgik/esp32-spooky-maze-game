@@ -1,6 +1,0 @@
-
-
-[wokwi]
-version = 1
-elf = "target/xtensa-esp32-none-elf/release/spooky-wrover-kit"
-firmware = "target/xtensa-esp32-none-elf/release/spooky-wrover-kit"
