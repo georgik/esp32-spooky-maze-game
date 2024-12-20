@@ -11,7 +11,8 @@ esp-backtrace = { version = "0.14.2", features = [
     "panic-handler",
     "println"
 ] }
-esp-println =  "0.12.0"
+esp-println = { version = "0.12.0", features = [ "log" ] }
+log = { version = "0.4.21" }
 
 esp-alloc = "0.5.0"
 embedded-graphics = "0.8.0"
@@ -21,7 +22,10 @@ mipidsi = "0.8.0"
 spooky-core = { path = "../spooky-core", default-features = false }
 spooky-embedded = { path = "../spooky-embedded", default-features = false }
 esp-display-interface-spi-dma = "0.2.0"
-esp-bsp = { path = "../../esp-bsp-rs" }
+esp-bsp = "0.4.0"
+axp2101 = { git = "https://github.com/georgik/axp2101-rs.git", optional = true }
+aw9523 = { git = "https://github.com/georgik/aw9523-rs.git", optional = true }
+shared-bus = { version = "0.3.0", optional = true }
 
 [features]
 default = [ "esp-hal/esp32s3", "esp-backtrace/esp32s3", "esp-println/esp32s3" ]
@@ -30,9 +34,9 @@ accelerometer = []
 no-psram = []
 
 esp32-s3-box = [ "esp-bsp/esp32-s3-box", "esp-hal/octal-psram", "accelerometer", "spooky-embedded/dynamic_maze", "spooky-embedded/resolution_320x240" ]
-esp32-s3-box-3 = [ "esp-bsp/esp32-s3-box-3", "esp-hal/octal-psram", "accelerometer", "spooky-embedded/dynamic_maze", "spooky-embedded/resolution_320x240" ]
+esp32-s3-box-3 = [ "esp-bsp/esp32-s3-box-3", "esp-hal/octal-psram", "accelerometer", "spooky-embedded/dynamic_maze", "spooky-embedded/dynamic_maze", "spooky-embedded/resolution_320x240" ]
 esp32-s3-usb-otg = [ "esp-bsp/esp32-s3-usb-otg", "no-psram", "spooky-embedded/static_maze", "spooky-embedded/resolution_240x240" ]
-m5stack-cores3 = [ "esp-bsp/m5stack-cores3", "esp-hal/quad-psram", "accelerometer", "spooky-embedded/dynamic_maze", "spooky-embedded/resolution_320x240" ]
+m5stack-cores3 = [ "esp-bsp/m5stack-cores3", "esp-hal/quad-psram", "spooky-embedded/dynamic_maze", "spooky-embedded/resolution_320x240", "dep:aw9523", "dep:axp2101", "dep:shared-bus" ]
 
 [profile.dev]
 # Rust debug is too slow.

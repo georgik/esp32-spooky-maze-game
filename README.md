@@ -28,19 +28,14 @@ Install `espflash` which is required to flash and monitor the app on Embedded De
 
 ```
 cargo install espflash
-cargo install cargo-espflash
 ```
 
 Enter the directory with project and build it:
 
 ```
-cd esp-wrover-kit
-cargo build --release
+cd esp32-s3
+cargo build --release --features esp32-s3-box-3
 ```
-
-### Build binaries for all targets
-
-The script builds all possible targets: support/ci/build-esp32-firmware.sh
 
 ## Wokwi simulation in VS Code
 
@@ -80,7 +75,7 @@ Overview:
 | waveshare-c6-lcd-1-47| esp32c6  | ili9341  |                                       |         |               |
 
 
-### Build for ESP32-S3-BOX with ILI9486
+### Build for ESP32-S3-BOX-3 with ILI9486
 
 
 Control: IMU
@@ -89,8 +84,8 @@ Control: IMU
 - move quickly down to place dynamite and destroy walls around
 
 ```
-cd esp32-s3-box
-cargo run --release --monitor
+cd esp32-s3
+cargo run --release --features esp32-s3-box-3
 ```
 
 ### Build for ESP32-C3-DeviKit-RUST with ILI9341
@@ -154,8 +149,8 @@ Control: buttons
 - press ok & menu to place dynamite
 
 ```
-cd esp32-s3-usb-otg
-cargo run --release --monitor
+cd esp32-s3
+cargo run --release --features esp32-s3-usb-otg
 ```
 
 ### Build for M5Stack-FIRE with ESP32 and ILI9341
@@ -168,41 +163,12 @@ Control: MPU-9250, buttons
 - move quickly down or press button B to place dynamite and destroy walls around
 
 ```
-cd m5stack-fire
-cargo run --release --monitor
-```
-
-#### Build M5Stack-FIRE using GitPod.io and run with Wokwi
-
-- Open in [GitPod.io](https://gitpod.io/github.com/georgik/esp32-spooky-maze-game)
-
-```
-cd m5stack-fire
-./run-wokwi.sh
+cd esp32
+cargo run --release --features m5stack-fire
 ```
 
 - Wokwi project: https://wokwi.com/projects/350825213595746900
 
-#### Build M5Stack-FIRE using Codespaces and run with Wokwi
-
-- Navigate to [GitHub repository](https://github.com/georgik/esp32-spooky-maze-game)
-- Click Open, select Codespaces tab, click Create Codespace
-
-```
-cd m5stack-fire
-./run-wokwi.sh
-```
-
-#### Build M5Stack-FIRE and run Wokwi in local VS Code
-
-Preview: install VS Code Wokwi plugin (private beta available on request)
-
-```
-cd m5stack-fire
-cargo build --release --no-default-features --features "wokwi"
-```
-
-Press F1, select Wokwi: Start simulation
 
 ### Build for M5Stack-Core2 with ESP32 and ILI9342C
 
@@ -214,8 +180,8 @@ Control: MPU6886
 - move quickly down or press button B to place dynamite and destroy walls around
 
 ```
-cd m5stack-core2
-cargo run --release --monitor
+cd esp32
+cargo run --release --features m5stack-core2
 ```
 
 ### Build for ESP32-S2-Kaluga v1.3
@@ -229,8 +195,8 @@ Control: buttons (partialy implemented based on of https://github.com/espressif/
 - (not supported) press K6 button to place dynamite
 
 ```
-cd esp32-s2-kaluga
-cargo run --release --monitor
+cd esp32-s2
+cargo run --release --features esp32-s2-kaluga
 ```
 
 Note for older version 1.2 - GPIO6 is used to control backlight.
@@ -266,6 +232,11 @@ Control: 6 push buttons
 - press button Boot to teleport
 
 ```
-cd esp-wrover-kit
-cargo run --release --monitor
+cd esp32
+cargo run --release --features esp32-wrover-kit
 ```
+
+## Board Support Package (BSP)
+
+The project is using [ESP-BSP-RS](https://crates.io/crates/esp-bsp) which provides macros with preconfigured
+GPIOs for a specific board.
