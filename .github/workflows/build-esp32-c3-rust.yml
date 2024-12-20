@@ -26,7 +26,7 @@ jobs:
         with:
           default: true
           version: '1.82.0'
-          buildtargets: esp32c6
+          buildtargets: esp32c3
           ldproxy: false
 
       - name: Enable caching
