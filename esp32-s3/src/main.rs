@@ -32,6 +32,7 @@ use esp_hal::{
     spi::master::Spi,
 };
 
+#[allow(unused_imports)]
 use spooky_embedded::{
     app::app_loop,
     controllers::{
@@ -64,6 +65,7 @@ fn main() -> ! {
     info!("Initializing SPI LCD driver");
 
     // Use the `lcd_i2c_init` macro to initialize I2C for accelerometer
+    #[allow(unused_variables)]
     let i2c = i2c_init!(peripherals);
 
     #[cfg(feature = "m5stack-cores3")]
