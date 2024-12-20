@@ -36,7 +36,9 @@ use spooky_embedded::{
     embedded_display::LCD_MEMORY_SIZE,
 };
 
+#[cfg(feature = "accelerometer")]
 use icm42670::{Address, Icm42670};
+
 use esp_hal::gpio::OutputOpenDrain;
 use esp_hal::gpio::Pull;
 
@@ -44,7 +46,10 @@ use esp_hal::gpio::Pull;
 fn main() -> ! {
     // Initialize peripherals
     let peripherals = esp_hal::init(esp_hal::Config::default());
+    #[cfg(not(feature = "no-psram"))]
     esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram);
+    #[cfg(feature = "no-psram")]
+    esp_alloc::heap_allocator!(280 * 1024);
 
     let mut delay = Delay::new();
 
@@ -81,6 +86,7 @@ fn main() -> ! {
     .unwrap();
 
     // Initialize the accelerometer
+    #[cfg(feature = "accelerometer")]
     let icm = Icm42670::new(i2c, Address::Primary).unwrap();
 
     // Initialize the random number generator
@@ -89,11 +95,16 @@ fn main() -> ! {
     rng.read(&mut seed_buffer);
 
     // Initialize the movement controllers
+    #[cfg(feature = "accelerometer")]
     let accel_movement_controller = AccelMovementController::new(icm, 0.2);
-    let demo_movement_controller =
-        spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
-    let movement_controller =
-        AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
+
+    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
+
+    #[cfg(feature = "accelerometer")]
+    let movement_controller = AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
+
+    #[cfg(not(feature = "accelerometer"))]
+    let movement_controller = demo_movement_controller;
 
     println!("Entering main loop");
 
