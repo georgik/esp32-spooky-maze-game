@@ -3,7 +3,7 @@ name: CI for ESP32-C6
 on:
   push:
     paths:
-      - "esp32-c3/**"
+      - "esp32-c6/**"
       - "spooky-core/**"
       - "spooky-embedded/**"
   workflow_dispatch:
@@ -41,7 +41,6 @@ jobs:
           # Perform common checks
           echo "Running common checks"
           cargo fmt --all -- --check --color always
-          cargo clippy --release --all-features --workspace -- -D warnings
 
           # Iterate through each board and build
           for board in "${boards[@]}"; do

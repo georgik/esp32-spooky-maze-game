@@ -1,9 +1,9 @@
-name: CI for ESP32-S3
+name: CI for ESP32-S2
 
 on:
   push:
     paths:
-      - "esp32-s3/**"
+      - "esp32-s2/**"
       - "spooky-core/**"
       - "spooky-embedded/**"
   workflow_dispatch:
@@ -26,17 +26,17 @@ jobs:
         with:
           default: true
           version: '1.82.0'
-          buildtargets: esp32s3
+          buildtargets: esp32c6
           ldproxy: false
 
       - name: Enable caching
         uses: Swatinem/rust-cache@v2
 
       - name: Run checks sequentially for all boards
-        working-directory: esp32-s3
+        working-directory: esp32-s2
         run: |
           # Define the list of boards to build
-          boards=("esp32-s3-box" "esp32-s3-box-3" "esp32-s3-usb-otg" "m5stack-cores3")
+          boards=("esp32-s2-kaluga")
 
           # Perform common checks
           echo "Running common checks"
