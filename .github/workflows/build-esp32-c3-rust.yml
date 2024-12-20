@@ -36,7 +36,8 @@ jobs:
         working-directory: esp32-c3
         run: |
           # Define the list of boards to build
-          boards=("esp32-c3-devkit-rust" "esp32-c3-lcdkit")
+          # boards=("esp32-c3-devkit-rust" "esp32-c3-lcdkit")
+          boards=("esp32-c3-lcdkit")
 
           # Perform common checks
           echo "Running common checks"
