@@ -71,8 +71,8 @@ fn main() -> ! {
         Point::new(80, 110),
         MonoTextStyle::new(&FONT_8X13, RgbColor::WHITE),
     )
-        .draw(&mut display)
-        .unwrap();
+    .draw(&mut display)
+    .unwrap();
 
     // Initialize the random number generator
     let mut rng = Rng::new(peripherals.RNG);

@@ -122,10 +122,12 @@ fn main() -> ! {
     #[cfg(feature = "accelerometer")]
     let accel_movement_controller = AccelMovementController::new(icm, 0.2);
 
-    let demo_movement_controller = spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
+    let demo_movement_controller =
+        spooky_core::demo_movement_controller::DemoMovementController::new(seed_buffer);
 
     #[cfg(feature = "accelerometer")]
-    let movement_controller = AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
+    let movement_controller =
+        AccelCompositeController::new(demo_movement_controller, accel_movement_controller);
 
     #[cfg(not(feature = "accelerometer"))]
     let movement_controller = demo_movement_controller;
