@@ -29,7 +29,7 @@ use esp_hal::{
     spi::master::Spi,
 };
 
-use spooky_embedded::{app::app_loop, embedded_display::LCD_MEMORY_SIZE};
+use spooky_embedded::app::app_loop;
 
 #[entry]
 fn main() -> ! {

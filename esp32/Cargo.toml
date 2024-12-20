@@ -24,7 +24,7 @@ mipidsi = "0.8.0"
 spooky-core = { path = "../spooky-core", default-features = false, features = [ "static_maze"] }
 spooky-embedded = { path = "../spooky-embedded", default-features = false, features = [ "static_maze" ] }
 esp-display-interface-spi-dma = "0.2.0"
-esp-bsp = "0.4.0"
+esp-bsp = "0.4.1"
 
 [features]
 default = [ "esp-hal/esp32", "esp-backtrace/esp32", "esp-println/esp32" ]

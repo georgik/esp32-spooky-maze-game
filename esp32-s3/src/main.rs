@@ -21,7 +21,6 @@ use embedded_graphics::{
     Drawable,
 };
 use embedded_hal::delay::DelayNs;
-use esp_println::println;
 
 use esp_hal::{
     delay::Delay,
@@ -38,7 +37,6 @@ use spooky_embedded::{
     controllers::{
         accel::AccelMovementController, composites::accel_composite::AccelCompositeController,
     },
-    embedded_display::LCD_MEMORY_SIZE,
 };
 
 #[cfg(feature = "accelerometer")]
