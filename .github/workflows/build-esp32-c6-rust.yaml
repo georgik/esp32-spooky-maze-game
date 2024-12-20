@@ -3,7 +3,7 @@ name: Continuous Integration for ESP32-C6
 on:
   push:
     paths:
-      - "esp32-c6-devkit/**"
+      - "../../esp32-c6/**"
       - "spooky-core/**"
       - "spooky-embedded/**"
   workflow_dispatch:

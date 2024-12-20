@@ -14,15 +14,13 @@ The Teleport spell requires some time to recharge. There are some not friendly s
 Binaries are available in [GitHub Releases](https://github.com/georgik/esp32-spooky-maze-game/releases).
 
 Binaries can be flashed by:
-  - GUI [esp-helm](https://github.com/georgik/esp-helm)
   - CLI [espflash](https://github.com/esp-rs/espflash) `espflash write-bin 0x0 spooky-maze-esp-wrover-kit.bin`
-  - Web browser (experimental) [ESP-Launchpad](https://georgik.rocks/wp-content/html5/esp-launchpad/?flashConfigURL=https://georgik.rocks/wp-content/esp32/esp32-spooky-maze-game/esp-launchpad.toml).
 
 ## IDE support
 
-### CLion
+### Rust Rover
 
-Recommendation: Open only sub-directory with specific target with specific toolchain in CLion, because only one toolchain is supported for resolving code dependencies. Opening whole workspace works, just some code dependencies might not be resolved. This is also limitation of cargo, which supports only one toolchain per build.
+Recommendation: Open whole project and attach to particular Cargo.toml for specific target.
 
 ## Build and flash
 
@@ -30,19 +28,14 @@ Install `espflash` which is required to flash and monitor the app on Embedded De
 
 ```
 cargo install espflash
-cargo install cargo-espflash
 ```
 
 Enter the directory with project and build it:
 
 ```
-cd esp-wrover-kit
-cargo build --release
+cd esp32-s3
+cargo build --release --features esp32-s3-box-3
 ```
-
-### Build binaries for all targets
-
-The script builds all possible targets: support/ci/build-esp32-firmware.sh
 
 ## Wokwi simulation in VS Code
 
@@ -79,9 +72,10 @@ Overview:
 | m5stack-core2        | esp32    | ili9341  | mpu6886 accelerometer                 | axp192  |               |
 | m5stack-cores32      | esp32-s3 | ili9342c | bmi279 accelerometer                  | axp2101 | aw9523        |
 | m5stack-fire         | esp32    | ili9342c | mpu9250 accelerometer                 |         |               |
+| waveshare-c6-lcd-1-47| esp32c6  | ili9341  |                                       |         |               |
 
 
-### Build for ESP32-S3-BOX with ILI9486
+### Build for ESP32-S3-BOX-3 with ILI9486
 
 
 Control: IMU
@@ -90,8 +84,8 @@ Control: IMU
 - move quickly down to place dynamite and destroy walls around
 
 ```
-cd esp32-s3-box
-cargo run --release --monitor
+cd esp32-s3
+cargo run --release --features esp32-s3-box-3
 ```
 
 ### Build for ESP32-C3-DeviKit-RUST with ILI9341
@@ -100,8 +94,8 @@ Control: IMU
 - tilt board to move character
 
 ```
-cd esp32-c3-devkit-rust
-cargo run --release --monitor
+cd esp32-c3
+cargo run --release --features esp32-c3-devkit-rust
 ```
 
 #### Features
@@ -110,6 +104,17 @@ cargo run --release --monitor
 - Framebuffer
 - Random maze generator
 - IMU Accelerometer control
+
+### Build for ESP32-C3-LcdKit
+
+Control: rotary encoder
+- rotate encoder to move the character
+- press the encoder to switch the direction
+
+```
+cd esp32-c3
+cargo run --release --features esp32-c3-lcdkit
+```
 
 ### Build for desktop
 
@@ -144,8 +149,8 @@ Control: buttons
 - press ok & menu to place dynamite
 
 ```
-cd esp32-s3-usb-otg
-cargo run --release --monitor
+cd esp32-s3
+cargo run --release --features esp32-s3-usb-otg
 ```
 
 ### Build for M5Stack-FIRE with ESP32 and ILI9341
@@ -158,41 +163,12 @@ Control: MPU-9250, buttons
 - move quickly down or press button B to place dynamite and destroy walls around
 
 ```
-cd m5stack-fire
-cargo run --release --monitor
-```
-
-#### Build M5Stack-FIRE using GitPod.io and run with Wokwi
-
-- Open in [GitPod.io](https://gitpod.io/github.com/georgik/esp32-spooky-maze-game)
-
-```
-cd m5stack-fire
-./run-wokwi.sh
+cd esp32
+cargo run --release --features m5stack-fire
 ```
 
 - Wokwi project: https://wokwi.com/projects/350825213595746900
 
-#### Build M5Stack-FIRE using Codespaces and run with Wokwi
-
-- Navigate to [GitHub repository](https://github.com/georgik/esp32-spooky-maze-game)
-- Click Open, select Codespaces tab, click Create Codespace
-
-```
-cd m5stack-fire
-./run-wokwi.sh
-```
-
-#### Build M5Stack-FIRE and run Wokwi in local VS Code
-
-Preview: install VS Code Wokwi plugin (private beta available on request)
-
-```
-cd m5stack-fire
-cargo build --release --no-default-features --features "wokwi"
-```
-
-Press F1, select Wokwi: Start simulation
 
 ### Build for M5Stack-Core2 with ESP32 and ILI9342C
 
@@ -204,8 +180,8 @@ Control: MPU6886
 - move quickly down or press button B to place dynamite and destroy walls around
 
 ```
-cd m5stack-core2
-cargo run --release --monitor
+cd esp32
+cargo run --release --features m5stack-core2
 ```
 
 ### Build for ESP32-S2-Kaluga v1.3
@@ -219,8 +195,8 @@ Control: buttons (partialy implemented based on of https://github.com/espressif/
 - (not supported) press K6 button to place dynamite
 
 ```
-cd esp32-s2-kaluga
-cargo run --release --monitor
+cd esp32-s2
+cargo run --release --features esp32-s2-kaluga
 ```
 
 Note for older version 1.2 - GPIO6 is used to control backlight.
@@ -229,13 +205,22 @@ Note for older version 1.2 - GPIO6 is used to control backlight.
 
 HW: https://docs.espressif.com/projects/espressif-esp-dev-kits/en/latest/esp32c6/esp32-c6-devkitc-1/index.html
 
-Important: Requires `espflash 2.x` - install with `cargo install espflash --git https://github.com/esp-rs/espflash.git`
+Controls: not implemented
+
+```
+cd esp32-c6
+cargo run --release --features esp32-c6-devkitc-1
+```
+
+### Build for Waveshare C6 LCD 1.47inch
+
+HW: https://www.waveshare.com/esp32-c6-lcd-1.47.htm
 
 Controls: not implemented
 
 ```
-cd esp32-c6-devkit
-cargo espflash flash --release --monitor
+cd esp32-c6
+cargo run --release --features waveshare-esp32-c6-lcd-1-47
 ```
 
 ### Build for ESP Wrover Kit
@@ -247,26 +232,11 @@ Control: 6 push buttons
 - press button Boot to teleport
 
 ```
-cd esp-wrover-kit
-cargo run --release --monitor
+cd esp32
+cargo run --release --features esp32-wrover-kit
 ```
 
-## Development
+## Board Support Package (BSP)
 
-Following steps are useful for IDE integration, so that IDE can recognize which is your current target and fature set.
-
-Check `target` configurad in the file `.cargo/config.toml`.
-It should be one of following values:
-```
-target = "xtensa-esp32-none-elf"
-target = "xtensa-esp32s2-none-elf"
-target = "xtensa-esp32s3-none-elf"
-target = "riscv32imac-unknown-none-elf"
-```
-
-If no value is selected, make sure to specify target on command line.
-
-Check default `features` in `Cargo.toml`. Make sure that default set contains your board and display combinations.
-
-If no value is selected, make sure to specify features on command line.
-
+The project is using [ESP-BSP-RS](https://crates.io/crates/esp-bsp) which provides macros with preconfigured
+GPIOs for a specific board.
