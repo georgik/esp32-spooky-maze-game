@@ -42,7 +42,9 @@ use spooky_embedded::{
 #[cfg(feature = "accelerometer")]
 use icm42670::{Address, Icm42670};
 
+#[allow(unused_imports)]
 use esp_hal::gpio::OutputOpenDrain;
+#[allow(unused_imports)]
 use esp_hal::gpio::Pull;
 use log::info;
 
