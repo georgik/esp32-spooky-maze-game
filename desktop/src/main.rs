@@ -11,7 +11,7 @@ fn main() {
         DefaultPlugins,
     ))
     .add_systems(Startup, systems::setup::setup)
-    // .add_systems(Update, systems::player_input::handle_input)
+    .add_systems(Update, systems::player_input::handle_input)
     .add_systems(Update, systems::game_logic::update_game)
     .run();
 }

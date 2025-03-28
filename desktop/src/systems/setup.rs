@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::image::Image; // Import Image from bevy::image
 use crate::maze::Maze;
-use crate::resources::MazeResource;
+use crate::resources::{MazeResource, PlayerPosition};
 
 pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Load textures with explicit type annotations.
@@ -29,6 +29,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Now move maze into a resource.
     commands.insert_resource(MazeResource { maze });
 
+    commands.insert_resource(PlayerPosition { x: 0.0, y: 0.0 });
     // Spawn the player's avatar (ghost) at the origin.
     commands.spawn((
         Sprite::from_image(ghost_texture),
