@@ -2,6 +2,8 @@
 
 // Import common parts from Bevy.
 use bevy::prelude::*;
+use bevy_math::Vec3;
+use bevy_transform::prelude::*;
 use crate::maze::Maze;
 use crate::resources::{MazeResource, PlayerPosition};
 use crate::components::Player;

@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use bevy_input::prelude::*;
+use bevy_transform::prelude::*;
 use log::info;
 use crate::resources::{MazeResource, PlayerPosition};
 use crate::components::Player;
