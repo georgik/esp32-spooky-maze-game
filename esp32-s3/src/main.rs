@@ -5,6 +5,9 @@ extern crate alloc;
 use alloc::boxed::Box;
 
 use core::fmt::Write;
+use bevy::app::{App, Startup};
+use bevy::DefaultPlugins;
+use bevy::prelude::Update;
 use bevy_ecs::prelude::*;
 use esp_hal::{
     Blocking,
@@ -138,6 +141,18 @@ fn render_system(
     }
 }
 
+use core::sync::atomic::{Ordering};
+use bevy::platform_support::sync::atomic::AtomicU64;
+use bevy::platform_support::time::Instant;
+// use bevy_time::Instant; // Use the Bevy time Instant (re-exported via bevy_platform_support)
+
+static ELAPSED: AtomicU64 = AtomicU64::new(0);
+
+fn elapsed_time() -> core::time::Duration {
+    // Return the monotonic elapsed time as a Duration.
+    core::time::Duration::from_nanos(ELAPSED.load(Ordering::Relaxed))
+}
+
 // ------------------------------------------------------------------------------------
 // Our embedded main: initialize HW, set up the game world, and run the schedule.
 #[main]
@@ -208,46 +223,24 @@ fn main() -> ! {
 
     info!("Display initialized");
 
-    // --- Set up the game state from spooky-core ---
-    // Create and initialize a maze.
-    let mut maze = Maze::new(64, 64, None);
-    maze.generate_coins();
-    maze.generate_walkers();
-    maze.generate_dynamites();
-    maze.generate_npcs();
-
-    // For this demo, place the player at the lower‑left playable tile center.
-    let (left_bound, bottom_bound, _right, _top) = maze.playable_bounds();
-    let player_initial_x = left_bound as f32;
-    let player_initial_y = bottom_bound as f32;
-
-    // Build the ECS world.
-    let mut world = World::default();
-    // Insert the maze and player position resources from spooky‑core.
-    world.insert_resource(spooky_core::resources::MazeResource { maze: maze.clone() });
-    world.insert_resource(spooky_core::resources::PlayerPosition {
-        x: player_initial_x,
-        y: player_initial_y,
-    });
-    // (Optionally, you could spawn entities for coins, player, etc. via spooky‑core systems.)
-    // For this demo we focus on the logic update and our custom render.
-
-    // Insert the framebuffer resource.
-    world.insert_resource(FrameBufferResource::new());
-
+    unsafe {Instant::set_elapsed(elapsed_time);}
     // Build the schedule.
-    let mut schedule = Schedule::default();
-    // Run the game logic systems from spooky-core.
-    schedule.add_systems(spooky_core::systems::game_logic::update_game);
-    // schedule.add_systems(spooky_core::systems::player_input::handle_input);
-    // Add our custom embedded render system.
-    schedule.add_systems(render_system);
+    let mut app = App::new();
+    app.add_plugins((
+        DefaultPlugins,
+    ));
+    app.insert_resource(FrameBufferResource::new());
+
+    app.add_systems(Startup, systems::setup::setup);
+    app.add_systems(Update, spooky_core::systems::game_logic::update_game);
+    app.add_systems(Update, render_system);
+
 
     // Create a delay for our main loop.
     let mut loop_delay = Delay::new();
 
     loop {
-        schedule.run(&mut world);
+        app.update();
         loop_delay.delay_ms(50u32);
     }
 }

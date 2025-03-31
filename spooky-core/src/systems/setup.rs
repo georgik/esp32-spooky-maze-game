@@ -12,7 +12,7 @@ use crate::components::Player;
 #[cfg(feature = "std")]
 use bevy::image::Image;
 #[cfg(feature = "std")]
-use bevy::render::camera::Camera2d;
+use bevy::prelude::*;
 
 // --- TextureAssets for asset loading ---
 
@@ -137,9 +137,9 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
             }
             #[cfg(not(feature = "std"))]
             {
-                // commands.spawn((
-                //     Transform::from_translation(Vec3::new(coin.x as f32, coin.y as f32, 1.0)),
-                // ));
+                commands
+                    .spawn_empty()
+                    ;
             }
         }
     }
