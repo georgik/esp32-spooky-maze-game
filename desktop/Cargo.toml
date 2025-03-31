@@ -6,7 +6,8 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-bevy = "0.16.0-rc.2"
+#bevy = "0.16.0-rc.2"
+bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618" }
 #spooky-core = { path = "../spooky-core" }
 rand = "0.9.0"
 rand_chacha = "0.9.0"

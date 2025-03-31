@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use log::info;
 use crate::resources::MazeResource;
 
 /// Updates the maze’s dynamic state—for example, moving NPCs.

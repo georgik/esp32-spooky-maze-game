@@ -5,6 +5,7 @@ use maze_generator::{prelude::*, recursive_backtracking::RbGenerator};
 
 use rand::prelude::*;
 use rand_chacha::ChaChaRng;
+use bevy::prelude::Vec;
 
 #[derive(Copy, Clone)]
 pub struct Coin {
