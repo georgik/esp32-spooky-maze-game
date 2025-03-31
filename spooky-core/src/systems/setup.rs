@@ -47,24 +47,27 @@ impl TextureAssets {
 
 // Embedded (no_std) mode: load embedded BMP images via tinybmp.
 #[cfg(not(feature = "std"))]
+use bevy::prelude::Resource;
+#[cfg(not(feature = "std"))]
 use tinybmp::Bmp;
 #[cfg(not(feature = "std"))]
 use embedded_graphics::pixelcolor::Rgb565;
 
 #[cfg(not(feature = "std"))]
-pub struct TextureAssets<'a> {
-    pub wall: Option<Bmp<'a, Rgb565>>,
-    pub ground: Option<Bmp<'a, Rgb565>>,
-    pub empty: Option<Bmp<'a, Rgb565>>,
-    pub scorched: Option<Bmp<'a, Rgb565>>,
-    pub ghost: Option<Bmp<'a, Rgb565>>,
-    pub coin: Option<Bmp<'a, Rgb565>>,
-    pub walker: Option<Bmp<'a, Rgb565>>,
-    pub dynamite: Option<Bmp<'a, Rgb565>>,
+#[derive(Resource)]
+pub struct TextureAssets {
+    pub wall: Option<Bmp<'static, Rgb565>>,
+    pub ground: Option<Bmp<'static, Rgb565>>,
+    pub empty: Option<Bmp<'static, Rgb565>>,
+    pub scorched: Option<Bmp<'static, Rgb565>>,
+    pub ghost: Option<Bmp<'static, Rgb565>>,
+    pub coin: Option<Bmp<'static, Rgb565>>,
+    pub walker: Option<Bmp<'static, Rgb565>>,
+    pub dynamite: Option<Bmp<'static, Rgb565>>,
 }
 
 #[cfg(not(feature = "std"))]
-impl<'a> TextureAssets<'a> {
+impl TextureAssets {
     pub fn load() -> Self {
         Self {
             wall: Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../../assets/img/wall.bmp")).unwrap()),
@@ -79,14 +82,34 @@ impl<'a> TextureAssets<'a> {
     }
 }
 
-// --- Main Setup Function ---
+#[cfg(not(feature = "std"))]
+#[derive(Clone, Copy, Debug)]
+pub enum TextureId {
+    Ghost,
+    Coin,
+    Walker,
+    Dynamite,
+    // Add more as needed…
+}
 
+#[cfg(not(feature = "std"))]
+#[derive(Component)]
+pub struct NoStdSprite {
+    pub texture: TextureId,
+}
+// --- Main Setup Function ---
+#[cfg(not(feature = "std"))]
+// use bevy_transform::prelude::Transform;
+
+#[cfg(not(feature = "std"))]
+#[derive(Component)]
+pub struct NoStdTransform(pub Transform);
 pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<AssetServer>) {
     // Load textures conditionally.
     #[cfg(feature = "std")]
     let textures = TextureAssets::load(&asset_server);
     #[cfg(not(feature = "std"))]
-    let textures = TextureAssets::load();
+    commands.insert_resource(TextureAssets::load());
 
     // Create the maze.
     let mut maze = Maze::new(64, 64, None);
@@ -119,10 +142,11 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
     }
     #[cfg(not(feature = "std"))]
     {
-        // commands.spawn((
-        //     Transform::from_translation(player_start),
-        //     Player,
-        // ));
+        commands.spawn((
+            NoStdTransform(Transform::from_translation(player_start)),
+            NoStdSprite { texture: TextureId::Ghost },
+            Player,
+        ));
     }
 
     // Spawn coins.
