@@ -241,7 +241,9 @@ impl Maze {
             return true;
         }
         let tile_x = x / self.tile_width as i32;
-        let tile_y = y / self.tile_height as i32;
+        // Flip the y coordinate: Bevy’s y=0 is at bottom,
+        // but maze.data is stored with row 0 at the top.
+        let tile_y = (self.height as i32 - 1) - (y / self.tile_height as i32);
         let tile_index = (tile_y * self.width as i32 + tile_x) as usize;
         self.data[tile_index] == 1
     }
