@@ -1,9 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-pub mod assets;
-pub mod demo_movement_controller;
-pub mod engine;
+
+// Expose modules for the core logic.
 pub mod maze;
-pub mod movement_controller;
-pub mod nomovement_controller;
-pub mod spritebuf;
-pub mod universe;
+pub mod components;
+pub mod resources;
+pub mod systems;

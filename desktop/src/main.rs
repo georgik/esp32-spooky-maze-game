@@ -1,9 +1,6 @@
 use bevy::prelude::*;
-
-mod components;
-mod maze;
-mod resources;
-mod systems;
+use spooky_core::systems;
+use spooky_core::resources;
 
 fn main() {
     let mut app = App::new();

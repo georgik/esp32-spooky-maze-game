@@ -4,6 +4,8 @@ version = "0.7.0"
 edition = "2021"
 
 [dependencies]
+bevy = "0.16.0-rc.2"
+
 embedded-graphics = "0.8.0"
 embedded-graphics-framebuf = { version = "0.3.0", git = "https://github.com/georgik/embedded-graphics-framebuf.git", branch = "feature/embedded-graphics-0.8" }
 #embedded-graphics-framebuf = "0.2.0"
@@ -15,12 +17,14 @@ maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "
 heapless = { version = "0.8.0", default-features = false }
 
 [features]
-default = [ "dynamic_maze" ]
+#default = [ "dynamic_maze" ]
 std = []
 wasm = [ "std" ]
 static_maze = []
 dynamic_maze = [ "dep:petgraph", "dep:maze_generator" ]
 system_timer = []
+
+default = [ "static_maze" ]
 
 esp32s2 = []
 esp32c6 = []

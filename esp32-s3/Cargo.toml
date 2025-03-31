@@ -1,34 +1,34 @@
 [package]
 name = "spooky-esp32-s3"
-version = "0.11.0"
+version = "0.12.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
-edition = "2021"
+edition = "2024"
 license = "MIT"
 
+
 [dependencies]
-esp-hal = "0.22.0"
-esp-backtrace = { version = "0.14.2", features = [
+esp-hal = { version = "1.0.0-beta.0", features = ["esp32s3", "unstable"] }
+esp-backtrace = { version = "0.15.1", features = [
     "panic-handler",
     "println"
 ] }
-esp-println = { version = "0.12.0", features = [ "log" ] }
-log = { version = "0.4.21" }
+esp-println = { version = "0.13", features = [ "log" ] }
+log = { version = "0.4.26" }
 
-esp-alloc = "0.5.0"
-embedded-graphics = "0.8.0"
+esp-alloc = "0.7.0"
+embedded-graphics = "0.8.1"
 embedded-hal = "1.0.0"
-icm42670 = { version = "0.2.0" }
-mipidsi = "0.8.0"
-spooky-core = { path = "../spooky-core", default-features = false }
-spooky-embedded = { path = "../spooky-embedded", default-features = false }
-esp-display-interface-spi-dma = "0.2.0"
-esp-bsp = "0.4.1"
-axp2101 = { git = "https://github.com/georgik/axp2101-rs.git", optional = true }
-aw9523 = { git = "https://github.com/georgik/aw9523-rs.git", optional = true }
-shared-bus = { version = "0.3.0", optional = true }
+mipidsi = "0.9.0"
+#esp-display-interface-spi-dma = "0.3.0"
+# esp-display-interface-spi-dma = { path = "../esp-display-interface-spi-dma"}
+# esp-bsp = "0.4.1"
+embedded-graphics-framebuf = "0.5.0"
+heapless = "0.8.0"
+embedded-hal-bus = "0.3.0"
+bevy_ecs = { git = "https://github.com/bevyengine/bevy.git", rev = "06cb5c5", default-features = false }
 
 [features]
-default = [ "esp-hal/esp32s3", "esp-backtrace/esp32s3", "esp-println/esp32s3" ]
+default = [ "esp-hal/esp32s3", "esp-backtrace/esp32s3", "esp-println/esp32s3", "esp32-s3-box-3" ]
 
 accelerometer = []
 no-psram = []
@@ -37,6 +37,7 @@ esp32-s3-box = [ "esp-bsp/esp32-s3-box", "esp-hal/octal-psram", "accelerometer",
 esp32-s3-box-3 = [ "esp-bsp/esp32-s3-box-3", "esp-hal/octal-psram", "accelerometer", "spooky-embedded/dynamic_maze", "spooky-embedded/dynamic_maze", "spooky-embedded/resolution_320x240" ]
 esp32-s3-usb-otg = [ "esp-bsp/esp32-s3-usb-otg", "no-psram", "spooky-embedded/static_maze", "spooky-embedded/resolution_240x240" ]
 m5stack-cores3 = [ "esp-bsp/m5stack-cores3", "esp-hal/quad-psram", "spooky-embedded/dynamic_maze", "spooky-embedded/resolution_320x240", "dep:aw9523", "dep:axp2101", "dep:shared-bus" ]
+
 
 [profile.dev]
 # Rust debug is too slow.
