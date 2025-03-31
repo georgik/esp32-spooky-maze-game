@@ -38,6 +38,13 @@ use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_graphics_framebuf::backends::FrameBufferBackend;
 
+
+#[panic_handler]
+fn panic(_info: &core::panic::PanicInfo) -> ! {
+    println!("Panic: {}", _info);
+    loop {}
+}
+
 // ------------------------------------------------------------------------------------
 // A simple Heap‑allocated framebuffer backend for drawing to our LCD.
 // (Similar to the Conway’s game of life example.)
@@ -231,10 +238,10 @@ fn main() -> ! {
     // Build the schedule.
     let mut schedule = Schedule::default();
     // Run the game logic systems from spooky-core.
-    schedule.add_system(spooky_core::systems::game_logic::update_game);
-    schedule.add_system(spooky_core::systems::player_input::handle_input);
+    schedule.add_systems(spooky_core::systems::game_logic::update_game);
+    // schedule.add_systems(spooky_core::systems::player_input::handle_input);
     // Add our custom embedded render system.
-    schedule.add_system(render_system);
+    schedule.add_systems(render_system);
 
     // Create a delay for our main loop.
     let mut loop_delay = Delay::new();

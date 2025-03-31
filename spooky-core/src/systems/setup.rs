@@ -1,21 +1,22 @@
 // spooky_core/src/systems/setup.rs
 
-// Import common parts from Bevy.
+// Common Bevy imports.
 use bevy::prelude::*;
 use bevy_math::Vec3;
-use bevy_transform::prelude::*;
+use bevy_transform::prelude::{Transform, GlobalTransform};
 use crate::maze::Maze;
 use crate::resources::{MazeResource, PlayerPosition};
 use crate::components::Player;
 
-//
-// Asset loading types
-//
-
-// When compiling for desktop (std enabled), use Bevy's AssetServer and bevy::image::Image.
+// When compiling for desktop (std enabled), use Bevy's AssetServer and its Image type.
 #[cfg(feature = "std")]
 use bevy::image::Image;
+#[cfg(feature = "std")]
+use bevy::render::camera::Camera2d;
 
+// --- TextureAssets for asset loading ---
+
+// Desktop (std) mode: load images via the AssetServer.
 #[cfg(feature = "std")]
 pub struct TextureAssets {
     pub wall: Handle<Image>,
@@ -44,8 +45,7 @@ impl TextureAssets {
     }
 }
 
-// For no_std builds, use tinybmp to load embedded BMP images.
-// (Adjust the file paths as needed.)
+// Embedded (no_std) mode: load embedded BMP images via tinybmp.
 #[cfg(not(feature = "std"))]
 use tinybmp::Bmp;
 #[cfg(not(feature = "std"))]
@@ -79,14 +79,12 @@ impl<'a> TextureAssets<'a> {
     }
 }
 
-//
-// The main setup function
-//
+// --- Main Setup Function ---
+
 pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<AssetServer>) {
     // Load textures conditionally.
     #[cfg(feature = "std")]
     let textures = TextureAssets::load(&asset_server);
-
     #[cfg(not(feature = "std"))]
     let textures = TextureAssets::load();
 
@@ -103,32 +101,28 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
     let initial_y = bottom as f32;
     let player_start = Vec3::new(initial_x, initial_y, 2.0);
 
-    // Insert initial player position resource.
+    // Insert the initial player position resource.
     commands.insert_resource(PlayerPosition { x: initial_x, y: initial_y });
 
-    // Clone maze for spawning entities, then insert original into a resource.
+    // Clone maze for spawning entities; store the original maze in a resource.
     let maze_for_entities = maze.clone();
     commands.insert_resource(MazeResource { maze });
 
-    // Spawn the player (ghost). In std mode we can use Sprite with loaded textures.
+    // Spawn the player (ghost) with its marker component.
     #[cfg(feature = "std")]
     {
         commands.spawn((
             Sprite::from_image(textures.ghost),
             Transform::from_translation(player_start),
-            GlobalTransform::default(),
             Player,
         ));
     }
-    // In no_std mode, you may need to spawn your player using your own drawing logic.
     #[cfg(not(feature = "std"))]
     {
-        // For example, simply spawn the player with its transform and marker.
-        commands.spawn((
-            Transform::from_translation(player_start),
-            GlobalTransform::default(),
-            Player,
-        ));
+        // commands.spawn((
+        //     Transform::from_translation(player_start),
+        //     Player,
+        // ));
     }
 
     // Spawn coins.
@@ -138,23 +132,14 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
             {
                 commands.spawn((
                     Sprite::from_image(textures.coin.clone()),
-                    Transform {
-                        translation: Vec3::new(coin.x as f32, coin.y as f32, 1.0),
-                        ..Default::default()
-                    },
-                    GlobalTransform::default(),
+                    Transform::from_translation(Vec3::new(coin.x as f32, coin.y as f32, 1.0)),
                 ));
             }
             #[cfg(not(feature = "std"))]
             {
-                commands.spawn((
-                    Transform {
-                        translation: Vec3::new(coin.x as f32, coin.y as f32, 1.0),
-                        ..Default::default()
-                    },
-                    GlobalTransform::default(),
-                    // You might add a marker component for coin entities.
-                ));
+                // commands.spawn((
+                //     Transform::from_translation(Vec3::new(coin.x as f32, coin.y as f32, 1.0)),
+                // ));
             }
         }
     }
@@ -166,22 +151,16 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
             {
                 commands.spawn((
                     Sprite::from_image(textures.walker.clone()),
-                    Transform {
-                        translation: Vec3::new(walker.x as f32, walker.y as f32, 1.0),
-                        ..Default::default()
-                    },
-                    GlobalTransform::default(),
+                    Transform::from_translation(Vec3::new(walker.x as f32, walker.y as f32, 1.0)),
                 ));
             }
             #[cfg(not(feature = "std"))]
             {
-                commands.spawn((
-                    Transform {
-                        translation: Vec3::new(walker.x as f32, walker.y as f32, 1.0),
-                        ..Default::default()
-                    },
-                    GlobalTransform::default(),
-                ));
+                // commands.spawn((
+                //     Transform::from_translation(Vec3::new(walker.x as f32, walker.y as f32, 1.0)),
+                //     GlobalTransform::default(),
+                // ));
+
             }
         }
     }
@@ -193,22 +172,14 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
             {
                 commands.spawn((
                     Sprite::from_image(textures.dynamite.clone()),
-                    Transform {
-                        translation: Vec3::new(dynamite.x as f32, dynamite.y as f32, 1.0),
-                        ..Default::default()
-                    },
-                    GlobalTransform::default(),
+                    Transform::from_translation(Vec3::new(dynamite.x as f32, dynamite.y as f32, 1.0)),
                 ));
             }
             #[cfg(not(feature = "std"))]
             {
-                commands.spawn((
-                    Transform {
-                        translation: Vec3::new(dynamite.x as f32, dynamite.y as f32, 1.0),
-                        ..Default::default()
-                    },
-                    GlobalTransform::default(),
-                ));
+                // commands.spawn((
+                //     Transform::from_translation(Vec3::new(dynamite.x as f32, dynamite.y as f32, 1.0)),
+                // ));
             }
         }
     }
@@ -225,7 +196,7 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
             let texture = if mx >= 0 && my >= 0 &&
                 mx < maze_for_entities.width as i32 && my < maze_for_entities.height as i32
             {
-                // Flip the row since maze data row 0 is at the top.
+                // Because maze data row 0 is at the top, flip the row.
                 let maze_row = (maze_for_entities.height as i32 - 1) - my;
                 let index = (maze_row * maze_for_entities.width as i32 + mx) as usize;
                 match maze_for_entities.data[index] {
@@ -240,21 +211,25 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
 
             #[cfg(feature = "std")]
             {
-                let translation = Vec3::new(tx as f32 * maze_for_entities.tile_width as f32, ty as f32 * maze_for_entities.tile_height as f32, 0.0);
+                let translation = Vec3::new(
+                    tx as f32 * maze_for_entities.tile_width as f32,
+                    ty as f32 * maze_for_entities.tile_height as f32,
+                    0.0,
+                );
                 commands.spawn((
                     Sprite::from_image(texture),
-                    Transform { translation, ..Default::default() },
-                    GlobalTransform::default(),
+                    Transform::from_translation(translation),
                 ));
             }
-            // In no_std mode, you might store tile info in a separate resource for your render system.
         }
     }
 
     // Spawn the camera.
-    commands.spawn((
-        Camera2d::default(),
-        Transform::from_translation(Vec3::new(initial_x, initial_y, 100.0)),
-        GlobalTransform::default(),
-    ));
+    #[cfg(feature = "std")]
+    {
+        commands.spawn((
+            Camera2d::default(),
+            Transform::from_translation(Vec3::new(initial_x, initial_y, 100.0)),
+        ));
+    }
 }

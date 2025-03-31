@@ -8,6 +8,7 @@ license = "MIT"
 [dependencies]
 # Disable default features for Bevy and its sub-crates so that no_std is used.
 bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false }
+bevy_ecs = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false }
 bevy_transform = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false }
 bevy_math = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false, features = ["alloc", "libm"] }
 bevy_input = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false }
