@@ -1,12 +1,15 @@
 use bevy::prelude::*;
 use crate::resources::PlayerPosition;
+use crate::components::Player;
 
 pub fn handle_input(
     keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut exit: EventWriter<AppExit>,
     mut player_pos: ResMut<PlayerPosition>,
-    mut camera_query: Query<&mut Transform, With<Camera2d>>,
+    mut player_query: Query<&mut Transform, With<Player>>,
+    mut camera_query: Query<&mut Transform, (With<Camera2d>, Without<Player>)>,
 ) {
-    let step: f32 = 16.0; // Adjust this step to match your maze tile size.
+    let step: f32 = 16.0;
     let mut moved = false;
 
     if keyboard_input.just_pressed(KeyCode::ArrowUp) {
@@ -26,8 +29,18 @@ pub fn handle_input(
         moved = true;
     }
 
+    if keyboard_input.just_pressed(KeyCode::Escape) {
+        exit.send(AppExit::Success);
+    }
+
+
     if moved {
-        // Update the camera's transform so that it always centers on the player.
+        // Update the player's transform.
+        if let Ok(mut transform) = player_query.get_single_mut() {
+            transform.translation.x = player_pos.x;
+            transform.translation.y = player_pos.y;
+        }
+        // Update the camera's transform to follow the player.
         for mut transform in camera_query.iter_mut() {
             transform.translation.x = player_pos.x;
             transform.translation.y = player_pos.y;
