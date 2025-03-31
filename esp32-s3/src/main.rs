@@ -108,10 +108,26 @@ impl FrameBufferResource {
     }
 }
 
+// Use the DMA-enabled SPI bus type.
+type MyDisplay = mipidsi::Display<
+    SpiInterface<
+        'static,
+        ExclusiveDevice<SpiDmaBus<'static, Blocking>, Output<'static>, Delay>,
+        Output<'static>,
+    >,
+    ILI9486Rgb565,
+    Output<'static>,
+>;
+
+struct DisplayResource {
+    display: MyDisplay,
+}
+
 // ------------------------------------------------------------------------------------
 // A simple render system that draws the maze tile map.
 // (This example assumes a basic color mapping; you could extend this to use textures.)
 fn render_system(
+    mut display_res: NonSendMut<DisplayResource>,
     mut fb_res: ResMut<FrameBufferResource>,
     maze_res: Res<MazeResource>,
 ) {
@@ -139,12 +155,17 @@ fn render_system(
             rect.draw(&mut fb_res.frame_buf).unwrap();
         }
     }
+    let area = Rectangle::new(Point::zero(), fb_res.frame_buf.size());
+    display_res
+        .display
+        .fill_contiguous(&area, fb_res.frame_buf.data.iter().copied())
+        .unwrap();
 }
 
 use core::sync::atomic::{Ordering};
 use bevy::platform_support::sync::atomic::AtomicU64;
 use bevy::platform_support::time::Instant;
-// use bevy_time::Instant; // Use the Bevy time Instant (re-exported via bevy_platform_support)
+use embedded_graphics::primitives::Rectangle;
 
 static ELAPSED: AtomicU64 = AtomicU64::new(0);
 
@@ -229,6 +250,7 @@ fn main() -> ! {
     app.add_plugins((
         DefaultPlugins,
     ));
+    app.insert_non_send_resource(DisplayResource { display });
     app.insert_resource(FrameBufferResource::new());
 
     app.add_systems(Startup, systems::setup::setup);
