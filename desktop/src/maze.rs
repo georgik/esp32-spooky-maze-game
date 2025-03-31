@@ -45,6 +45,7 @@ pub struct Maze {
 }
 
 impl Maze {
+    pub const MARGIN: i32 = 10;
     /// Create a new maze with the given dimensions and an optional seed.
     pub fn new(width: u32, height: u32, seed: Option<[u8; 32]>) -> Self {
         Self {
@@ -237,14 +238,20 @@ impl Maze {
     }
 
     pub fn check_wall_collision(&self, x: i32, y: i32) -> bool {
-        if self.check_boundary_collision(x, y) {
+        let (left, bottom, right, top) = self.playable_bounds();
+        // Outside the playable area is considered a collision.
+        if x < left || x >= right || y < bottom || y >= top {
             return true;
         }
-        let tile_x = x / self.tile_width as i32;
-        // Flip the y coordinate: Bevy’s y=0 is at bottom,
-        // but maze.data is stored with row 0 at the top.
-        let tile_y = (self.height as i32 - 1) - (y / self.tile_height as i32);
-        let tile_index = (tile_y * self.width as i32 + tile_x) as usize;
+        // Compute tile coordinates relative to the playable area.
+        let tile_x = (x - left) / self.tile_width as i32;
+        let tile_y = (y - bottom) / self.tile_height as i32;
+        // Convert world tile_y (0 at bottom) to maze row index (0 at top).
+        let maze_row = (self.height as i32 - 1) - tile_y;
+        if tile_x < 0 || maze_row < 0 || tile_x >= self.width as i32 || maze_row >= self.height as i32 {
+            return true;
+        }
+        let tile_index = (maze_row * self.width as i32 + tile_x) as usize;
         self.data[tile_index] == 1
     }
 
@@ -448,5 +455,14 @@ impl Maze {
                 }
             }
         }
+    }
+
+    pub fn playable_bounds(&self) -> (i32, i32, i32, i32) {
+        let margin = Self::MARGIN;
+        let left = margin * self.tile_width as i32;
+        let bottom = margin * self.tile_height as i32;
+        let right = left + self.width as i32 * self.tile_width as i32;
+        let top = bottom + self.height as i32 * self.tile_height as i32;
+        (left, bottom, right, top)
     }
 }

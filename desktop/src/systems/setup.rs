@@ -1,11 +1,11 @@
 use bevy::prelude::*;
-use bevy::image::Image; // Import Image from bevy::image
+use bevy::image::Image;
 use crate::maze::Maze;
 use crate::resources::{MazeResource, PlayerPosition};
 use crate::components::Player;
 
 pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // Load textures with explicit type annotations.
+    // Load textures.
     let wall_texture: Handle<Image> = asset_server.load("textures/wall.png");
     let ground_texture: Handle<Image> = asset_server.load("textures/ground.png");
     let empty_texture: Handle<Image> = asset_server.load("textures/empty.png");
@@ -15,38 +15,38 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let walker_texture: Handle<Image> = asset_server.load("textures/walker.png");
     let dynamite_texture: Handle<Image> = asset_server.load("textures/dynamite.png");
 
-    // Create a Maze instance (static mode: 64 x 64 tiles).
+    // Create the maze.
     let mut maze = Maze::new(64, 64, None);
     maze.generate_coins();
     maze.generate_walkers();
     maze.generate_dynamites();
     maze.generate_npcs();
 
-    // Define the margin and tile size.
-    let margin: i32 = 10;
+    // Compute playable bounds.
+    let (left, bottom, _right, _top) = maze.playable_bounds();
     let tile_width = maze.tile_width as f32;
     let tile_height = maze.tile_height as f32;
-    // Compute center of the maze area (drawn from tile index = margin to margin + maze.width).
-    let center_x = (margin as f32 + maze.width as f32 / 2.0) * tile_width;
-    let center_y = (margin as f32 + maze.height as f32 / 2.0) * tile_height;
-    let center_position = Vec3::new(center_x, center_y, 2.0);
+    // For reference, place the player at the lower-left playable tile's center.
+    let initial_x = left as f32;
+    let initial_y = bottom as f32;
+    let player_start = Vec3::new(initial_x, initial_y, 2.0);
 
-    // Insert the initial player position resource.
-    commands.insert_resource(PlayerPosition { x: center_x, y: center_y });
+    // Insert initial player position resource.
+    commands.insert_resource(PlayerPosition { x: initial_x, y: initial_y });
 
-    // Clone the maze for entity spawning, then insert the original into a resource.
+    // Clone maze for spawning entities, and insert original into resource.
     let maze_for_entities = maze.clone();
     commands.insert_resource(MazeResource { maze });
 
-    // Spawn the player's avatar (ghost) with a marker component, positioned at the center.
+    // Spawn the player (ghost) with a marker component.
     commands.spawn((
         Sprite::from_image(ghost_texture),
-        Transform::from_translation(center_position),
+        Transform::from_translation(player_start),
         GlobalTransform::default(),
         Player,
     ));
 
-    // Spawn coin entities.
+    // Spawn coins.
     for coin in &maze_for_entities.coins {
         if coin.x != -1 && coin.y != -1 {
             commands.spawn((
@@ -60,7 +60,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         }
     }
 
-    // Spawn walker entities.
+    // Spawn walkers.
     for walker in &maze_for_entities.walkers {
         if walker.x != -1 && walker.y != -1 {
             commands.spawn((
@@ -74,7 +74,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         }
     }
 
-    // Spawn dynamite entities.
+    // Spawn dynamites.
     for dynamite in &maze_for_entities.dynamites {
         if dynamite.x != -1 && dynamite.y != -1 {
             commands.spawn((
@@ -88,34 +88,32 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         }
     }
 
-    // ----- Spawn full tile map -----
-    // We want to cover the entire maze plus a margin around it.
+    // Spawn full tile map (background) covering maze plus margin.
+    let margin: i32 = Maze::MARGIN;
     let total_width = maze_for_entities.width as i32 + 2 * margin;
     let total_height = maze_for_entities.height as i32 + 2 * margin;
-
-    // Maze tiles (background) are drawn at z = 0.
     for ty in 0..total_height {
         for tx in 0..total_width {
-            // Compute maze coordinates relative to the maze data.
             let mx = tx - margin;
             let my = ty - margin;
-            let texture: Handle<Image> = if mx >= 0
-                && my >= 0
-                && mx < maze_for_entities.width as i32
-                && my < maze_for_entities.height as i32
+            // Only if the tile is inside the maze's dimensions.
+            let texture: Handle<Image> = if mx >= 0 && my >= 0 &&
+                mx < maze_for_entities.width as i32 && my < maze_for_entities.height as i32
             {
-                let index = (my * maze_for_entities.width as i32 + mx) as usize;
+                // Because maze data row 0 is at the top, flip my:
+                let maze_row = (maze_for_entities.height as i32 - 1) - my;
+                let index = (maze_row * maze_for_entities.width as i32 + mx) as usize;
                 match maze_for_entities.data[index] {
-                    1 => wall_texture.clone(),     // Wall tile.
-                    0 => ground_texture.clone(),   // Ground tile.
-                    2 => scorched_texture.clone(), // Scorched tile.
+                    1 => wall_texture.clone(),
+                    0 => ground_texture.clone(),
+                    2 => scorched_texture.clone(),
                     _ => ground_texture.clone(),
                 }
             } else {
                 empty_texture.clone()
             };
 
-            let translation = Vec3::new(tx as f32 * tile_width, ty as f32 * tile_height, 0.0);
+            let translation = Vec3::new(tx as f32 * maze_for_entities.tile_width as f32, ty as f32 * maze_for_entities.tile_height as f32, 0.0);
             commands.spawn((
                 Sprite::from_image(texture),
                 Transform { translation, ..Default::default() },
@@ -124,10 +122,11 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         }
     }
 
-    // Spawn the 2D camera at the player's center.
+    // Spawn the camera.
+    // Here we set the camera's initial transform to follow the player start.
     commands.spawn((
         Camera2d::default(),
-        Transform::from_translation(Vec3::new(center_x, center_y, 100.0)),
+        Transform::from_translation(Vec3::new(initial_x, initial_y, 100.0)),
         GlobalTransform::default(),
     ));
 }
