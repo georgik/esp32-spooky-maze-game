@@ -41,6 +41,11 @@ use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_graphics_framebuf::backends::FrameBufferBackend;
 
+mod embedded_systems {
+    pub mod render;
+}
+use embedded_systems::render::render_system;
+
 
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
@@ -133,48 +138,6 @@ use bevy_ecs::prelude::*;
 
 #[cfg(not(feature = "std"))]
 use crate::systems::setup::TextureAssets;
-pub fn render_system(
-    mut display_res: NonSendMut<crate::DisplayResource>,
-    mut fb_res: ResMut<crate::FrameBufferResource>,
-    maze_res: Res<MazeResource>,
-    #[cfg(not(feature = "std"))] texture_assets: Res<TextureAssets>,
-) {
-    fb_res.frame_buf.clear(Rgb565::BLACK).unwrap();
-
-    let maze = &maze_res.maze;
-    let (left, bottom, _right, _top) = maze.playable_bounds();
-
-    // Iterate over each tile in the maze.
-    for ty in 0..maze.height as i32 {
-        for tx in 0..maze.width as i32 {
-            // Maze data: note that row 0 is at the top.
-            let maze_row = (maze.height as i32 - 1) - ty;
-            let index = (maze_row * maze.width as i32 + tx) as usize;
-            // Choose the BMP based on maze data.
-            let bmp_opt = match maze.data[index] {
-                1 => texture_assets.wall.as_ref(),
-                0 => texture_assets.ground.as_ref(),
-                2 => texture_assets.scorched.as_ref(),
-                _ => texture_assets.ground.as_ref(),
-            };
-
-            if let Some(bmp) = bmp_opt {
-                // Calculate the pixel position for this tile.
-                let x = left + tx * maze.tile_width as i32;
-                let y = bottom + ty * maze.tile_height as i32;
-                let pos = Point::new(x, y);
-                // Draw the BMP image at the computed position.
-                Image::new(bmp, pos).draw(&mut fb_res.frame_buf).unwrap();
-            }
-        }
-    }
-    // Flush the framebuffer to the display.
-    let area = Rectangle::new(Point::zero(), fb_res.frame_buf.size());
-    display_res
-        .display
-        .fill_contiguous(&area, fb_res.frame_buf.data.iter().copied())
-        .unwrap();
-}
 
 use core::sync::atomic::{Ordering};
 use bevy::platform_support::sync::atomic::AtomicU64;
