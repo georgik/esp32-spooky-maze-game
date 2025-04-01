@@ -120,8 +120,8 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
 
     // Compute playable bounds.
     let (left, bottom, _right, _top) = maze.playable_bounds();
-    let initial_x = left as f32 + 32.0;
-    let initial_y = bottom as f32 + 32.0;
+    let initial_x = left as f32 + 10.0*16.0;
+    let initial_y = bottom as f32 + 8.0*16.0;
     let player_start = Vec3::new(initial_x, initial_y, 2.0);
 
     // Insert the initial player position resource.
