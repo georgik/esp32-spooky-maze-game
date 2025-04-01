@@ -1,62 +1,71 @@
-use bevy::prelude::*;
-use bevy_input::prelude::*;
-use bevy_transform::prelude::*;
-use log::info;
-use crate::resources::{MazeResource, PlayerPosition};
-use crate::components::{Player, MainCamera};
+// spooky_core/src/systems/player_input.rs
 
-pub fn handle_input(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut exit: EventWriter<AppExit>,
+use bevy::prelude::*;
+use crate::components::{Player, MainCamera};
+use crate::resources::PlayerPosition;
+
+/// An event carrying a player movement request.
+/// A positive dx moves the player right; a positive dy moves up.
+/// In our game the movement step is one tile.
+#[derive(Debug, Event)]
+pub struct PlayerInputEvent {
+    pub dx: f32,
+    pub dy: f32,
+}
+
+// Use our unified transform type alias.
+use crate::transform::SpookyTransform;
+
+// Create a type alias so that in std builds SpookyTransform is just Transform,
+// and in no_std builds it is our wrapper.
+#[cfg(feature = "std")]
+type SpTransform = SpookyTransform;
+
+#[cfg(not(feature = "std"))]
+type SpTransform = SpookyTransform;
+
+/// Process player input events: update the logical player position and adjust
+/// both the player's and camera's transform so that the player remains centered.
+pub fn process_player_input(
+    mut events: EventReader<PlayerInputEvent>,
     mut player_pos: ResMut<PlayerPosition>,
-    maze_res: Res<MazeResource>,
-    // mut player_query: Query<&mut Transform, With<Player>>,
-    // mut camera_query: Query<&mut Transform, (With<MainCamera>, Without<Player>)>,
+    mut player_query: Query<&mut SpookyTransform, With<Player>>,
+    #[cfg(feature = "std")]
+    mut camera_query: Query<&mut SpookyTransform, (With<Camera2d>, Without<Player>)>,
+    #[cfg(not(feature = "std"))]
+    mut camera_query: Query<&mut SpookyTransform, (With<MainCamera>, Without<Player>)>,
 ) {
-    let step: f32 = 16.0;
-    let mut moved = false;
-    // Start from current player position.
-    // let mut candidate_x = player_pos.x;
-    // let mut candidate_y = player_pos.y;
-    //
-    // if keyboard_input.just_pressed(KeyCode::ArrowUp) {
-    //     candidate_y += step;
-    //     moved = true;
-    // }
-    // if keyboard_input.just_pressed(KeyCode::ArrowDown) {
-    //     candidate_y -= step;
-    //     moved = true;
-    // }
-    // if keyboard_input.just_pressed(KeyCode::ArrowLeft) {
-    //     candidate_x -= step;
-    //     moved = true;
-    // }
-    // if keyboard_input.just_pressed(KeyCode::ArrowRight) {
-    //     candidate_x += step;
-    //     moved = true;
-    // }
-    //
-    // if keyboard_input.just_pressed(KeyCode::Escape) {
-    //     exit.send(AppExit::Success);
-    // }
-    //
-    // if moved {
-    //     // Check collision: here you can add additional logging or adjustments.
-    //     if maze_res.maze.check_wall_collision(candidate_x as i32, candidate_y as i32) {
-    //         info!("Collision detected at candidate position: ({}, {})", candidate_x, candidate_y);
-    //     } else {
-    //         // No collision: update player position.
-    //         player_pos.x = candidate_x;
-    //         player_pos.y = candidate_y;
-    //         if let Ok(mut transform) = player_query.get_single_mut() {
-    //             transform.translation.x = player_pos.x;
-    //             transform.translation.y = player_pos.y;
-    //         }
-    //         for mut transform in camera_query.iter_mut() {
-    //             transform.translation.x = player_pos.x;
-    //             transform.translation.y = player_pos.y;
-    //         }
-    //         info!("New player position: ({}, {})", player_pos.x, player_pos.y);
-    //     }
-    // }
+    // Use `read()` to iterate over events.
+    for event in events.read() {
+        // Update the logical position.
+        player_pos.x += event.dx;
+        player_pos.y += event.dy;
+
+        // Update the player's transform.
+        if let Ok(mut transform) = player_query.get_single_mut() {
+            #[cfg(feature = "std")]
+            {
+                transform.translation.x = player_pos.x;
+                transform.translation.y = player_pos.y;
+            }
+            #[cfg(not(feature = "std"))]
+            {
+                transform.0.translation.x = player_pos.x;
+                transform.0.translation.y = player_pos.y;
+            }
+        }
+        // Update the camera transform so that the player stays centered.
+        for mut transform in camera_query.iter_mut() {
+            #[cfg(feature = "std")]
+            {
+                transform.translation.x = player_pos.x;
+                transform.translation.y = player_pos.y;
+            }
+            #[cfg(not(feature = "std"))]
+            {
+                transform.0.translation.x = player_pos.x;
+                transform.0.translation.y = player_pos.y;
+            }
+        }
+    }
 }

@@ -1,6 +1,8 @@
+mod desktop_systems;
+
 use bevy::prelude::*;
 use spooky_core::systems;
-use spooky_core::resources;
+use spooky_core::systems::player_input::PlayerInputEvent;
 
 fn main() {
     let mut app = App::new();
@@ -8,7 +10,9 @@ fn main() {
         DefaultPlugins,
     ))
     .add_systems(Startup, systems::setup::setup)
-    .add_systems(Update, systems::player_input::handle_input)
+    .add_event::<PlayerInputEvent>()
+    .add_systems(Update, crate::desktop_systems::player_input::dispatch_keyboard_input)
+    .add_systems(Update, systems::player_input::process_player_input)
     .add_systems(Update, systems::game_logic::update_game)
     .run();
 }

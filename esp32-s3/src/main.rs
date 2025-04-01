@@ -2,6 +2,7 @@
 #![no_main]
 
 extern crate alloc;
+use spooky_core::systems::player_input::PlayerInputEvent;
 use alloc::boxed::Box;
 
 use core::fmt::Write;
@@ -15,6 +16,7 @@ use esp_hal::{
     main,
     rng::Rng,
     spi::master::{Spi, SpiDmaBus},
+    i2c::master::I2c,
     time::Rate,
 };
 use embedded_hal_bus::spi::ExclusiveDevice;
@@ -22,7 +24,6 @@ use embedded_hal::delay::DelayNs;
 use esp_hal::dma::{DmaRxBuf, DmaTxBuf};
 use esp_hal::dma_buffers;
 use esp_hal::delay::Delay;
-// use esp_hal_bus::spi::ExclusiveDevice;
 use esp_println::{logger::init_logger_from_env, println};
 use log::info;
 use mipidsi::{Builder, models::ILI9486Rgb565};
@@ -41,10 +42,24 @@ use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_graphics_framebuf::backends::FrameBufferBackend;
 
+// Bring in our custom render system from our embedded module.
 mod embedded_systems {
     pub mod render;
+    pub mod player_input;
 }
 use embedded_systems::render::render_system;
+
+// Bring in our heapbuffer helper.
+mod heapbuffer;
+
+use crate::heapbuffer::HeapBuffer;
+
+// --- NEW: Imports for the ICM-42670 accelerometer ---
+use icm42670::prelude::*;
+use icm42670::Icm42670;
+
+/// A resource wrapping the accelerometer sensor.
+/// (We make this NonSend because hardware sensor drivers typically aren’t Sync.)
 
 
 #[panic_handler]
@@ -53,42 +68,10 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}
 }
 
-// ------------------------------------------------------------------------------------
-// A simple Heap‑allocated framebuffer backend for drawing to our LCD.
-// (Similar to the Conway’s game of life example.)
-pub struct HeapBuffer<C: PixelColor, const N: usize>(Box<[C; N]>);
-
-impl<C: PixelColor, const N: usize> HeapBuffer<C, N> {
-    pub fn new(data: Box<[C; N]>) -> Self {
-        Self(data)
-    }
-}
-
-impl<C: PixelColor, const N: usize> core::ops::Deref for HeapBuffer<C, N> {
-    type Target = [C; N];
-    fn deref(&self) -> &Self::Target {
-        &*self.0
-    }
-}
-
-impl<C: PixelColor, const N: usize> core::ops::DerefMut for HeapBuffer<C, N> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut *self.0
-    }
-}
-
-impl<C: PixelColor, const N: usize> FrameBufferBackend for HeapBuffer<C, N> {
-    type Color = C;
-    fn set(&mut self, index: usize, color: Self::Color) {
-        self.0[index] = color;
-    }
-    fn get(&self, index: usize) -> Self::Color {
-        self.0[index]
-    }
-    fn nr_elements(&self) -> usize {
-        N
-    }
-}
+// For example, define a type alias for your concrete I2C:
+// Adjust the lifetime and driver mode if needed.
+type MyI2c = esp_hal::i2c::master::I2c<'static, Blocking>;
+type MyI2cError = esp_hal::i2c::master::Error;
 
 // ------------------------------------------------------------------------------------
 // LCD resolution and framebuffer definitions.
@@ -128,26 +111,14 @@ struct DisplayResource {
     display: MyDisplay,
 }
 
-
-use embedded_graphics::{
-    image::Image,
-    prelude::*,
-    primitives::{ PrimitiveStyle},
-};
-use bevy_ecs::prelude::*;
-
-#[cfg(not(feature = "std"))]
-use crate::systems::setup::TextureAssets;
-
 use core::sync::atomic::{Ordering};
 use bevy::platform_support::sync::atomic::AtomicU64;
 use bevy::platform_support::time::Instant;
-use embedded_graphics::primitives::Rectangle;
+use spooky_core::systems::setup::NoStdTransform;
+use crate::embedded_systems::player_input::AccelerometerResource;
 
 static ELAPSED: AtomicU64 = AtomicU64::new(0);
-
 fn elapsed_time() -> core::time::Duration {
-    // Return the monotonic elapsed time as a Duration.
     core::time::Duration::from_nanos(ELAPSED.load(Ordering::Relaxed))
 }
 
@@ -157,10 +128,7 @@ fn elapsed_time() -> core::time::Duration {
 fn main() -> ! {
     // Initialize ESP‑hal peripherals.
     let peripherals = esp_hal::init(esp_hal::Config::default());
-
     init_logger_from_env();
-
-    // Allocate PSRAM for the heap.
     esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram);
 
     // --- DMA Buffers for SPI ---
@@ -198,46 +166,53 @@ fn main() -> ! {
         Level::High,
         OutputConfig::default().with_drive_mode(DriveMode::OpenDrain),
     );
-    // Initialize the display using mipidsi.
-    let mut display: mipidsi::Display<
-        SpiInterface<
-            'static,
-            ExclusiveDevice<SpiDmaBus<'static, Blocking>, Output<'static>, Delay>,
-            Output<'static>,
-        >,
-        ILI9486Rgb565,
-        Output<'static>,
-    > = Builder::new(ILI9486Rgb565, di)
+    let mut display: MyDisplay = Builder::new(ILI9486Rgb565, di)
         .reset_pin(reset)
         .display_size(320, 240)
         .color_order(ColorOrder::Bgr)
         .init(&mut display_delay)
         .unwrap();
     display.clear(Rgb565::BLUE).unwrap();
-
-    // Turn on backlight (GPIO47).
     let mut backlight = Output::new(peripherals.GPIO47, Level::Low, OutputConfig::default());
     backlight.set_high();
-
     info!("Display initialized");
+    unsafe { Instant::set_elapsed(elapsed_time) };
 
-    unsafe {Instant::set_elapsed(elapsed_time);}
-    // Build the schedule.
+    // --- Initialize the accelerometer sensor.
+    const DEVICE_ADDR: u8 = 0x77;
+    let mut i2c = I2c::new( peripherals.I2C0, esp_hal::i2c::master::Config::default(), ).unwrap()
+        .with_sda(peripherals.GPIO8)
+        .with_scl(peripherals.GPIO18);
+    let icm_sensor = Icm42670::new(i2c, icm42670::Address::Primary).unwrap();
+
+    // --- Build the Bevy app.
     let mut app = App::new();
-    app.add_plugins((
-        DefaultPlugins,
-    ));
+    app.add_plugins(DefaultPlugins);
+    // Insert the accelerometer resource.
+    app.insert_non_send_resource(AccelerometerResource { sensor: icm_sensor });
+
     app.insert_non_send_resource(DisplayResource { display });
+
     app.insert_resource(FrameBufferResource::new());
+    // Register the custom event.
+    app.add_event::<PlayerInputEvent>();
 
+    // Use spooky_core's setup system to spawn the maze, coins, and player.
     app.add_systems(Startup, systems::setup::setup);
+    // Add game logic system.
     app.add_systems(Update, spooky_core::systems::game_logic::update_game);
+    // Add the embedded render system.
     app.add_systems(Update, render_system);
+    // Add the accelerometer dispatch system (from the embedded module).
+    app.add_systems(
+        Update,
+        crate::embedded_systems::player_input::dispatch_accelerometer_input::<MyI2c, MyI2cError>,
+    );
 
+    // Add the common event processing system.
+    app.add_systems(Update, spooky_core::systems::player_input::process_player_input);
 
-    // Create a delay for our main loop.
     let mut loop_delay = Delay::new();
-
     loop {
         app.update();
         loop_delay.delay_ms(50u32);
