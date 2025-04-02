@@ -3,9 +3,8 @@
 
 extern crate alloc;
 use alloc::boxed::Box;
-use spooky_core::events::coin::CoinCollisionEvent;
-use spooky_core::events::player::PlayerInputEvent;
-use spooky_core::systems::coin_collision;
+use spooky_core::events::{ coin::CoinCollisionEvent, player::PlayerInputEvent };
+use spooky_core::systems;
 use spooky_core::systems::process_player_input::process_player_input;
 
 use bevy::DefaultPlugins;
@@ -34,7 +33,6 @@ use mipidsi::{interface::SpiInterface, options::ColorOrder};
 use spooky_core::components::Player;
 use spooky_core::maze::Maze;
 use spooky_core::resources::{MazeResource, PlayerPosition};
-use spooky_core::systems;
 
 // Embedded Graphics imports for our framebuffer drawing.
 use embedded_graphics::pixelcolor::Rgb565;
@@ -114,7 +112,12 @@ use crate::embedded_systems::player_input::AccelerometerResource;
 use bevy::platform_support::sync::atomic::AtomicU64;
 use bevy::platform_support::time::Instant;
 use core::sync::atomic::Ordering;
+use spooky_core::events::dynamite::DynamiteCollisionEvent;
+use spooky_core::events::npc::NpcCollisionEvent;
+use spooky_core::events::walker::WalkerCollisionEvent;
+use spooky_core::systems::collisions;
 use spooky_core::systems::setup::NoStdTransform;
+use crate::embedded_systems::player_input;
 
 static ELAPSED: AtomicU64 = AtomicU64::new(0);
 fn elapsed_time() -> core::time::Duration {
@@ -187,25 +190,36 @@ fn main() -> ! {
 
     // --- Build the Bevy app.
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins)
+    app.add_plugins((DefaultPlugins,))
         .insert_non_send_resource(DisplayResource { display })
         .insert_non_send_resource(AccelerometerResource { sensor: icm_sensor })
         .insert_resource(FrameBufferResource::new())
+        .add_systems(Startup, systems::setup::setup)
         .add_event::<PlayerInputEvent>()
         .add_event::<CoinCollisionEvent>()
-        .add_systems(Startup, systems::setup::setup)
+        .add_event::<DynamiteCollisionEvent>()
+        .add_event::<WalkerCollisionEvent>()
+        .add_event::<NpcCollisionEvent>()
         .add_systems(
             Update,
             (
-                spooky_core::systems::game_logic::update_game,
-                coin_collision::detect_coin_collision,
-                coin_collision::remove_coin_on_collision,
+                player_input::dispatch_accelerometer_input::<MyI2c, MyI2cError>,
+                systems::process_player_input::process_player_input,
+                collisions::coin::detect_coin_collision,
+                collisions::coin::remove_coin_on_collision,
+                collisions::dynamite::handle_dynamite_collision,
+                collisions::walker::detect_walker_collision,
+                collisions::walker::handle_walker_collision,
+                collisions::npc::detect_npc_collision,
+                collisions::npc::handle_npc_collision,
+                systems::dynamite_logic::handle_dynamite_collision,
+                systems::npc_logic::update_npc_movement,
+                systems::game_logic::update_game,
                 embedded_systems::render::render_system,
-                embedded_systems::player_input::dispatch_accelerometer_input::<MyI2c, MyI2cError>,
-                spooky_core::systems::process_player_input::process_player_input,
             ),
         )
         .run();
+
     let mut loop_delay = Delay::new();
     loop {
         app.update();
