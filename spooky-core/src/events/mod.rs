@@ -1,1 +1,2 @@
-pub mod player_events;
+pub mod player;
+pub mod coin;

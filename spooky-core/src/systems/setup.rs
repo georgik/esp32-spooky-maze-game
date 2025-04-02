@@ -6,7 +6,7 @@ use bevy_math::Vec3;
 use bevy_transform::prelude::{Transform, GlobalTransform};
 use crate::maze::Maze;
 use crate::resources::{MazeResource, PlayerPosition};
-use crate::components::Player;
+use crate::components::{CoinComponent, Player};
 
 // When compiling for desktop (std enabled), use Bevy's AssetServer and its Image type.
 #[cfg(feature = "std")]
@@ -157,6 +157,7 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
                 commands.spawn((
                     Sprite::from_image(textures.coin.clone()),
                     Transform::from_translation(Vec3::new(coin.x as f32, coin.y as f32, 2.0)),
+                    CoinComponent { x: coin.x, y: coin.y },
                 ));
             }
             #[cfg(not(feature = "std"))]

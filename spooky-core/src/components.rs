@@ -14,3 +14,9 @@ pub struct Ghost;
 
 #[derive(Component)]
 pub struct MainCamera;
+
+#[derive(Component)]
+pub struct CoinComponent {
+    pub x: i32,
+    pub y: i32,
+}

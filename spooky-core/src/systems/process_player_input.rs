@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use crate::components::{Player, MainCamera};
 use crate::resources::{PlayerPosition, MazeResource};
-use crate::events::player_events::PlayerInputEvent;
+use crate::events::player::PlayerInputEvent;
 
 // Use our unified transform type alias.
 use crate::transform::SpookyTransform;
