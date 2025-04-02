@@ -1,9 +1,9 @@
-use spooky_core::events::player::PlayerInputEvent;
-use embedded_hal::i2c::I2c;
 use bevy_ecs::prelude::*;
 use core::fmt::Debug;
-use icm42670::prelude::*;
+use embedded_hal::i2c::I2c;
 use icm42670::Icm42670;
+use icm42670::prelude::*;
+use spooky_core::events::player::PlayerInputEvent;
 use spooky_core::resources::MazeResource;
 use spooky_core::resources::PlayerPosition;
 

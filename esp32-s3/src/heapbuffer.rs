@@ -1,9 +1,8 @@
 use alloc::boxed::Box;
-use embedded_graphics::prelude::*;
 use embedded_graphics::pixelcolor::Rgb565;
+use embedded_graphics::prelude::*;
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_graphics_framebuf::backends::FrameBufferBackend;
-
 
 // ------------------------------------------------------------------------------------
 // A simple Heap‑allocated framebuffer backend for drawing to our LCD.

@@ -2,53 +2,50 @@
 #![no_main]
 
 extern crate alloc;
-use spooky_core::systems::coin_collision;
-use spooky_core::events::coin::CoinCollisionEvent;
-use spooky_core::systems::process_player_input::process_player_input;
-use spooky_core::events::player::PlayerInputEvent;
 use alloc::boxed::Box;
+use spooky_core::events::coin::CoinCollisionEvent;
+use spooky_core::events::player::PlayerInputEvent;
+use spooky_core::systems::coin_collision;
+use spooky_core::systems::process_player_input::process_player_input;
 
-use core::fmt::Write;
-use bevy::app::{App, Startup};
 use bevy::DefaultPlugins;
+use bevy::app::{App, Startup};
 use bevy::prelude::Update;
 use bevy_ecs::prelude::*;
+use core::fmt::Write;
+use embedded_hal::delay::DelayNs;
+use embedded_hal_bus::spi::ExclusiveDevice;
+use esp_hal::delay::Delay;
+use esp_hal::dma::{DmaRxBuf, DmaTxBuf};
+use esp_hal::dma_buffers;
 use esp_hal::{
     Blocking,
     gpio::{DriveMode, Level, Output, OutputConfig},
+    i2c::master::I2c,
     main,
     rng::Rng,
     spi::master::{Spi, SpiDmaBus},
-    i2c::master::I2c,
     time::Rate,
 };
-use embedded_hal_bus::spi::ExclusiveDevice;
-use embedded_hal::delay::DelayNs;
-use esp_hal::dma::{DmaRxBuf, DmaTxBuf};
-use esp_hal::dma_buffers;
-use esp_hal::delay::Delay;
 use esp_println::{logger::init_logger_from_env, println};
 use log::info;
 use mipidsi::{Builder, models::ILI9486Rgb565};
-use mipidsi::{
-    interface::SpiInterface,
-    options::{ColorOrder},
-};
+use mipidsi::{interface::SpiInterface, options::ColorOrder};
+use spooky_core::components::Player;
 use spooky_core::maze::Maze;
 use spooky_core::resources::{MazeResource, PlayerPosition};
 use spooky_core::systems;
-use spooky_core::components::Player;
 
 // Embedded Graphics imports for our framebuffer drawing.
-use embedded_graphics::prelude::*;
 use embedded_graphics::pixelcolor::Rgb565;
+use embedded_graphics::prelude::*;
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_graphics_framebuf::backends::FrameBufferBackend;
 
 // Bring in our custom render system from our embedded module.
 mod embedded_systems {
-    pub mod render;
     pub mod player_input;
+    pub mod render;
 }
 use embedded_systems::render::render_system;
 
@@ -58,12 +55,11 @@ mod heapbuffer;
 use crate::heapbuffer::HeapBuffer;
 
 // --- NEW: Imports for the ICM-42670 accelerometer ---
-use icm42670::prelude::*;
 use icm42670::Icm42670;
+use icm42670::prelude::*;
 
 /// A resource wrapping the accelerometer sensor.
 /// (We make this NonSend because hardware sensor drivers typically aren’t Sync.)
-
 
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
@@ -114,11 +110,11 @@ struct DisplayResource {
     display: MyDisplay,
 }
 
-use core::sync::atomic::{Ordering};
+use crate::embedded_systems::player_input::AccelerometerResource;
 use bevy::platform_support::sync::atomic::AtomicU64;
 use bevy::platform_support::time::Instant;
+use core::sync::atomic::Ordering;
 use spooky_core::systems::setup::NoStdTransform;
-use crate::embedded_systems::player_input::AccelerometerResource;
 
 static ELAPSED: AtomicU64 = AtomicU64::new(0);
 fn elapsed_time() -> core::time::Duration {
@@ -146,11 +142,11 @@ fn main() -> ! {
             .with_frequency(Rate::from_mhz(40))
             .with_mode(esp_hal::spi::Mode::_0),
     )
-        .unwrap()
-        .with_sck(peripherals.GPIO7)
-        .with_mosi(peripherals.GPIO6)
-        .with_dma(peripherals.DMA_CH0)
-        .with_buffers(dma_rx_buf, dma_tx_buf);
+    .unwrap()
+    .with_sck(peripherals.GPIO7)
+    .with_mosi(peripherals.GPIO6)
+    .with_dma(peripherals.DMA_CH0)
+    .with_buffers(dma_rx_buf, dma_tx_buf);
     let cs_output = Output::new(peripherals.GPIO5, Level::High, OutputConfig::default());
     let spi_delay = Delay::new();
     let spi_device = ExclusiveDevice::new(spi, cs_output, spi_delay).unwrap();
@@ -183,7 +179,8 @@ fn main() -> ! {
 
     // --- Initialize the accelerometer sensor.
     const DEVICE_ADDR: u8 = 0x77;
-    let mut i2c = I2c::new( peripherals.I2C0, esp_hal::i2c::master::Config::default(), ).unwrap()
+    let mut i2c = I2c::new(peripherals.I2C0, esp_hal::i2c::master::Config::default())
+        .unwrap()
         .with_sda(peripherals.GPIO8)
         .with_scl(peripherals.GPIO18);
     let icm_sensor = Icm42670::new(i2c, icm42670::Address::Primary).unwrap();
@@ -197,14 +194,17 @@ fn main() -> ! {
         .add_event::<PlayerInputEvent>()
         .add_event::<CoinCollisionEvent>()
         .add_systems(Startup, systems::setup::setup)
-        .add_systems(Update, (
-            spooky_core::systems::game_logic::update_game,
-            coin_collision::detect_coin_collision,
-            coin_collision::remove_coin_on_collision,
-            embedded_systems::render::render_system,
-            embedded_systems::player_input::dispatch_accelerometer_input::<MyI2c, MyI2cError>,
-            spooky_core::systems::process_player_input::process_player_input,
-        ))
+        .add_systems(
+            Update,
+            (
+                spooky_core::systems::game_logic::update_game,
+                coin_collision::detect_coin_collision,
+                coin_collision::remove_coin_on_collision,
+                embedded_systems::render::render_system,
+                embedded_systems::player_input::dispatch_accelerometer_input::<MyI2c, MyI2cError>,
+                spooky_core::systems::process_player_input::process_player_input,
+            ),
+        )
         .run();
     let mut loop_delay = Delay::new();
     loop {

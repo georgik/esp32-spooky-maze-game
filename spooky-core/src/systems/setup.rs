@@ -1,7 +1,7 @@
 // spooky_core/src/systems/setup.rs
 
 // Common Bevy imports.
-use crate::components::{CoinComponent, Player};
+use crate::components::{CoinComponent, NpcComponent, Player};
 use crate::maze::Maze;
 use crate::resources::{MazeResource, PlayerPosition};
 use bevy::prelude::*;
@@ -246,7 +246,7 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
     }
 
     // <-- NEW: Spawn NPCs.
-    for npc in &maze_for_entities.npcs {
+    for (i, npc) in maze_for_entities.npcs.iter().enumerate() {
         if npc.x != -1 && npc.y != -1 {
             #[cfg(feature = "std")]
             {
@@ -255,7 +255,11 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
                 commands.spawn((
                     Sprite::from_image(textures.npc.clone()),
                     Transform::from_translation(Vec3::new(npc.x as f32, npc.y as f32, 5.0)),
-                    crate::components::NpcComponent { x: npc.x, y: npc.y },
+                    NpcComponent {
+                        index: i,
+                        x: npc.x,
+                        y: npc.y,
+                    },
                 ));
             }
             #[cfg(not(feature = "std"))]

@@ -35,6 +35,7 @@ pub struct WalkerComponent {
 
 #[derive(Component)]
 pub struct NpcComponent {
+    pub index: usize,
     pub x: i32,
     pub y: i32,
 }
