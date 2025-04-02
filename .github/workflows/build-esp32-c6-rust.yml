@@ -1,11 +1,11 @@
 name: CI for ESP32-C6
 
 on:
-  push:
-    paths:
-      - "esp32-c6/**"
-      - "spooky-core/**"
-      - "spooky-embedded/**"
+#  push:
+#    paths:
+#      - "esp32-c6/**"
+#      - "spooky-core/**"
+#      - "spooky-embedded/**"
   workflow_dispatch:
 
 env:

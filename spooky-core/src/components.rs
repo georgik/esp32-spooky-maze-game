@@ -20,3 +20,9 @@ pub struct CoinComponent {
     pub x: i32,
     pub y: i32,
 }
+
+#[derive(Component)]
+pub struct DynamiteComponent {
+    pub x: i32,
+    pub y: i32,
+}

@@ -2,6 +2,8 @@
 #![no_main]
 
 extern crate alloc;
+use spooky_core::systems::coin_collision;
+use spooky_core::events::coin::CoinCollisionEvent;
 use spooky_core::systems::process_player_input::process_player_input;
 use spooky_core::events::player::PlayerInputEvent;
 use alloc::boxed::Box;
@@ -188,35 +190,22 @@ fn main() -> ! {
 
     // --- Build the Bevy app.
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins);
-    // Insert the accelerometer resource.
-    app.insert_non_send_resource(AccelerometerResource { sensor: icm_sensor });
-
-    app.insert_non_send_resource(DisplayResource { display });
-
-    app.insert_resource(FrameBufferResource::new());
-    // Register the custom event.
-    app.add_event::<PlayerInputEvent>();
-    app.add_event::<spooky_core::events::coin::CoinCollisionEvent>();
-
-
-    // Use spooky_core's setup system to spawn the maze, coins, and player.
-    app.add_systems(Startup, systems::setup::setup);
-    // Add game logic system.
-    app.add_systems(Update, spooky_core::systems::game_logic::update_game);
-    app.add_systems(Update, spooky_core::systems::coin_collision::detect_coin_collision);
-    app.add_systems(Update, spooky_core::systems::coin_collision::remove_coin_on_collision);
-    // Add the embedded render system.
-    app.add_systems(Update, render_system);
-    // Add the accelerometer dispatch system (from the embedded module).
-    app.add_systems(
-        Update,
-        crate::embedded_systems::player_input::dispatch_accelerometer_input::<MyI2c, MyI2cError>,
-    );
-
-    // Add the common event processing system.
-    app.add_systems(Update, process_player_input);
-
+    app.add_plugins(DefaultPlugins)
+        .insert_non_send_resource(DisplayResource { display })
+        .insert_non_send_resource(AccelerometerResource { sensor: icm_sensor })
+        .insert_resource(FrameBufferResource::new())
+        .add_event::<PlayerInputEvent>()
+        .add_event::<CoinCollisionEvent>()
+        .add_systems(Startup, systems::setup::setup)
+        .add_systems(Update, (
+            spooky_core::systems::game_logic::update_game,
+            coin_collision::detect_coin_collision,
+            coin_collision::remove_coin_on_collision,
+            embedded_systems::render::render_system,
+            embedded_systems::player_input::dispatch_accelerometer_input::<MyI2c, MyI2cError>,
+            spooky_core::systems::process_player_input::process_player_input,
+        ))
+        .run();
     let mut loop_delay = Delay::new();
     loop {
         app.update();

@@ -1,11 +1,11 @@
 name: CI for ESP32-S2
 
 on:
-  push:
-    paths:
-      - "esp32-s2/**"
-      - "spooky-core/**"
-      - "spooky-embedded/**"
+#  push:
+#    paths:
+#      - "esp32-s2/**"
+#      - "spooky-core/**"
+#      - "spooky-embedded/**"
   workflow_dispatch:
 
 env:
