@@ -3,7 +3,7 @@
 
 extern crate alloc;
 use alloc::boxed::Box;
-use spooky_core::events::{ coin::CoinCollisionEvent, player::PlayerInputEvent };
+use spooky_core::events::{coin::CoinCollisionEvent, player::PlayerInputEvent};
 use spooky_core::systems;
 use spooky_core::systems::process_player_input::process_player_input;
 
@@ -108,6 +108,7 @@ struct DisplayResource {
     display: MyDisplay,
 }
 
+use crate::embedded_systems::player_input;
 use crate::embedded_systems::player_input::AccelerometerResource;
 use bevy::platform_support::sync::atomic::AtomicU64;
 use bevy::platform_support::time::Instant;
@@ -117,7 +118,6 @@ use spooky_core::events::npc::NpcCollisionEvent;
 use spooky_core::events::walker::WalkerCollisionEvent;
 use spooky_core::systems::collisions;
 use spooky_core::systems::setup::NoStdTransform;
-use crate::embedded_systems::player_input;
 
 static ELAPSED: AtomicU64 = AtomicU64::new(0);
 fn elapsed_time() -> core::time::Duration {

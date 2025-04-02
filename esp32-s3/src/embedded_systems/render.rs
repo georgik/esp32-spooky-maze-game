@@ -1,11 +1,7 @@
 #[cfg(not(feature = "std"))]
 use embedded_graphics::pixelcolor::Rgb565;
 
-use embedded_graphics::{
-    image::Image,
-    prelude::*,
-    primitives::Rectangle,
-};
+use embedded_graphics::{image::Image, prelude::*, primitives::Rectangle};
 
 use bevy_ecs::prelude::*;
 use spooky_core::resources::{MazeResource, PlayerPosition};
@@ -78,9 +74,7 @@ pub fn render_system(
             };
 
             if let Some(bmp) = bmp_opt {
-                Image::new(bmp, pos)
-                    .draw(&mut fb_res.frame_buf)
-                    .unwrap();
+                Image::new(bmp, pos).draw(&mut fb_res.frame_buf).unwrap();
             }
         }
     }
@@ -92,9 +86,7 @@ pub fn render_system(
                 let screen_x = coin.x - offset_x;
                 let screen_y = coin.y - offset_y;
                 let pos = Point::new(screen_x, screen_y);
-                Image::new(bmp, pos)
-                    .draw(&mut fb_res.frame_buf)
-                    .unwrap();
+                Image::new(bmp, pos).draw(&mut fb_res.frame_buf).unwrap();
             }
         }
     }
@@ -104,9 +96,7 @@ pub fn render_system(
         let screen_x = player_pos.x as i32 - offset_x;
         let screen_y = player_pos.y as i32 - offset_y;
         let pos = Point::new(screen_x, screen_y);
-        Image::new(bmp, pos)
-            .draw(&mut fb_res.frame_buf)
-            .unwrap();
+        Image::new(bmp, pos).draw(&mut fb_res.frame_buf).unwrap();
     }
 
     // Flush the completed framebuffer to the physical display.

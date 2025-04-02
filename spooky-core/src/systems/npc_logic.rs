@@ -1,7 +1,7 @@
 use crate::components::NpcComponent;
 use crate::resources::MazeResource;
-use bevy::prelude::*;
 use crate::transform::SpookyTransform;
+use bevy::prelude::*;
 
 /// This system updates the positions of all NPCs by calling Maze::move_npcs.
 pub fn update_npc_movement(
@@ -17,7 +17,6 @@ pub fn update_npc_movement(
         let updated_npc = maze_res.maze.npcs[npc_comp.index];
         npc_comp.x = updated_npc.x;
         npc_comp.y = updated_npc.y;
-
 
         #[cfg(feature = "std")]
         {
