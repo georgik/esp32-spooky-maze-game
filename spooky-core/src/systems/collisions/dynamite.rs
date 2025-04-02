@@ -1,8 +1,8 @@
-use bevy::prelude::*;
 use crate::components::DynamiteComponent;
 use crate::events::dynamite::DynamiteCollisionEvent;
-use crate::resources::{PlayerPosition, MazeResource};
 use crate::maze::Coin;
+use crate::resources::{MazeResource, PlayerPosition};
+use bevy::prelude::*;
 
 /// This system checks the player's current tile against the dynamite tile(s)
 /// in the maze. If the player's tile matches a dynamite tile, it dispatches a
@@ -37,7 +37,10 @@ pub fn handle_dynamite_collision(
 ) {
     for event in events.read() {
         // Relocate the dynamite in the maze.
-        maze_res.maze.relocate_dynamite(Coin { x: event.x, y: event.y });
+        maze_res.maze.relocate_dynamite(Coin {
+            x: event.x,
+            y: event.y,
+        });
         // Now update the dynamite entity: we assume the component stores its tile coordinates.
         for mut dyn_comp in query.iter_mut() {
             if dyn_comp.x == event.x && dyn_comp.y == event.y {

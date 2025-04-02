@@ -1,12 +1,12 @@
 // spooky_core/src/systems/setup.rs
 
 // Common Bevy imports.
-use bevy::prelude::*;
-use bevy_math::Vec3;
-use bevy_transform::prelude::{Transform, GlobalTransform};
+use crate::components::{CoinComponent, Player};
 use crate::maze::Maze;
 use crate::resources::{MazeResource, PlayerPosition};
-use crate::components::{CoinComponent, Player};
+use bevy::prelude::*;
+use bevy_math::Vec3;
+use bevy_transform::prelude::{GlobalTransform, Transform};
 
 // When compiling for desktop (std enabled), use Bevy's AssetServer and its Image type.
 #[cfg(feature = "std")]
@@ -15,8 +15,6 @@ use bevy::image::Image;
 use bevy::prelude::*;
 
 // --- TextureAssets for asset loading ---
-
-// Desktop (std) mode: load images via the AssetServer.
 #[cfg(feature = "std")]
 pub struct TextureAssets {
     pub wall: Handle<Image>,
@@ -27,6 +25,7 @@ pub struct TextureAssets {
     pub coin: Handle<Image>,
     pub walker: Handle<Image>,
     pub dynamite: Handle<Image>,
+    pub npc: Handle<Image>,
 }
 
 #[cfg(feature = "std")]
@@ -41,6 +40,7 @@ impl TextureAssets {
             coin: asset_server.load("textures/coin.png"),
             walker: asset_server.load("textures/walker.png"),
             dynamite: asset_server.load("textures/dynamite.png"),
+            npc: asset_server.load("textures/npc.png"),
         }
     }
 }
@@ -49,9 +49,9 @@ impl TextureAssets {
 #[cfg(not(feature = "std"))]
 use bevy::prelude::Resource;
 #[cfg(not(feature = "std"))]
-use tinybmp::Bmp;
-#[cfg(not(feature = "std"))]
 use embedded_graphics::pixelcolor::Rgb565;
+#[cfg(not(feature = "std"))]
+use tinybmp::Bmp;
 
 #[cfg(not(feature = "std"))]
 #[derive(Resource)]
@@ -70,14 +70,35 @@ pub struct TextureAssets {
 impl TextureAssets {
     pub fn load() -> Self {
         Self {
-            wall: Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../../assets/img/wall.bmp")).unwrap()),
-            ground: Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../../assets/img/ground.bmp")).unwrap()),
-            empty: Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../../assets/img/empty.bmp")).unwrap()),
-            scorched: Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../../assets/img/scorched.bmp")).unwrap()),
-            ghost: Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../../assets/img/ghost1.bmp")).unwrap()),
-            coin: Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../../assets/img/coin.bmp")).unwrap()),
-            walker: Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../../assets/img/walker.bmp")).unwrap()),
-            dynamite: Some(Bmp::<Rgb565>::from_slice(include_bytes!("../../../assets/img/dynamite.bmp")).unwrap()),
+            wall: Some(
+                Bmp::<Rgb565>::from_slice(include_bytes!("../../../assets/img/wall.bmp")).unwrap(),
+            ),
+            ground: Some(
+                Bmp::<Rgb565>::from_slice(include_bytes!("../../../assets/img/ground.bmp"))
+                    .unwrap(),
+            ),
+            empty: Some(
+                Bmp::<Rgb565>::from_slice(include_bytes!("../../../assets/img/empty.bmp")).unwrap(),
+            ),
+            scorched: Some(
+                Bmp::<Rgb565>::from_slice(include_bytes!("../../../assets/img/scorched.bmp"))
+                    .unwrap(),
+            ),
+            ghost: Some(
+                Bmp::<Rgb565>::from_slice(include_bytes!("../../../assets/img/ghost1.bmp"))
+                    .unwrap(),
+            ),
+            coin: Some(
+                Bmp::<Rgb565>::from_slice(include_bytes!("../../../assets/img/coin.bmp")).unwrap(),
+            ),
+            walker: Some(
+                Bmp::<Rgb565>::from_slice(include_bytes!("../../../assets/img/walker.bmp"))
+                    .unwrap(),
+            ),
+            dynamite: Some(
+                Bmp::<Rgb565>::from_slice(include_bytes!("../../../assets/img/dynamite.bmp"))
+                    .unwrap(),
+            ),
         }
     }
 }
@@ -100,10 +121,11 @@ pub struct NoStdSprite {
 // --- Main Setup Function ---
 #[cfg(not(feature = "std"))]
 // use bevy_transform::prelude::Transform;
-
 #[cfg(not(feature = "std"))]
 #[derive(Component)]
 pub struct NoStdTransform(pub Transform);
+
+// --- Main Setup Function ---
 pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<AssetServer>) {
     // Load textures conditionally.
     #[cfg(feature = "std")]
@@ -120,22 +142,26 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
 
     // Compute playable bounds.
     let (left, bottom, _right, _top) = maze.playable_bounds();
-    let initial_x = left as f32 + 10.0*16.0;
-    let initial_y = bottom as f32 + 8.0*16.0;
+    let initial_x = left as f32 + 10.0 * 16.0;
+    let initial_y = bottom as f32 + 8.0 * 16.0;
     let player_start = Vec3::new(initial_x, initial_y, 2.0);
 
     // Insert the initial player position resource.
-    commands.insert_resource(PlayerPosition { x: initial_x, y: initial_y, z: 10.0 });
+    commands.insert_resource(PlayerPosition {
+        x: initial_x,
+        y: initial_y,
+        z: 10.0,
+    });
 
-    // Clone maze for spawning entities; store the original maze in a resource.
+    // Store the maze as a resource.
     let maze_for_entities = maze.clone();
     commands.insert_resource(MazeResource { maze });
 
-    // Spawn the player (ghost) with its marker component.
+    // Spawn the player (ghost).
     #[cfg(feature = "std")]
     {
         commands.spawn((
-            Sprite::from_image(textures.ghost),
+            Sprite::from_image(textures.ghost.clone()),
             Transform::from_translation(player_start),
             Player,
         ));
@@ -144,7 +170,9 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
     {
         commands.spawn((
             NoStdTransform(Transform::from_translation(player_start)),
-            NoStdSprite { texture: TextureId::Ghost },
+            NoStdSprite {
+                texture: TextureId::Ghost,
+            },
             Player,
         ));
     }
@@ -157,14 +185,16 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
                 commands.spawn((
                     Sprite::from_image(textures.coin.clone()),
                     Transform::from_translation(Vec3::new(coin.x as f32, coin.y as f32, 2.0)),
-                    CoinComponent { x: coin.x, y: coin.y },
+                    // (Assuming you have a CoinComponent for collision detection)
+                    crate::components::CoinComponent {
+                        x: coin.x,
+                        y: coin.y,
+                    },
                 ));
             }
             #[cfg(not(feature = "std"))]
             {
-                commands
-                    .spawn_empty()
-                    ;
+                commands.spawn_empty();
             }
         }
     }
@@ -177,15 +207,15 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
                 commands.spawn((
                     Sprite::from_image(textures.walker.clone()),
                     Transform::from_translation(Vec3::new(walker.x as f32, walker.y as f32, 3.0)),
+                    crate::components::WalkerComponent {
+                        x: walker.x,
+                        y: walker.y,
+                    },
                 ));
             }
             #[cfg(not(feature = "std"))]
             {
-                // commands.spawn((
-                //     Transform::from_translation(Vec3::new(walker.x as f32, walker.y as f32, 3.0)),
-                //     GlobalTransform::default(),
-                // ));
-
+                // (No action or custom handling)
             }
         }
     }
@@ -197,19 +227,45 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
             {
                 commands.spawn((
                     Sprite::from_image(textures.dynamite.clone()),
-                    Transform::from_translation(Vec3::new(dynamite.x as f32, dynamite.y as f32, 4.0)),
+                    Transform::from_translation(Vec3::new(
+                        dynamite.x as f32,
+                        dynamite.y as f32,
+                        4.0,
+                    )),
+                    crate::components::DynamiteComponent {
+                        x: dynamite.x,
+                        y: dynamite.y,
+                    },
                 ));
             }
             #[cfg(not(feature = "std"))]
             {
-                // commands.spawn((
-                //     Transform::from_translation(Vec3::new(dynamite.x as f32, dynamite.y as f32, 4.0)),
-                // ));
+                // (No action or custom handling)
             }
         }
     }
 
-    // Spawn the full tile map (background) covering the maze plus margin.
+    // <-- NEW: Spawn NPCs.
+    for npc in &maze_for_entities.npcs {
+        if npc.x != -1 && npc.y != -1 {
+            #[cfg(feature = "std")]
+            {
+                // Choose an appropriate z-coordinate (e.g., 5.0) so that NPCs are drawn in front of coins
+                // but behind the player if that’s your design.
+                commands.spawn((
+                    Sprite::from_image(textures.npc.clone()),
+                    Transform::from_translation(Vec3::new(npc.x as f32, npc.y as f32, 5.0)),
+                    crate::components::NpcComponent { x: npc.x, y: npc.y },
+                ));
+            }
+            #[cfg(not(feature = "std"))]
+            {
+                // (No action or custom handling for no_std)
+            }
+        }
+    }
+
+    // Spawn the full tile map (background) covering the maze.
     let margin: i32 = Maze::MARGIN;
     let total_width = maze_for_entities.width as i32 + 2 * margin;
     let total_height = maze_for_entities.height as i32 + 2 * margin;
@@ -218,12 +274,13 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
             let mx = tx - margin;
             let my = ty - margin;
             #[cfg(feature = "std")]
-            let texture = if mx >= 0 && my >= 0 &&
-                mx < maze_for_entities.width as i32 && my < maze_for_entities.height as i32
+            let texture = if mx >= 0
+                && my >= 0
+                && mx < maze_for_entities.width as i32
+                && my < maze_for_entities.height as i32
             {
-                // Because maze data row 0 is at the top, flip the row.
-                let maze_row = (maze_for_entities.height as i32 - 1) - my;
-                let index = (maze_row * maze_for_entities.width as i32 + mx) as usize;
+                // No flipping here – use top‑left as anchor.
+                let index = (my * maze_for_entities.width as i32 + mx) as usize;
                 match maze_for_entities.data[index] {
                     1 => textures.wall.clone(),
                     0 => textures.ground.clone(),

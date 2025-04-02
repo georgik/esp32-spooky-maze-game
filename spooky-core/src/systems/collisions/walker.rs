@@ -1,8 +1,8 @@
-use bevy::prelude::*;
+use crate::components::WalkerComponent;
 use crate::events::walker::WalkerCollisionEvent;
-use crate::resources::{PlayerPosition, MazeResource};
 use crate::maze::Coin;
-use crate::components::WalkerComponent; // Assumes you have a WalkerComponent
+use crate::resources::{MazeResource, PlayerPosition};
+use bevy::prelude::*; // Assumes you have a WalkerComponent
 
 /// This system checks the player's current tile against all walker tiles in the maze.
 /// When a collision is detected, a `WalkerCollisionEvent` is sent.

@@ -5,9 +5,9 @@
 #[cfg(feature = "dynamic_maze")]
 use maze_generator::{prelude::*, recursive_backtracking::RbGenerator};
 
+use bevy::prelude::Vec;
 use rand::prelude::*;
 use rand_chacha::ChaChaRng;
-use bevy::prelude::Vec;
 
 #[derive(Copy, Clone)]
 pub struct Coin {
@@ -27,6 +27,7 @@ pub struct Npc {
     pub y: i32,
     pub vector_x: i32,
     pub vector_y: i32,
+    pub steps_remaining: i32,
 }
 
 #[derive(Clone)]
@@ -66,7 +67,13 @@ impl Maze {
             tile_height: 16,
             coins: [Coin { x: -1, y: -1 }; 100],
             coin_counter: 100,
-            npcs: [Npc { x: -1, y: -1, vector_x: 0, vector_y: 0 }; 5],
+            npcs: [Npc {
+                x: -1,
+                y: -1,
+                vector_x: 0,
+                vector_y: 0,
+                steps_remaining: 0,
+            }; 5],
             walkers: [Coin { x: -1, y: -1 }; 5],
             dynamites: [Coin { x: -1, y: -1 }; 1],
             rng: match seed {
@@ -102,7 +109,11 @@ impl Maze {
         let tile_y = (y - bottom) / self.tile_height as i32;
         // Our maze data array is laid out with row 0 at the top.
         let maze_row = (self.height as i32 - 1) - tile_y;
-        if tile_x < 0 || maze_row < 0 || tile_x >= self.width as i32 || maze_row >= self.height as i32 {
+        if tile_x < 0
+            || maze_row < 0
+            || tile_x >= self.width as i32
+            || maze_row >= self.height as i32
+        {
             return true;
         }
         let tile_index = (maze_row * self.width as i32 + tile_x) as usize;
@@ -180,25 +191,43 @@ impl Maze {
             let (new_x, new_y) = self.get_random_coordinates();
             self.npcs[index].x = new_x;
             self.npcs[index].y = new_y;
-            self.npcs[index].vector_x = 1;
-            self.npcs[index].vector_y = 1;
+            // Choose a random direction from the four cardinal directions.
+            let directions = [(1, 0), (-1, 0), (0, 1), (0, -1)];
+            let idx = self.get_rand() as usize % 4;
+            let (vx, vy) = directions[idx];
+            self.npcs[index].vector_x = vx;
+            self.npcs[index].vector_y = vy;
+            // Random steps between 1 and 4.
+            self.npcs[index].steps_remaining = (self.get_rand() % 4) + 1;
         }
     }
 
     pub fn get_coin_at(&self, x: i32, y: i32) -> Option<Coin> {
-        self.coins.iter().copied().find(|coin| coin.x == x && coin.y == y)
+        self.coins
+            .iter()
+            .copied()
+            .find(|coin| coin.x == x && coin.y == y)
     }
 
     pub fn get_npc_at(&self, x: i32, y: i32) -> Option<Npc> {
-        self.npcs.iter().copied().find(|npc| npc.x == x && npc.y == y)
+        self.npcs
+            .iter()
+            .copied()
+            .find(|npc| npc.x == x && npc.y == y)
     }
 
     pub fn get_walker_at(&self, x: i32, y: i32) -> Option<Coin> {
-        self.walkers.iter().copied().find(|walker| walker.x == x && walker.y == y)
+        self.walkers
+            .iter()
+            .copied()
+            .find(|walker| walker.x == x && walker.y == y)
     }
 
     pub fn get_dynamite_at(&self, x: i32, y: i32) -> Option<Coin> {
-        self.dynamites.iter().copied().find(|d| d.x == x && d.y == y)
+        self.dynamites
+            .iter()
+            .copied()
+            .find(|d| d.x == x && d.y == y)
     }
 
     pub fn remove_coin(&mut self, coin: Coin) {
@@ -290,11 +319,14 @@ impl Maze {
     pub fn generate_maze(&mut self, graph_width: usize, graph_height: usize) {
         let seed_buffer = [0u8; 32];
         let mut generator = RbGenerator::new(Some(seed_buffer));
-        let maze_graph = generator.generate(graph_width as i32, graph_height as i32).unwrap();
+        let maze_graph = generator
+            .generate(graph_width as i32, graph_height as i32)
+            .unwrap();
         for y in 1..graph_height {
             for x in 1..graph_width {
                 let field = maze_graph.get_field(&(x as i32, y as i32).into()).unwrap();
-                let tile_index = (x - 1) * 2 + (y - 1) * 2 * (self.width as usize) + (self.offset as usize);
+                let tile_index =
+                    (x - 1) * 2 + (y - 1) * 2 * (self.width as usize) + (self.offset as usize);
                 self.data[tile_index] = 0;
                 if field.has_passage(&Direction::West) {
                     self.data[tile_index + 1] = 0;

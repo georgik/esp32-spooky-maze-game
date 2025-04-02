@@ -1,7 +1,7 @@
-use bevy::prelude::*;
-use crate::components::{Player, MainCamera};
-use crate::resources::{PlayerPosition, MazeResource};
+use crate::components::{MainCamera, Player};
 use crate::events::player::PlayerInputEvent;
+use crate::resources::{MazeResource, PlayerPosition};
+use bevy::prelude::*;
 
 // Use our unified transform type alias.
 use crate::transform::SpookyTransform;
@@ -20,10 +20,14 @@ pub fn process_player_input(
     mut player_pos: ResMut<PlayerPosition>,
     maze_res: Res<MazeResource>,
     mut player_query: Query<&mut SpookyTransform, With<Player>>,
-    #[cfg(feature = "std")]
-    mut camera_query: Query<&mut SpookyTransform, (With<Camera2d>, Without<Player>)>,
-    #[cfg(not(feature = "std"))]
-    mut camera_query: Query<&mut SpookyTransform, (With<MainCamera>, Without<Player>)>,
+    #[cfg(feature = "std")] mut camera_query: Query<
+        &mut SpookyTransform,
+        (With<Camera2d>, Without<Player>),
+    >,
+    #[cfg(not(feature = "std"))] mut camera_query: Query<
+        &mut SpookyTransform,
+        (With<MainCamera>, Without<Player>),
+    >,
 ) {
     for event in events.read() {
         // Calculate candidate new position.
@@ -31,7 +35,10 @@ pub fn process_player_input(
         let candidate_y = player_pos.y + event.dy;
 
         // Check for wall collision.
-        if maze_res.maze.check_wall_collision(candidate_x as i32, candidate_y as i32) {
+        if maze_res
+            .maze
+            .check_wall_collision(candidate_x as i32, candidate_y as i32)
+        {
             // Optionally log the collision, then skip updating.
             info!("Collision detected at ({}, {})", candidate_x, candidate_y);
             continue;

@@ -1,8 +1,8 @@
-use bevy::prelude::*;
 use crate::components::CoinComponent;
 use crate::events::coin::CoinCollisionEvent;
-use crate::resources::{PlayerPosition, MazeResource};
 use crate::maze::Coin;
+use crate::resources::{MazeResource, PlayerPosition};
+use bevy::prelude::*;
 
 /// This system checks the player's current position against all coin positions in the maze.
 /// If the player is on the same tile as a coin, it dispatches a `CoinCollisionEvent`.
@@ -34,7 +34,10 @@ pub fn remove_coin_on_collision(
 ) {
     for event in events.read() {
         // Remove the coin at the collision coordinates.
-        maze_res.maze.remove_coin(Coin { x: event.coin_x, y: event.coin_y });
+        maze_res.maze.remove_coin(Coin {
+            x: event.coin_x,
+            y: event.coin_y,
+        });
         // Despawn coin entity with matching coordinates.
         for (entity, coin_comp) in query.iter() {
             if coin_comp.x == event.coin_x && coin_comp.y == event.coin_y {
