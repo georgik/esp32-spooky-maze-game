@@ -1,6 +1,6 @@
 use bevy::input::keyboard::KeyboardInput;
 use bevy::prelude::*;
-use crate::systems::player_input::PlayerInputEvent;
+use spooky_core::events::player_events::PlayerInputEvent;
 
 /// Reads keyboard input (arrow keys) and sends a PlayerInputEvent.
 /// A positive dx moves right; a positive dy moves up.

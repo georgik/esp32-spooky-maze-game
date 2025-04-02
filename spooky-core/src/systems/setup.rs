@@ -125,7 +125,7 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
     let player_start = Vec3::new(initial_x, initial_y, 2.0);
 
     // Insert the initial player position resource.
-    commands.insert_resource(PlayerPosition { x: initial_x, y: initial_y });
+    commands.insert_resource(PlayerPosition { x: initial_x, y: initial_y, z: 10.0 });
 
     // Clone maze for spawning entities; store the original maze in a resource.
     let maze_for_entities = maze.clone();
@@ -156,7 +156,7 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
             {
                 commands.spawn((
                     Sprite::from_image(textures.coin.clone()),
-                    Transform::from_translation(Vec3::new(coin.x as f32, coin.y as f32, 1.0)),
+                    Transform::from_translation(Vec3::new(coin.x as f32, coin.y as f32, 2.0)),
                 ));
             }
             #[cfg(not(feature = "std"))]
@@ -175,13 +175,13 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
             {
                 commands.spawn((
                     Sprite::from_image(textures.walker.clone()),
-                    Transform::from_translation(Vec3::new(walker.x as f32, walker.y as f32, 1.0)),
+                    Transform::from_translation(Vec3::new(walker.x as f32, walker.y as f32, 3.0)),
                 ));
             }
             #[cfg(not(feature = "std"))]
             {
                 // commands.spawn((
-                //     Transform::from_translation(Vec3::new(walker.x as f32, walker.y as f32, 1.0)),
+                //     Transform::from_translation(Vec3::new(walker.x as f32, walker.y as f32, 3.0)),
                 //     GlobalTransform::default(),
                 // ));
 
@@ -196,13 +196,13 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
             {
                 commands.spawn((
                     Sprite::from_image(textures.dynamite.clone()),
-                    Transform::from_translation(Vec3::new(dynamite.x as f32, dynamite.y as f32, 1.0)),
+                    Transform::from_translation(Vec3::new(dynamite.x as f32, dynamite.y as f32, 4.0)),
                 ));
             }
             #[cfg(not(feature = "std"))]
             {
                 // commands.spawn((
-                //     Transform::from_translation(Vec3::new(dynamite.x as f32, dynamite.y as f32, 1.0)),
+                //     Transform::from_translation(Vec3::new(dynamite.x as f32, dynamite.y as f32, 4.0)),
                 // ));
             }
         }

@@ -1,48 +1,47 @@
-// spooky_core/src/systems/player_input.rs
-
 use bevy::prelude::*;
 use crate::components::{Player, MainCamera};
-use crate::resources::PlayerPosition;
-
-/// An event carrying a player movement request.
-/// A positive dx moves the player right; a positive dy moves up.
-/// In our game the movement step is one tile.
-#[derive(Debug, Event)]
-pub struct PlayerInputEvent {
-    pub dx: f32,
-    pub dy: f32,
-}
+use crate::resources::{PlayerPosition, MazeResource};
+use crate::events::player_events::PlayerInputEvent;
 
 // Use our unified transform type alias.
 use crate::transform::SpookyTransform;
 
-// Create a type alias so that in std builds SpookyTransform is just Transform,
-// and in no_std builds it is our wrapper.
 #[cfg(feature = "std")]
 type SpTransform = SpookyTransform;
-
 #[cfg(not(feature = "std"))]
 type SpTransform = SpookyTransform;
 
 /// Process player input events: update the logical player position and adjust
 /// both the player's and camera's transform so that the player remains centered.
+/// Movement is only applied if the new coordinates do not collide with a wall.
 pub fn process_player_input(
     mut events: EventReader<PlayerInputEvent>,
     mut player_pos: ResMut<PlayerPosition>,
+    maze_res: Res<MazeResource>,
     mut player_query: Query<&mut SpookyTransform, With<Player>>,
     #[cfg(feature = "std")]
     mut camera_query: Query<&mut SpookyTransform, (With<Camera2d>, Without<Player>)>,
     #[cfg(not(feature = "std"))]
     mut camera_query: Query<&mut SpookyTransform, (With<MainCamera>, Without<Player>)>,
 ) {
-    // Use `read()` to iterate over events.
     for event in events.read() {
-        // Update the logical position.
-        player_pos.x += event.dx;
-        player_pos.y += event.dy;
+        // Calculate candidate new position.
+        let candidate_x = player_pos.x + event.dx;
+        let candidate_y = player_pos.y + event.dy;
+
+        // Check for wall collision.
+        if maze_res.maze.check_wall_collision(candidate_x as i32, candidate_y as i32) {
+            // Optionally log the collision, then skip updating.
+            info!("Collision detected at ({}, {})", candidate_x, candidate_y);
+            continue;
+        }
+
+        // No collision: update the logical player position.
+        player_pos.x = candidate_x;
+        player_pos.y = candidate_y;
 
         // Update the player's transform.
-        if let Ok(mut transform) = player_query.get_single_mut() {
+        if let Ok(mut transform) = player_query.single_mut() {
             #[cfg(feature = "std")]
             {
                 transform.translation.x = player_pos.x;
@@ -54,7 +53,8 @@ pub fn process_player_input(
                 transform.0.translation.y = player_pos.y;
             }
         }
-        // Update the camera transform so that the player stays centered.
+
+        // Update the camera's transform so that the player remains centered.
         for mut transform in camera_query.iter_mut() {
             #[cfg(feature = "std")]
             {
