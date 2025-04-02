@@ -2,6 +2,7 @@
 #![no_main]
 
 extern crate alloc;
+use spooky_core::systems::hud::HudState;
 use alloc::boxed::Box;
 use spooky_core::events::{coin::CoinCollisionEvent, player::PlayerInputEvent};
 use spooky_core::systems;
@@ -194,6 +195,7 @@ fn main() -> ! {
         .insert_non_send_resource(DisplayResource { display })
         .insert_non_send_resource(AccelerometerResource { sensor: icm_sensor })
         .insert_resource(FrameBufferResource::new())
+        .insert_resource(HudState::default())
         .add_systems(Startup, systems::setup::setup)
         .add_event::<PlayerInputEvent>()
         .add_event::<CoinCollisionEvent>()

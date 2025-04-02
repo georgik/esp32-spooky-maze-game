@@ -1,26 +1,36 @@
-#[cfg(not(feature = "std"))]
-use embedded_graphics::pixelcolor::Rgb565;
+#![cfg(not(feature = "std"))]
 
-use embedded_graphics::{image::Image, prelude::*, primitives::Rectangle};
-
+use alloc::format;
+use embedded_graphics::{
+    image::Image,
+    mono_font::{ascii::FONT_6X10, MonoTextStyle},
+    prelude::*,
+    text::Text,
+    pixelcolor::Rgb565,
+    primitives::Rectangle,
+};
 use bevy_ecs::prelude::*;
 use spooky_core::resources::{MazeResource, PlayerPosition};
-
+use spooky_core::systems::hud::HudState;
 #[cfg(not(feature = "std"))]
 use spooky_core::systems::setup::TextureAssets;
 
 /// Render the maze tile map, coins, and the player ghost into the off‑screen framebuffer,
 /// then flush it to the physical display.
 ///
-/// The camera is simulated by calculating an offset so that the player (whose world
-/// coordinates are stored in `PlayerPosition`) is always centered on the display.
-/// Only tiles that fall within the visible region are drawn.
+/// The camera is simulated by computing an offset so that the player's world coordinates
+/// (stored in `PlayerPosition`) are centered on screen. Only tiles that fall within the
+/// visible region (after applying the camera offset) are drawn.
+///
+/// After drawing the world (maze, coins, and player), a HUD overlay is rendered at the top‑left
+/// corner. This HUD displays four lines of text (for coins, teleport, walker and dynamite).
 pub fn render_system(
     mut display_res: NonSendMut<crate::DisplayResource>,
     mut fb_res: ResMut<crate::FrameBufferResource>,
     maze_res: Res<MazeResource>,
     #[cfg(not(feature = "std"))] texture_assets: Res<TextureAssets>,
     #[cfg(not(feature = "std"))] player_pos: Res<PlayerPosition>,
+    #[cfg(not(feature = "std"))] hud_state: Res<HudState>,
 ) {
     // Clear the framebuffer.
     fb_res.frame_buf.clear(Rgb565::BLACK).unwrap();
@@ -46,7 +56,7 @@ pub fn render_system(
     let visible_bottom = offset_y;
     let visible_top = offset_y + display_height;
 
-    // Convert the visible world bounds to tile indices.
+    // Compute visible tile indices (clamping to maze dimensions).
     let min_tx = ((visible_left - maze_left) / tile_w).max(0);
     let max_tx = ((visible_right - maze_left) / tile_w).min(maze.width as i32 - 1);
     let min_ty = ((visible_bottom - maze_bottom) / tile_h).max(0);
@@ -55,16 +65,16 @@ pub fn render_system(
     // --- Render the maze tile map (background) ---
     for ty in min_ty..=max_ty {
         for tx in min_tx..=max_tx {
-            // Compute the tile's world coordinate (using top‑left as the anchor).
+            // Compute world coordinate (using top‑left as anchor).
             let world_x = maze_left + tx * tile_w;
             let world_y = maze_bottom + ty * tile_h;
-            // Compute the screen coordinate by subtracting the camera offset.
+            // Convert to screen coordinates by subtracting the camera offset.
             let screen_x = world_x - offset_x;
             let screen_y = world_y - offset_y;
             let pos = Point::new(screen_x, screen_y);
 
-            // Use the data array directly without flipping, because maze data
-            // has been adjusted to follow Bevy's coordinate system.
+            // The maze data is stored in row‑major order (with row 0 at the top).
+            // (Our maze was generated using Bevy’s coordinate system, so no flipping is needed.)
             let tile_index = (ty * maze.width as i32 + tx) as usize;
             let bmp_opt = match maze.data[tile_index] {
                 1 => texture_assets.wall.as_ref(),
@@ -99,7 +109,36 @@ pub fn render_system(
         Image::new(bmp, pos).draw(&mut fb_res.frame_buf).unwrap();
     }
 
-    // Flush the completed framebuffer to the physical display.
+    // --- Render HUD overlay ---
+    // We'll display four lines of text in the top‑left corner.
+    let text_style = MonoTextStyle::new(&FONT_6X10, Rgb565::WHITE);
+    let hud_start_x = 5;
+    let mut hud_start_y = 12;
+    let line_height = 12;
+
+    let coins_line = format!("Coins: {}", hud_state.coins_left);
+    let teleport_line = format!("Teleport: {}", hud_state.teleport_countdown);
+    let walker_line = format!("Walker: {}", hud_state.walker_timer);
+    let dynamite_line = format!("Dynamite: {}", hud_state.dynamites);
+
+    // Draw each HUD line.
+    Text::new(&coins_line, Point::new(hud_start_x, hud_start_y), text_style)
+        .draw(&mut fb_res.frame_buf)
+        .unwrap();
+    hud_start_y += line_height;
+    Text::new(&teleport_line, Point::new(hud_start_x, hud_start_y), text_style)
+        .draw(&mut fb_res.frame_buf)
+        .unwrap();
+    hud_start_y += line_height;
+    Text::new(&walker_line, Point::new(hud_start_x, hud_start_y), text_style)
+        .draw(&mut fb_res.frame_buf)
+        .unwrap();
+    hud_start_y += line_height;
+    Text::new(&dynamite_line, Point::new(hud_start_x, hud_start_y), text_style)
+        .draw(&mut fb_res.frame_buf)
+        .unwrap();
+
+    // Flush the off‑screen framebuffer to the physical display.
     let area = Rectangle::new(Point::zero(), fb_res.frame_buf.size());
     display_res
         .display
