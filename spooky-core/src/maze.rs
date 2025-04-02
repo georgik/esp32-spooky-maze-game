@@ -106,7 +106,8 @@ impl Maze {
         }
         // Compute the tile coordinates relative to the playable area.
         let tile_x = (x - left) / self.tile_width as i32;
-        let tile_y = (y - bottom) / self.tile_height as i32;
+        // TODO: Replace 63 with proper value
+        let tile_y = 63 - (y - bottom) / self.tile_height as i32;
         // Our maze data array is laid out with row 0 at the top.
         let maze_row = (self.height as i32 - 1) - tile_y;
         if tile_x < 0
