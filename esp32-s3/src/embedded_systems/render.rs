@@ -16,10 +16,12 @@ use spooky_core::systems::setup::TextureAssets;
 /// Render the maze tile map, coins, and the player ghost into the off‑screen framebuffer,
 /// then flush it to the physical display.
 ///
-/// Drawing order is:
+/// The camera is simulated by calculating an offset so that the player (whose world
+/// coordinates are in PlayerPosition) is always centered on the display.
+/// The drawing order is:
 /// 1. Maze tile map (background)
-/// 2. Coins (drawn so that they’re centered on the tile)
-/// 3. (Other elements, such as the player, might be drawn separately)
+/// 2. Coins (drawn using the tile’s top‑left as anchor)
+/// 3. The player ghost (drawn using the tile’s top‑left as anchor)
 pub fn render_system(
     mut display_res: NonSendMut<crate::DisplayResource>,
     mut fb_res: ResMut<crate::FrameBufferResource>,
@@ -35,11 +37,16 @@ pub fn render_system(
     let tile_w = maze.tile_width as i32;
     let tile_h = maze.tile_height as i32;
 
+    // Compute the camera offset so that the player is centered.
+    // For example, if the display is 320x240 then the center is (160,120).
+    let display_center_x = (crate::LCD_H_RES as i32) / 2;
+    let display_center_y = (crate::LCD_V_RES as i32) / 2;
+    let offset_x = player_pos.x as i32 - display_center_x;
+    let offset_y = player_pos.y as i32 - display_center_y;
+
     // --- Render the maze tile map (background) ---
     for ty in 0..maze.height as i32 {
         for tx in 0..maze.width as i32 {
-            // Since our maze data is stored bottom‑up, we can use the current (tx, ty)
-            // directly if valid_coordinates are computed that way.
             let tile_index = (ty * maze.width as i32 + tx) as usize;
             let bmp_opt = match maze.data[tile_index] {
                 1 => texture_assets.wall.as_ref(),
@@ -49,10 +56,13 @@ pub fn render_system(
             };
 
             if let Some(bmp) = bmp_opt {
-                // Compute the top‑left pixel coordinate of this tile.
-                let x = left + tx * tile_w;
-                let y = bottom + ty * tile_h;
-                let pos = Point::new(x, y);
+                // Compute the tile's world coordinate (top‑left of the tile)
+                let world_x = left + tx * tile_w;
+                let world_y = bottom + ty * tile_h;
+                // Compute the screen coordinate by subtracting the camera offset.
+                let screen_x = world_x - offset_x;
+                let screen_y = world_y - offset_y;
+                let pos = Point::new(screen_x, screen_y);
                 Image::new(bmp, pos)
                     .draw(&mut fb_res.frame_buf)
                     .unwrap();
@@ -64,9 +74,10 @@ pub fn render_system(
     for coin in &maze.coins {
         if coin.x != -1 && coin.y != -1 {
             if let Some(bmp) = texture_assets.coin.as_ref() {
-                // The valid coordinate is the center of the tile.
-                // Subtract half the tile dimensions so the coin is centered.
-                let pos = Point::new(coin.x - tile_w / 2, coin.y - tile_h / 2);
+                // Use the coin's coordinate as the top‑left corner.
+                let screen_x = coin.x - offset_x;
+                let screen_y = coin.y - offset_y;
+                let pos = Point::new(screen_x, screen_y);
                 Image::new(bmp, pos)
                     .draw(&mut fb_res.frame_buf)
                     .unwrap();
@@ -74,7 +85,16 @@ pub fn render_system(
         }
     }
 
-    // (You can add additional drawing for the player ghost here if needed.)
+    // --- Render the player ghost ---
+    if let Some(bmp) = texture_assets.ghost.as_ref() {
+        // Use the player position as the top‑left coordinate.
+        let screen_x = player_pos.x as i32 - offset_x;
+        let screen_y = player_pos.y as i32 - offset_y;
+        let pos = Point::new(screen_x, screen_y);
+        Image::new(bmp, pos)
+            .draw(&mut fb_res.frame_buf)
+            .unwrap();
+    }
 
     // Flush the completed framebuffer to the physical display.
     let area = Rectangle::new(Point::zero(), fb_res.frame_buf.size());

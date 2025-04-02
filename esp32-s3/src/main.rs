@@ -2,7 +2,8 @@
 #![no_main]
 
 extern crate alloc;
-use spooky_core::systems::player_input::PlayerInputEvent;
+use spooky_core::systems::process_player_input::process_player_input;
+use spooky_core::events::player::PlayerInputEvent;
 use alloc::boxed::Box;
 
 use core::fmt::Write;
@@ -196,11 +197,15 @@ fn main() -> ! {
     app.insert_resource(FrameBufferResource::new());
     // Register the custom event.
     app.add_event::<PlayerInputEvent>();
+    app.add_event::<spooky_core::events::coin::CoinCollisionEvent>();
+
 
     // Use spooky_core's setup system to spawn the maze, coins, and player.
     app.add_systems(Startup, systems::setup::setup);
     // Add game logic system.
     app.add_systems(Update, spooky_core::systems::game_logic::update_game);
+    app.add_systems(Update, spooky_core::systems::coin_collision::detect_coin_collision);
+    app.add_systems(Update, spooky_core::systems::coin_collision::remove_coin_on_collision);
     // Add the embedded render system.
     app.add_systems(Update, render_system);
     // Add the accelerometer dispatch system (from the embedded module).
@@ -210,7 +215,7 @@ fn main() -> ! {
     );
 
     // Add the common event processing system.
-    app.add_systems(Update, spooky_core::systems::player_input::process_player_input);
+    app.add_systems(Update, process_player_input);
 
     let mut loop_delay = Delay::new();
     loop {

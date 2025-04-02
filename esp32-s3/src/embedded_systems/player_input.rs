@@ -1,4 +1,4 @@
-use spooky_core::systems::player_input::PlayerInputEvent;
+use spooky_core::events::player::PlayerInputEvent;
 use embedded_hal::i2c::I2c;
 use bevy_ecs::prelude::*;
 use core::fmt::Debug;
