@@ -7,16 +7,24 @@ use spooky_core::events::player::PlayerInputEvent;
 use spooky_core::events::walker::WalkerCollisionEvent;
 use spooky_core::events::{coin::CoinCollisionEvent, dynamite::DynamiteCollisionEvent};
 use spooky_core::{systems, systems::collisions};
+use spooky_core::systems::hud::HudState;
+use crate::desktop_systems::hud::{setup_hud, update_hud};
 
 fn main() {
     let mut app = App::new();
     app.add_plugins((DefaultPlugins,))
-        .add_systems(Startup, systems::setup::setup)
+        .add_systems(Startup,
+                     (
+                         systems::setup::setup,
+                         setup_hud,
+                     )
+        )
         .add_event::<PlayerInputEvent>()
         .add_event::<CoinCollisionEvent>()
         .add_event::<DynamiteCollisionEvent>()
         .add_event::<WalkerCollisionEvent>()
         .add_event::<NpcCollisionEvent>()
+        .insert_resource(HudState::default())
         .add_systems(
             Update,
             (
@@ -32,7 +40,9 @@ fn main() {
                 systems::dynamite_logic::handle_dynamite_collision,
                 systems::npc_logic::update_npc_movement,
                 systems::game_logic::update_game,
+                update_hud,
             ),
         )
+
         .run();
 }

@@ -1,12 +1,5 @@
 #![no_std]
 
-use embedded_graphics::{
-    mono_font::{ascii::FONT_6X10, MonoTextStyle},
-    prelude::*,
-    text::Text,
-    pixelcolor::Rgb565,
-    primitives::{Rectangle, PrimitiveStyle},
-};
 use bevy::prelude::*;
 
 /// A resource storing the current HUD values.
