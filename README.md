@@ -1,5 +1,7 @@
 # esp32-spooky-maze-game
 
+**Note: For the latest development check feature/bevy branch**
+
 [![Wokwi](https://img.shields.io/endpoint?url=https%3A%2F%2Fwokwi.com%2Fbadge%2Fclick-to-simulate.json)](https://wokwi.com/projects/380658681618693121)
 
 Spooky Maze is simple game where ghost is located in the maze. The goal is to collect 100 coins.
