@@ -1,11 +1,15 @@
+use alloc::format;
 #[cfg(not(feature = "std"))]
 use embedded_graphics::pixelcolor::Rgb565;
 #[cfg(not(feature = "std"))]
 use embedded_graphics::{image::Image, prelude::*, primitives::Rectangle};
 
 use bevy_ecs::prelude::*;
+use embedded_graphics::mono_font::ascii::FONT_6X10;
+use embedded_graphics::mono_font::MonoTextStyle;
+use embedded_graphics::text::Text;
 use spooky_core::resources::{MazeResource, PlayerPosition};
-
+use spooky_core::systems::hud::HudState;
 #[cfg(not(feature = "std"))]
 use spooky_core::systems::setup::TextureAssets;
 
@@ -63,6 +67,7 @@ pub fn render_system(
     maze_res: Res<MazeResource>,
     #[cfg(not(feature = "std"))] texture_assets: Res<TextureAssets>,
     #[cfg(not(feature = "std"))] player_pos: Res<PlayerPosition>,
+    #[cfg(not(feature = "std"))] hud_state: Res<HudState>,
 ) {
     // Clear the framebuffer.
     fb_res.frame_buf.clear(Rgb565::BLACK).unwrap();
@@ -143,6 +148,35 @@ pub fn render_system(
             Image::new(bmp, pos).draw(&mut sprite_buf).unwrap();
         }
     }
+
+    // --- Render HUD overlay ---
+    let text_style = MonoTextStyle::new(&FONT_6X10, Rgb565::WHITE);
+    let hud_start_x = 5;
+    let mut hud_start_y = 12;
+    let line_height = 12;
+
+    let coins_line = format!("Coins: {}", hud_state.coins_left);
+    let teleport_line = format!("Teleport: {}", hud_state.teleport_countdown);
+    let walker_line = format!("Walker: {}", hud_state.walker_timer);
+    let dynamite_line = format!("Dynamite: {}", hud_state.dynamites);
+
+    // Draw each HUD line.
+    Text::new(&coins_line, Point::new(hud_start_x, hud_start_y), text_style)
+        .draw(&mut fb_res.frame_buf)
+        .unwrap();
+    hud_start_y += line_height;
+    Text::new(&teleport_line, Point::new(hud_start_x, hud_start_y), text_style)
+        .draw(&mut fb_res.frame_buf)
+        .unwrap();
+    hud_start_y += line_height;
+    Text::new(&walker_line, Point::new(hud_start_x, hud_start_y), text_style)
+        .draw(&mut fb_res.frame_buf)
+        .unwrap();
+    hud_start_y += line_height;
+    Text::new(&dynamite_line, Point::new(hud_start_x, hud_start_y), text_style)
+        .draw(&mut fb_res.frame_buf)
+        .unwrap();
+
 
     // Finally, flush the framebuffer to the display.
     let area = Rectangle::new(Point::zero(), fb_res.frame_buf.size());
