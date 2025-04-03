@@ -19,6 +19,7 @@ fn main() {
                          setup_hud,
                      )
         )
+        .insert_resource(Time::<Fixed>::from_hz(10.0))
         .add_event::<PlayerInputEvent>()
         .add_event::<CoinCollisionEvent>()
         .add_event::<DynamiteCollisionEvent>()
@@ -26,9 +27,7 @@ fn main() {
         .add_event::<NpcCollisionEvent>()
         .insert_resource(HudState::default())
         .add_systems(
-            Update,
-            (
-                player_input::dispatch_keyboard_input,
+            FixedUpdate, (
                 systems::process_player_input::process_player_input,
                 collisions::coin::detect_coin_collision,
                 collisions::coin::remove_coin_on_collision,
@@ -40,6 +39,12 @@ fn main() {
                 systems::dynamite_logic::handle_dynamite_collision,
                 systems::npc_logic::update_npc_movement,
                 systems::game_logic::update_game,
+                player_input::dispatch_keyboard_input,
+            ),
+        )
+        .add_systems(
+            Update,
+            (
                 update_hud,
             ),
         )
