@@ -2,8 +2,8 @@ use bevy::input::keyboard::KeyboardInput;
 use bevy::prelude::*;
 use spooky_core::events::player::PlayerInputEvent;
 
-/// Reads keyboard input (arrow keys) and sends a PlayerInputEvent.
-/// A positive dx moves right; a positive dy moves up.
+/// Reads keyboard input (arrow keys) and sends a PlayerInputEvent continuously
+/// while keys are held down. A positive dx moves right; a positive dy moves up.
 /// The step is defined as one tile.
 pub fn dispatch_keyboard_input(
     keyboard_input: Res<ButtonInput<KeyCode>>,
@@ -13,16 +13,16 @@ pub fn dispatch_keyboard_input(
     let mut dy = 0.0;
     let step = 16.0; // adjust to your tile size
 
-    if keyboard_input.just_pressed(KeyCode::ArrowUp) {
+    if keyboard_input.pressed(KeyCode::ArrowUp) {
         dy += step;
     }
-    if keyboard_input.just_pressed(KeyCode::ArrowDown) {
+    if keyboard_input.pressed(KeyCode::ArrowDown) {
         dy -= step;
     }
-    if keyboard_input.just_pressed(KeyCode::ArrowRight) {
+    if keyboard_input.pressed(KeyCode::ArrowRight) {
         dx += step;
     }
-    if keyboard_input.just_pressed(KeyCode::ArrowLeft) {
+    if keyboard_input.pressed(KeyCode::ArrowLeft) {
         dx -= step;
     }
 

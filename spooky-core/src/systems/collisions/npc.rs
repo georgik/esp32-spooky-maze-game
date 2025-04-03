@@ -1,12 +1,13 @@
-use crate::components::Player;
+use crate::components::{Player};
 use crate::events::npc::NpcCollisionEvent;
 use crate::maze::Npc;
+use crate::maze::Coin; // needed for coin operations
 use crate::resources::{MazeResource, PlayerPosition};
 use crate::transform::SpookyTransform;
-use bevy::prelude::*; // Our unified transform alias
+use bevy::prelude::*;
 
 /// This system checks the player's current tile against all NPC positions in the maze.
-/// If the player is on the same tile as an NPC, it dispatches a `NPCCollisionEvent`.
+/// If the player is on the same tile as an NPC, it dispatches an `NpcCollisionEvent`.
 pub fn detect_npc_collision(
     player_pos: Res<PlayerPosition>,
     maze_res: Res<MazeResource>,
@@ -25,8 +26,8 @@ pub fn detect_npc_collision(
     }
 }
 
-/// This system handles `NPCCollisionEvent`s by relocating the player
-/// to a new valid position. (NPC positions remain unchanged.)
+/// This system handles `NpcCollisionEvent`s by relocating the player to a random position.
+/// Additionally, it penalizes the player by relocating 5 coins.
 pub fn handle_npc_collision(
     mut events: EventReader<NpcCollisionEvent>,
     mut player_pos: ResMut<PlayerPosition>,
@@ -34,7 +35,7 @@ pub fn handle_npc_collision(
     mut player_query: Query<&mut SpookyTransform, With<Player>>,
 ) {
     for _event in events.read() {
-        // When collision happens, relocate the player.
+        // Relocate the player.
         let (new_x, new_y) = maze_res.maze.get_random_coordinates();
         player_pos.x = new_x as f32;
         player_pos.y = new_y as f32;
@@ -51,5 +52,8 @@ pub fn handle_npc_collision(
                 transform.0.translation.y = player_pos.y;
             }
         }
+
+        // Apply penalty: relocate 5 coins.
+        maze_res.maze.relocate_coins(5);
     }
 }

@@ -2,7 +2,7 @@
 name = "spooky-desktop"
 version = "0.12.0"
 authors = ["Juraj Michalek <juraj.michalek@espressif.com>", "Samuel Benko"]
-edition = "2021"
+edition = "2024"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
