@@ -14,7 +14,7 @@ pub struct HudState {
 impl Default for HudState {
     fn default() -> Self {
         Self {
-            coins_left: 0,
+            coins_left: 100,
             teleport_countdown: 100,
             walker_timer: 0,
             dynamites: 0,

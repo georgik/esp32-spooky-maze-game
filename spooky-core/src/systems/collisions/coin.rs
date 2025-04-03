@@ -3,6 +3,7 @@ use crate::events::coin::CoinCollisionEvent;
 use crate::maze::Coin;
 use crate::resources::{MazeResource, PlayerPosition};
 use bevy::prelude::*;
+use crate::systems::hud::HudState;
 
 /// This system checks the player's current position against all coin positions in the maze.
 /// If the player is on the same tile as a coin, it dispatches a `CoinCollisionEvent`.
@@ -29,6 +30,7 @@ pub fn detect_coin_collision(
 pub fn remove_coin_on_collision(
     mut events: EventReader<CoinCollisionEvent>,
     mut maze_res: ResMut<MazeResource>,
+    mut hud_state: ResMut<HudState>,
     mut commands: Commands,
     query: Query<(Entity, &CoinComponent)>,
 ) {
@@ -38,6 +40,9 @@ pub fn remove_coin_on_collision(
             x: event.coin_x,
             y: event.coin_y,
         });
+
+        hud_state.coins_left = maze_res.maze.coin_counter;
+
         // Despawn coin entity with matching coordinates.
         for (entity, coin_comp) in query.iter() {
             if coin_comp.x == event.coin_x && coin_comp.y == event.coin_y {
