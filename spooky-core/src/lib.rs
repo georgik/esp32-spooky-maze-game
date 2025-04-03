@@ -11,3 +11,4 @@ mod transform;
 
 #[cfg(feature = "static_maze")]
 mod static_maze_data;
+pub mod sprite_buf;
