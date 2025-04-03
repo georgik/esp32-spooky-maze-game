@@ -1,11 +1,7 @@
 #[cfg(not(feature = "std"))]
 use embedded_graphics::pixelcolor::Rgb565;
 #[cfg(not(feature = "std"))]
-use embedded_graphics::{
-    image::Image,
-    prelude::*,
-    primitives::Rectangle,
-};
+use embedded_graphics::{image::Image, prelude::*, primitives::Rectangle};
 
 use bevy_ecs::prelude::*;
 use spooky_core::resources::{MazeResource, PlayerPosition};
@@ -15,18 +11,23 @@ use spooky_core::systems::setup::TextureAssets;
 
 /// A borrowed sprite buffer wrapper that implements a DrawTarget filtering out “magic pink”.
 /// In our case, we treat any pixel with R=31, G=0, B=31 as transparent.
-pub struct SpriteBuf<'a, B: embedded_graphics_framebuf::backends::FrameBufferBackend<Color = Rgb565>> {
+pub struct SpriteBuf<
+    'a,
+    B: embedded_graphics_framebuf::backends::FrameBufferBackend<Color = Rgb565>,
+> {
     pub fbuf: &'a mut embedded_graphics_framebuf::FrameBuf<Rgb565, B>,
 }
 
-impl<'a, B: embedded_graphics_framebuf::backends::FrameBufferBackend<Color=Rgb565>> Dimensions for SpriteBuf<'a, B> {
+impl<'a, B: embedded_graphics_framebuf::backends::FrameBufferBackend<Color = Rgb565>> Dimensions
+    for SpriteBuf<'a, B>
+{
     fn bounding_box(&self) -> Rectangle {
         Rectangle::new(Point::zero(), self.fbuf.size())
     }
 }
 
 impl<'a, B: embedded_graphics_framebuf::backends::FrameBufferBackend<Color = Rgb565>> DrawTarget
-for SpriteBuf<'a, B>
+    for SpriteBuf<'a, B>
 {
     type Color = Rgb565;
     type Error = core::convert::Infallible;
@@ -112,9 +113,7 @@ pub fn render_system(
                 _ => texture_assets.ground.as_ref(),
             };
             if let Some(bmp) = bmp_opt {
-                Image::new(bmp, pos)
-                    .draw(&mut fb_res.frame_buf)
-                    .unwrap();
+                Image::new(bmp, pos).draw(&mut fb_res.frame_buf).unwrap();
             }
         }
     }
@@ -132,9 +131,7 @@ pub fn render_system(
                     let screen_x = coin.x - offset_x;
                     let screen_y = coin.y - offset_y;
                     let pos = Point::new(screen_x, screen_y);
-                    Image::new(bmp, pos)
-                        .draw(&mut sprite_buf)
-                        .unwrap();
+                    Image::new(bmp, pos).draw(&mut sprite_buf).unwrap();
                 }
             }
         }
@@ -143,9 +140,7 @@ pub fn render_system(
             let screen_x = player_pos.x as i32 - offset_x;
             let screen_y = player_pos.y as i32 - offset_y;
             let pos = Point::new(screen_x, screen_y);
-            Image::new(bmp, pos)
-                .draw(&mut sprite_buf)
-                .unwrap();
+            Image::new(bmp, pos).draw(&mut sprite_buf).unwrap();
         }
     }
 

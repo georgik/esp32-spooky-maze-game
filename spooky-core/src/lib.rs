@@ -9,6 +9,6 @@ pub mod resources;
 pub mod systems;
 mod transform;
 
+pub mod sprite_buf;
 #[cfg(feature = "static_maze")]
 mod static_maze_data;
-pub mod sprite_buf;

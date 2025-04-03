@@ -1,11 +1,11 @@
 use embedded_graphics::pixelcolor::Rgb565;
+use embedded_graphics::prelude::RgbColor;
 use embedded_graphics::{
     geometry::{OriginDimensions, Size},
     prelude::{DrawTarget, Pixel, Point},
 };
 use embedded_graphics_framebuf::backends::FrameBufferBackend;
 use embedded_graphics_framebuf::FrameBuf;
-use embedded_graphics::prelude::RgbColor;
 
 pub struct SpriteBuf<'a, B: FrameBufferBackend<Color = Rgb565>> {
     pub fbuf: &'a mut FrameBuf<Rgb565, B>,
@@ -56,4 +56,3 @@ where
         self.fbuf.into_iter().map(|pixel| pixel.1)
     }
 }
-

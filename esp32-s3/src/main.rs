@@ -2,10 +2,10 @@
 #![no_main]
 
 extern crate alloc;
-use spooky_core::systems::hud::HudState;
 use alloc::boxed::Box;
 use spooky_core::events::{coin::CoinCollisionEvent, player::PlayerInputEvent};
 use spooky_core::systems;
+use spooky_core::systems::hud::HudState;
 use spooky_core::systems::process_player_input::process_player_input;
 
 use bevy::DefaultPlugins;
