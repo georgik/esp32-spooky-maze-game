@@ -1,24 +1,26 @@
 mod desktop_systems;
 
+use crate::desktop_systems::hud::{setup_hud, update_hud};
 use crate::desktop_systems::player_input;
 use bevy::prelude::*;
+use rand::RngCore;
 use spooky_core::events::npc::NpcCollisionEvent;
 use spooky_core::events::player::PlayerInputEvent;
 use spooky_core::events::walker::WalkerCollisionEvent;
 use spooky_core::events::{coin::CoinCollisionEvent, dynamite::DynamiteCollisionEvent};
-use spooky_core::{systems, systems::collisions};
+use spooky_core::resources::MazeSeed;
 use spooky_core::systems::hud::HudState;
-use crate::desktop_systems::hud::{setup_hud, update_hud};
+use spooky_core::{systems, systems::collisions};
 
 fn main() {
     let mut app = App::new();
     app.add_plugins((DefaultPlugins,))
-        .add_systems(Startup,
-                     (
-                         systems::setup::setup,
-                         setup_hud,
-                     )
-        )
+        .insert_resource(MazeSeed(Some({
+            let mut seed = [0u8; 32];
+            rand::rng().fill_bytes(seed.as_mut());
+            seed
+        })))
+        .add_systems(Startup, (systems::setup::setup, setup_hud))
         .insert_resource(Time::<Fixed>::from_hz(10.0))
         .add_event::<PlayerInputEvent>()
         .add_event::<CoinCollisionEvent>()
@@ -27,7 +29,8 @@ fn main() {
         .add_event::<NpcCollisionEvent>()
         .insert_resource(HudState::default())
         .add_systems(
-            FixedUpdate, (
+            FixedUpdate,
+            (
                 systems::process_player_input::process_player_input,
                 collisions::coin::detect_coin_collision,
                 collisions::coin::remove_coin_on_collision,
@@ -42,12 +45,6 @@ fn main() {
                 player_input::dispatch_keyboard_input,
             ),
         )
-        .add_systems(
-            Update,
-            (
-                update_hud,
-            ),
-        )
-
+        .add_systems(Update, (update_hud,))
         .run();
 }

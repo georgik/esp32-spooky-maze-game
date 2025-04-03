@@ -1,9 +1,7 @@
-// spooky_core/src/systems/setup.rs
-
 // Common Bevy imports.
 use crate::components::{CoinComponent, NpcComponent, Player};
 use crate::maze::Maze;
-use crate::resources::{MazeResource, PlayerPosition};
+use crate::resources::{MazeResource, MazeSeed, PlayerPosition};
 use bevy::prelude::*;
 use bevy_math::Vec3;
 use bevy_transform::prelude::{GlobalTransform, Transform};
@@ -110,7 +108,6 @@ pub enum TextureId {
     Coin,
     Walker,
     Dynamite,
-    // Add more as needed…
 }
 
 #[cfg(not(feature = "std"))]
@@ -125,8 +122,11 @@ pub struct NoStdSprite {
 #[derive(Component)]
 pub struct NoStdTransform(pub Transform);
 
-// --- Main Setup Function ---
-pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<AssetServer>) {
+pub fn setup(
+    mut commands: Commands,
+    #[cfg(feature = "std")] asset_server: Res<AssetServer>,
+    maze_seed: Res<MazeSeed>, // NEW: Inject the seed resource
+) {
     // Load textures conditionally.
     #[cfg(feature = "std")]
     let textures = TextureAssets::load(&asset_server);
@@ -134,8 +134,8 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
     commands.insert_resource(TextureAssets::load());
 
     // Create the maze.
-    let mut maze = Maze::new(64, 64, None);
-    maze.generate_maze(32,32);
+    let mut maze = Maze::new(64, 64, maze_seed.0);
+    maze.generate_maze(32, 32);
     maze.generate_coins();
     maze.generate_walkers();
     maze.generate_dynamites();

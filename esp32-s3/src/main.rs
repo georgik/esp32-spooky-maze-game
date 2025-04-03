@@ -33,7 +33,7 @@ use mipidsi::{Builder, models::ILI9486Rgb565};
 use mipidsi::{interface::SpiInterface, options::ColorOrder};
 use spooky_core::components::Player;
 use spooky_core::maze::Maze;
-use spooky_core::resources::{MazeResource, PlayerPosition};
+use spooky_core::resources::{MazeResource, MazeSeed, PlayerPosition};
 
 // Embedded Graphics imports for our framebuffer drawing.
 use embedded_graphics::pixelcolor::Rgb565;
@@ -189,6 +189,10 @@ fn main() -> ! {
         .with_scl(peripherals.GPIO18);
     let icm_sensor = Icm42670::new(i2c, icm42670::Address::Primary).unwrap();
 
+    let mut hardware_rng = Rng::new(peripherals.RNG);
+    let mut seed = [0u8; 32];
+    hardware_rng.read(&mut seed);
+
     // --- Build the Bevy app.
     let mut app = App::new();
     app.add_plugins((DefaultPlugins,))
@@ -196,6 +200,7 @@ fn main() -> ! {
         .insert_non_send_resource(AccelerometerResource { sensor: icm_sensor })
         .insert_resource(FrameBufferResource::new())
         .insert_resource(HudState::default())
+        .insert_resource(MazeSeed(Some(seed)))
         .add_systems(Startup, systems::setup::setup)
         .add_event::<PlayerInputEvent>()
         .add_event::<CoinCollisionEvent>()

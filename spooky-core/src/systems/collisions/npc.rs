@@ -1,7 +1,7 @@
-use crate::components::{Player};
+use crate::components::Player;
 use crate::events::npc::NpcCollisionEvent;
-use crate::maze::Npc;
 use crate::maze::Coin; // needed for coin operations
+use crate::maze::Npc;
 use crate::resources::{MazeResource, PlayerPosition};
 use crate::transform::SpookyTransform;
 use bevy::prelude::*;
