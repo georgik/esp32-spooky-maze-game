@@ -135,6 +135,7 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
 
     // Create the maze.
     let mut maze = Maze::new(64, 64, None);
+    maze.generate_maze(32,32);
     maze.generate_coins();
     maze.generate_walkers();
     maze.generate_dynamites();
@@ -142,8 +143,8 @@ pub fn setup(mut commands: Commands, #[cfg(feature = "std")] asset_server: Res<A
 
     // Compute playable bounds.
     let (left, bottom, _right, _top) = maze.playable_bounds();
-    let initial_x = left as f32 + 10.0 * 16.0;
-    let initial_y = bottom as f32 + 8.0 * 16.0;
+    let initial_x = left as f32 + 11.0 * 16.0;
+    let initial_y = bottom as f32 + 10.0 * 16.0;
     let player_start = Vec3::new(initial_x, initial_y, 2.0);
 
     // Insert the initial player position resource.

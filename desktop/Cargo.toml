@@ -12,9 +12,9 @@ bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618" }
 rand = "0.9.0"
 rand_chacha = "0.9.0"
 maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "feature/no_std", default-features = false, features = [ "recursive_backtracking"], optional = true }
-spooky-core = { path = "../spooky-core", features = ["std"] }
+spooky-core = { path = "../spooky-core", default-features = false, features = ["std"] }
 
 [features]
-default = [ "static_maze" ]
+default = [ "dynamic_maze" ]
 static_maze = []
-dynamic_maze = [ "dep:maze_generator" ]
+dynamic_maze = [ "dep:maze_generator", "spooky-core/dynamic_maze" ]
