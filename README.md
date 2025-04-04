@@ -8,6 +8,15 @@ In this game, a ghost navigates through a maze collecting coins while avoiding o
 dynamite and the "walker" power-up introduce additional gameplay mechanics. On collision with various objects, events
 are dispatched to decouple hardware-specific logic from game rules.
 
+
+## Screenshots
+
+### Embedded Version - ESP32-S3-BOX-3
+![Spooky Maze Game ESP32-S3-BOX-3](assets/screenshot/spooky-maze-esp32-s3-box-3.webp)
+
+### Desktop Version - macOS
+![Spooky Maze Game Desktop](assets/screenshot/spooky-maze-desktop.webp)
+
 ## Targets
 
 For now, the project supports two primary targets:
