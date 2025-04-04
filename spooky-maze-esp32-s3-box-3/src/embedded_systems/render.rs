@@ -5,8 +5,8 @@ use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::{image::Image, prelude::*, primitives::Rectangle};
 
 use bevy_ecs::prelude::*;
-use embedded_graphics::mono_font::ascii::FONT_6X10;
 use embedded_graphics::mono_font::MonoTextStyle;
+use embedded_graphics::mono_font::ascii::FONT_6X10;
 use embedded_graphics::text::Text;
 use spooky_core::resources::{MazeResource, PlayerPosition};
 use spooky_core::systems::hud::HudState;
@@ -161,22 +161,37 @@ pub fn render_system(
     let dynamite_line = format!("Dynamite: {}", hud_state.dynamites);
 
     // Draw each HUD line.
-    Text::new(&coins_line, Point::new(hud_start_x, hud_start_y), text_style)
-        .draw(&mut fb_res.frame_buf)
-        .unwrap();
+    Text::new(
+        &coins_line,
+        Point::new(hud_start_x, hud_start_y),
+        text_style,
+    )
+    .draw(&mut fb_res.frame_buf)
+    .unwrap();
     hud_start_y += line_height;
-    Text::new(&teleport_line, Point::new(hud_start_x, hud_start_y), text_style)
-        .draw(&mut fb_res.frame_buf)
-        .unwrap();
+    Text::new(
+        &teleport_line,
+        Point::new(hud_start_x, hud_start_y),
+        text_style,
+    )
+    .draw(&mut fb_res.frame_buf)
+    .unwrap();
     hud_start_y += line_height;
-    Text::new(&walker_line, Point::new(hud_start_x, hud_start_y), text_style)
-        .draw(&mut fb_res.frame_buf)
-        .unwrap();
+    Text::new(
+        &walker_line,
+        Point::new(hud_start_x, hud_start_y),
+        text_style,
+    )
+    .draw(&mut fb_res.frame_buf)
+    .unwrap();
     hud_start_y += line_height;
-    Text::new(&dynamite_line, Point::new(hud_start_x, hud_start_y), text_style)
-        .draw(&mut fb_res.frame_buf)
-        .unwrap();
-
+    Text::new(
+        &dynamite_line,
+        Point::new(hud_start_x, hud_start_y),
+        text_style,
+    )
+    .draw(&mut fb_res.frame_buf)
+    .unwrap();
 
     // Finally, flush the framebuffer to the display.
     let area = Rectangle::new(Point::zero(), fb_res.frame_buf.size());
