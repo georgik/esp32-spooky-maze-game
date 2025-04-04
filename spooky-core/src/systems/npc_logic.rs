@@ -1,12 +1,12 @@
 use crate::components::NpcComponent;
 use crate::resources::MazeResource;
-use crate::transform::SpookyTransform;
+use crate::transform::UnifiedTransform;
 use bevy::prelude::*;
 
 /// This system updates the positions of all NPCs by calling Maze::move_npcs.
 pub fn update_npc_movement(
     mut maze_res: ResMut<MazeResource>,
-    mut query: Query<(&mut SpookyTransform, &mut NpcComponent)>,
+    mut query: Query<(&mut UnifiedTransform, &mut NpcComponent)>,
 ) {
     // Update positions in the Maze resource.
     maze_res.maze.move_npcs();

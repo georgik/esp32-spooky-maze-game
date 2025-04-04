@@ -74,6 +74,12 @@ cargo install rustup
 rustup install -v 1.85.0.0
 ```
 
+Compiler toolchain from ESP-IDF v5.5 (required only for Xtensa targets):
+```shell
+git clone git@github.com:espressif/esp-idf.git --depth 10 --recursive --shallow-submodules 
+source esp-idf/export.sh
+```
+
 Properly configured ESP32-S3-BOX-3 hardware
 
 Build:

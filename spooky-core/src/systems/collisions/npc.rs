@@ -3,7 +3,7 @@ use crate::events::npc::NpcCollisionEvent;
 use crate::maze::Coin; // needed for coin operations
 use crate::maze::Npc;
 use crate::resources::{MazeResource, PlayerPosition};
-use crate::transform::SpookyTransform;
+use crate::transform::UnifiedTransform;
 use bevy::prelude::*;
 
 /// This system checks the player's current tile against all NPC positions in the maze.
@@ -32,7 +32,7 @@ pub fn handle_npc_collision(
     mut events: EventReader<NpcCollisionEvent>,
     mut player_pos: ResMut<PlayerPosition>,
     mut maze_res: ResMut<MazeResource>,
-    mut player_query: Query<&mut SpookyTransform, With<Player>>,
+    mut player_query: Query<&mut UnifiedTransform, With<Player>>,
 ) {
     for _event in events.read() {
         // Relocate the player.

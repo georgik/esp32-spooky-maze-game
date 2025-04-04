@@ -38,6 +38,7 @@ jobs:
 
           # Perform common checks
           echo "Running common checks"
+          cd "$board"
           cargo fmt --all -- --check --color always
 
           echo "Building for board: $board"

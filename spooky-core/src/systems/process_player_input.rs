@@ -4,13 +4,8 @@ use crate::resources::{MazeResource, PlayerPosition};
 use bevy::prelude::*;
 
 // Use our unified transform type alias.
-use crate::transform::SpookyTransform;
+use crate::transform::UnifiedTransform;
 use log::info;
-
-#[cfg(feature = "std")]
-type SpTransform = SpookyTransform;
-#[cfg(not(feature = "std"))]
-type SpTransform = SpookyTransform;
 
 /// Process player input events: update the logical player position and adjust
 /// both the player's and camera's transform so that the player remains centered.
@@ -19,13 +14,13 @@ pub fn process_player_input(
     mut events: EventReader<PlayerInputEvent>,
     mut player_pos: ResMut<PlayerPosition>,
     maze_res: Res<MazeResource>,
-    mut player_query: Query<&mut SpookyTransform, With<Player>>,
+    mut player_query: Query<&mut UnifiedTransform, With<Player>>,
     #[cfg(feature = "std")] mut camera_query: Query<
-        &mut SpookyTransform,
+        &mut UnifiedTransform,
         (With<Camera2d>, Without<Player>),
     >,
     #[cfg(not(feature = "std"))] mut camera_query: Query<
-        &mut SpookyTransform,
+        &mut UnifiedTransform,
         (With<MainCamera>, Without<Player>),
     >,
 ) {
