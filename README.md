@@ -26,7 +26,7 @@ For now, the project supports two primary targets:
 - ESP32-S3-BOX-3 Embedded Version
   Uses an ICM42670 accelerometer for input (tilt the board to move the ghost).
 
-Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the v0.10.0 branch.
+Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the [v0.10.0 tag](https://github.com/georgik/esp32-spooky-maze-game/tree/v0.10.0).
 
 ## Key Technical Decisions
 
