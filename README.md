@@ -8,6 +8,9 @@ In this game, a ghost navigates through a maze collecting coins while avoiding o
 dynamite and the "walker" power-up introduce additional gameplay mechanics. On collision with various objects, events
 are dispatched to decouple hardware-specific logic from game rules.
 
+<video src="https://github.com/user-attachments/assets/28ef7c2b-42cc-4c79-bbdb-fcb0740bf533" controls width="320">
+View the video [here](https://github.com/user-attachments/assets/28ef7c2b-42cc-4c79-bbdb-fcb0740bf533).
+</video>
 
 ## Screenshots
 
