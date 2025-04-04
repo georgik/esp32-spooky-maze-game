@@ -1,8 +1,12 @@
 # ESP32 Spooky Maze Game
 
-ESP32 Spooky Maze Game is a technical demo game built using Bevy ECS with no_std support via esp-hal. The game demonstrates how to build cross-platform applications that run on both embedded hardware and desktop environments using a shared core.
+ESP32 Spooky Maze Game is a technical demo game built using Bevy ECS with no_std support via esp-hal. The game
+demonstrates how to build cross-platform applications that run on both embedded hardware and desktop environments using
+a shared core.
 
-In this game, a ghost navigates through a maze collecting coins while avoiding obstacles. Special artifacts such as dynamite and the "walker" power-up introduce additional gameplay mechanics. On collision with various objects, events are dispatched to decouple hardware-specific logic from game rules.
+In this game, a ghost navigates through a maze collecting coins while avoiding obstacles. Special artifacts such as
+dynamite and the "walker" power-up introduce additional gameplay mechanics. On collision with various objects, events
+are dispatched to decouple hardware-specific logic from game rules.
 
 ## Targets
 
@@ -18,26 +22,34 @@ Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the v0
 ## Key Technical Decisions
 
 - Bevy ECS & no_std:
-  The core game logic is implemented in spooky-core using Bevy ECS. For the embedded version, we use a no_std configuration along with esp-hal.
+  The core game logic is implemented in spooky-core using Bevy ECS. For the embedded version, we use a no_std
+  configuration along with esp-hal.
 - Renderer & HUD on Embedded:
-  Since Bevy’s built-in rendering and UI systems aren’t available in no_std mode, we’ve implemented our own renderer using the Embedded Graphics crate. This renderer also handles HUD text output using Embedded Graphics primitives.
+  Since Bevy’s built-in rendering and UI systems aren’t available in no_std mode, we’ve implemented our own renderer
+  using the Embedded Graphics crate. This renderer also handles HUD text output using Embedded Graphics primitives.
 - Event-based Architecture:
-  Input events (whether from keyboard on desktop or accelerometer on embedded) are dispatched and processed by separate systems, allowing for a clean decoupling between hardware input and game logic.
+  Input events (whether from keyboard on desktop or accelerometer on embedded) are dispatched and processed by separate
+  systems, allowing for a clean decoupling between hardware input and game logic.
 - Hardware Peripheral Integration:
-  Peripherals like the ICM42670 accelerometer are injected as Bevy resources (using NonSend where required), enabling seamless access to hardware data within ECS systems.
+  Peripherals like the ICM42670 accelerometer are injected as Bevy resources (using NonSend where required), enabling
+  seamless access to hardware data within ECS systems.
 - Random Maze Generation:
-  The maze is generated dynamically, with a seed provided as a resource to ensure variability across game sessions. For the embedded version, the seed is generated using the hardware RNG and passed into the maze generation logic.
+  The maze is generated dynamically, with a seed provided as a resource to ensure variability across game sessions. For
+  the embedded version, the seed is generated using the hardware RNG and passed into the maze generation logic.
 
 ## Build and Run Instructions
 
 ### Desktop Version
+
 Prerequisites:
+
 - Rust
 
 Build:
 
-```
-bash cd spooky-maze-desktop cargo run
+```shell
+cd spooky-maze-desktop
+cargo run
 ```
 
 Controls:
@@ -56,14 +68,20 @@ espflash installed:
 cargo install espflash
 ```
 
+Rust [Xtensa toolchain](https://github.com/esp-rs/rust-build) installed:
+```shell
+cargo install rustup
+rustup install -v 1.85.0.0
+```
+
 Properly configured ESP32-S3-BOX-3 hardware
 
 Build:
 
+```shell
+cd spooky-maze-esp32-s3-box-3
+cargo run --release
 ```
-cd spooky-maze-esp32-s3-box-3 cargo run --release --features esp32-s3-box-3
-```
-
 Controls:
 
 Movement: Tilt the board (using the ICM42670 accelerometer)
@@ -71,16 +89,23 @@ Movement: Tilt the board (using the ICM42670 accelerometer)
 ## Differences of Embedded Bevy no_std from Classical Bevy std
 
 - Embedded Renderer:
-  The embedded version uses a custom renderer built with Embedded Graphics. This renderer handles both drawing the maze and HUD, filtering out a specific “magic pink” color used to represent transparent pixels in sprites.
+  The embedded version uses a custom renderer built with Embedded Graphics. This renderer handles both drawing the maze
+  and HUD, filtering out a specific “magic pink” color used to represent transparent pixels in sprites.
 - Peripheral Resources:
-  Hardware peripherals like the accelerometer are injected as Bevy resources (using NonSend), enabling the decoupling of hardware interactions from game logic.
+  Hardware peripherals like the accelerometer are injected as Bevy resources (using NonSend), enabling the decoupling of
+  hardware interactions from game logic.
 - Event-driven Input:
-  Input events are dispatched and processed by ECS systems, allowing for a unified event-driven architecture across both desktop and embedded platforms.
+  Input events are dispatched and processed by ECS systems, allowing for a unified event-driven architecture across both
+  desktop and embedded platforms.
 
 ## Contributing
-Contributions are welcome! If you'd like to help improve the game, add new features, or adapt the project to additional hardware targets, please feel free to submit a pull request. We especially welcome contributions that help improve the no_std integration with Bevy ECS or enhance the embedded graphics rendering.
 
-For more information on embedded development with ESP32, visit the [Espressif Developer Portal](https://developer.espressif.com).
+Contributions are welcome! If you'd like to help improve the game, add new features, or adapt the project to additional
+hardware targets, please feel free to submit a pull request. We especially welcome contributions that help improve the
+no_std integration with Bevy ECS or enhance the embedded graphics rendering.
+
+For more information on embedded development with ESP32, visit
+the [Espressif Developer Portal](https://developer.espressif.com).
 
 ## IDE support
 

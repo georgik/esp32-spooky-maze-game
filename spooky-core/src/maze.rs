@@ -318,7 +318,7 @@ impl Maze {
 
     #[cfg(feature = "dynamic_maze")]
     pub fn generate_maze(&mut self, graph_width: usize, graph_height: usize) {
-        let seed: [u8; 32] = self.rng.gen();
+        let seed: [u8; 32] = self.rng.r#gen();
         let mut generator = RbGenerator::new(Some(seed));
         let maze_graph = generator
             .generate(graph_width as i32, graph_height as i32)

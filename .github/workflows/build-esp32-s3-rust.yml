@@ -3,9 +3,8 @@ name: CI for ESP32-S3
 on:
   push:
     paths:
-      - "esp32-s3/**"
+      - "spooky-maze-esp32-s3-box-3/**"
       - "spooky-core/**"
-      - "spooky-embedded/**"
   workflow_dispatch:
 
 env:
@@ -32,20 +31,15 @@ jobs:
       - name: Enable caching
         uses: Swatinem/rust-cache@v2
 
-      - name: Run checks sequentially for all boards
+      - name: Run checks
         working-directory: esp32-s3
         run: |
-          # Define the list of boards to build
-          # boards=("esp32-s3-box" "esp32-s3-box-3" "esp32-s3-usb-otg" "m5stack-cores3")
-          boards=("esp32-s3-box-3")
+          board="esp32-s3-box-3"
 
           # Perform common checks
           echo "Running common checks"
           cargo fmt --all -- --check --color always
 
-          # Iterate through each board and build
-          for board in "${boards[@]}"; do
-            echo "Building for board: $board"
-            #cargo clippy --release --features "$board" --workspace -- -D warnings
-            cargo build --release --features "$board"
-          done
+          echo "Building for board: $board"
+          cargo clippy --release --features "$board" --workspace -- -D warnings
+          cargo build --release --features "$board"
