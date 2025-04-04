@@ -1,0 +1,20 @@
+[package]
+name = "spooky-maze-desktop"
+version = "0.12.0"
+authors = ["Juraj Michalek <juraj.michalek@espressif.com>", "Samuel Benko"]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+#bevy = "0.16.0-rc.2"
+bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618" }
+#spooky-core = { path = "../spooky-core" }
+rand = "0.9.0"
+rand_chacha = "0.9.0"
+maze_generator = { git = "https://github.com/georgik/maze_generator", branch = "feature/no_std", default-features = false, features = [ "recursive_backtracking"], optional = true }
+spooky-core = { path = "../spooky-core", default-features = false, features = ["std"] }
+
+[features]
+default = [ "dynamic_maze" ]
+static_maze = []
+dynamic_maze = [ "dep:maze_generator", "spooky-core/dynamic_maze" ]

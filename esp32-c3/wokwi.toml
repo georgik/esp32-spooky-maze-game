@@ -1,6 +1,0 @@
-
-
-[wokwi]
-version = 1
-elf = "target/riscv32imc-unknown-none-elf/release/spooky-esp32-c3-lcdkit"
-firmware = "target/riscv32imc-unknown-none-elf/release/spooky-esp32-c3-lcdkit"
