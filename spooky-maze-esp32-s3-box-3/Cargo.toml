@@ -1,5 +1,5 @@
 [package]
-name = "spooky-esp32-s3"
+name = "spooky-maze-esp32-s3-box-3"
 version = "0.12.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2024"

@@ -1,7 +1,7 @@
 [package]
 name = "spooky-core"
-version = "0.7.0"
-edition = "2021"
+version = "0.12.0"
+edition = "2024"
 
 [dependencies]
 bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false }
@@ -9,12 +9,8 @@ bevy_transform = { git = "https://github.com/bevyengine/bevy.git", rev = "301f61
 bevy_math = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false, features = ["alloc", "libm"] }
 bevy_input = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false }
 
-#bevy = "0.16.0-rc.2"
-#bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false }
-#bevy_transform = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false }
 embedded-graphics = "0.8.0"
 embedded-graphics-framebuf = { version = "0.3.0", git = "https://github.com/georgik/embedded-graphics-framebuf.git", branch = "feature/embedded-graphics-0.8" }
-#embedded-graphics-framebuf = "0.2.0"
 tinybmp = "0.6.0"
 rand = { version = "0.8.5", default-features = false }
 rand_chacha = { version = "0.3.1", default-features = false }
@@ -24,7 +20,6 @@ heapless = { version = "0.8.0", default-features = false }
 log = "0.4.27"
 
 [features]
-#default = [ "dynamic_maze" ]
 std = []
 wasm = [ "std" ]
 static_maze = []
@@ -32,6 +27,3 @@ dynamic_maze = [ "dep:petgraph", "dep:maze_generator" ]
 system_timer = []
 
 default = [ "static_maze" ]
-
-esp32s2 = []
-esp32c6 = []

@@ -1,20 +1,86 @@
-# esp32-spooky-maze-game
+# ESP32 Spooky Maze Game
 
-[![Wokwi](https://img.shields.io/endpoint?url=https%3A%2F%2Fwokwi.com%2Fbadge%2Fclick-to-simulate.json)](https://wokwi.com/projects/380658681618693121)
+ESP32 Spooky Maze Game is a technical demo game built using Bevy ECS with no_std support via esp-hal. The game demonstrates how to build cross-platform applications that run on both embedded hardware and desktop environments using a shared core.
 
-Spooky Maze is simple game where ghost is located in the maze. The goal is to collect 100 coins.
-The ghost can find artifact "Walker" which allows him to pass throght the wall for limited period of time.
-The ghost can use dynamite to clear wall in the vicinity. The ghost can use also Teleport spell to move to random place in the maze.
-The Teleport spell requires some time to recharge. There are some not friendly spirits running around the maze, when collision occurs the ghost is teleported and loses five coins which are then send randomly back to the maze.
+In this game, a ghost navigates through a maze collecting coins while avoiding obstacles. Special artifacts such as dynamite and the "walker" power-up introduce additional gameplay mechanics. On collision with various objects, events are dispatched to decouple hardware-specific logic from game rules.
 
-![Spooky on ESP32-S2-Kaluga](assets/screenshot/esp32-spooky-s2-kaluga.jpg)
+## Targets
 
-## Flashing binary from Releases
+For now, the project supports two primary targets:
 
-Binaries are available in [GitHub Releases](https://github.com/georgik/esp32-spooky-maze-game/releases).
+- Desktop Rust Standard Version
+  Use keyboard controls to move the ghost and trigger actions.
+- ESP32-S3-BOX-3 Embedded Version
+  Uses an ICM42670 accelerometer for input (tilt the board to move the ghost).
 
-Binaries can be flashed by:
-  - CLI [espflash](https://github.com/esp-rs/espflash) `espflash write-bin 0x0 spooky-maze-esp-wrover-kit.bin`
+Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the v0.10.0 branch.
+
+## Key Technical Decisions
+
+- Bevy ECS & no_std:
+  The core game logic is implemented in spooky-core using Bevy ECS. For the embedded version, we use a no_std configuration along with esp-hal.
+- Renderer & HUD on Embedded:
+  Since Bevy’s built-in rendering and UI systems aren’t available in no_std mode, we’ve implemented our own renderer using the Embedded Graphics crate. This renderer also handles HUD text output using Embedded Graphics primitives.
+- Event-based Architecture:
+  Input events (whether from keyboard on desktop or accelerometer on embedded) are dispatched and processed by separate systems, allowing for a clean decoupling between hardware input and game logic.
+- Hardware Peripheral Integration:
+  Peripherals like the ICM42670 accelerometer are injected as Bevy resources (using NonSend where required), enabling seamless access to hardware data within ECS systems.
+- Random Maze Generation:
+  The maze is generated dynamically, with a seed provided as a resource to ensure variability across game sessions. For the embedded version, the seed is generated using the hardware RNG and passed into the maze generation logic.
+
+## Build and Run Instructions
+
+### Desktop Version
+Prerequisites:
+- Rust
+
+Build:
+
+```
+bash cd spooky-maze-desktop cargo run
+```
+
+Controls:
+
+Movement: Arrow keys
+
+### Embedded Version
+
+#### ESP32-S3-BOX-3
+
+Prerequisites:
+
+espflash installed:
+
+```
+cargo install espflash
+```
+
+Properly configured ESP32-S3-BOX-3 hardware
+
+Build:
+
+```
+cd spooky-maze-esp32-s3-box-3 cargo run --release --features esp32-s3-box-3
+```
+
+Controls:
+
+Movement: Tilt the board (using the ICM42670 accelerometer)
+
+## Differences of Embedded Bevy no_std from Classical Bevy std
+
+- Embedded Renderer:
+  The embedded version uses a custom renderer built with Embedded Graphics. This renderer handles both drawing the maze and HUD, filtering out a specific “magic pink” color used to represent transparent pixels in sprites.
+- Peripheral Resources:
+  Hardware peripherals like the accelerometer are injected as Bevy resources (using NonSend), enabling the decoupling of hardware interactions from game logic.
+- Event-driven Input:
+  Input events are dispatched and processed by ECS systems, allowing for a unified event-driven architecture across both desktop and embedded platforms.
+
+## Contributing
+Contributions are welcome! If you'd like to help improve the game, add new features, or adapt the project to additional hardware targets, please feel free to submit a pull request. We especially welcome contributions that help improve the no_std integration with Bevy ECS or enhance the embedded graphics rendering.
+
+For more information on embedded development with ESP32, visit the [Espressif Developer Portal](https://developer.espressif.com).
 
 ## IDE support
 
@@ -22,221 +88,6 @@ Binaries can be flashed by:
 
 Recommendation: Open whole project and attach to particular Cargo.toml for specific target.
 
-## Build and flash
+## License
 
-Install `espflash` which is required to flash and monitor the app on Embedded Device:
-
-```
-cargo install espflash
-```
-
-Enter the directory with project and build it:
-
-```
-cd esp32-s3
-cargo build --release --features esp32-s3-box-3
-```
-
-## Wokwi simulation in VS Code
-
-Open subdirectory with target in VS Code with installed Wokwi Extension. Select `Wokwi: Start Simulator`.
-
-### Build WASM version
-
-```
-cd wasm
-npm install
-npm run serve
-```
-
-Open in web browser: https://localhost:8443.
-
-Note: https is required for access to accelerometer data - https://w3c.github.io/deviceorientation/#security-and-privacy . It's possible to run the app without accelerometer on http.
-
-## Implemented technologies
-
-Each directory contains implementation specific for the HW.
-
-Overview:
-
-| Name                 | Chip     | Display  | Controls                              | PMU     | GPIO Expander |
-|----------------------|----------|----------|---------------------------------------|---------|---------------|
-| esp-wrover-kit       | esp32    | ili9341  | 6 push-button controls, separate PINs |         |               |
-| esp32-c3-devkit-rust | esp32-c3 | st7789   | icm42670 accelerometer                |         |               |
-| esp32-c3-lcdkit      | esp32-c3 | gc9a01   | rotary encoder                        |         |               |
-| esp32-c6-devkit      | esp32-c6 | ili9341  | resistor ladder with push buttons     |         |               |
-| esp32-s2-kaluga      | esp32-s2 | ili9341  | resistor ladder with push buttons     |         |               |
-| esp32-s3-box         | esp32-s3 | ili9342c | icm42670 accelerometer                |         |               |
-| esp32-s3-box-lite    | esp32-s3 | st7789   | no controls                           |         |               |
-| esp32-s3-usb-otg     | esp32-s3 | st7789   | 5 push-buttons on the board           |         |               |
-| m5stack-core2        | esp32    | ili9341  | mpu6886 accelerometer                 | axp192  |               |
-| m5stack-cores32      | esp32-s3 | ili9342c | bmi279 accelerometer                  | axp2101 | aw9523        |
-| m5stack-fire         | esp32    | ili9342c | mpu9250 accelerometer                 |         |               |
-| waveshare-c6-lcd-1-47| esp32c6  | ili9341  |                                       |         |               |
-
-
-### Build for ESP32-S3-BOX-3 with ILI9486
-
-
-Control: IMU
-- tilt the board to move the character
-- move quickly up to teleport
-- move quickly down to place dynamite and destroy walls around
-
-```
-cd esp32-s3
-cargo run --release --features esp32-s3-box-3
-```
-
-### Build for ESP32-C3-DeviKit-RUST with ILI9341
-
-Control: IMU
-- tilt board to move character
-
-```
-cd esp32-c3
-cargo run --release --features esp32-c3-devkit-rust
-```
-
-#### Features
-
-- Embedded Graphics
-- Framebuffer
-- Random maze generator
-- IMU Accelerometer control
-
-### Build for ESP32-C3-LcdKit
-
-Control: rotary encoder
-- rotate encoder to move the character
-- press the encoder to switch the direction
-
-```
-cd esp32-c3
-cargo run --release --features esp32-c3-lcdkit
-```
-
-### Build for desktop
-
-Control: keyboard
-- press arrows or W,A,S,D to move the character
-- press Enter to teleport
-
-- macOS prerequisites:
-```
-brew install SDL2
-export LIBRARY_PATH="$LIBRARY_PATH:$(brew --prefix)/lib"
-```
-
-- OpenSUSE Linux prerequisites:
-```
-sudo zypper install SDL2-devel
-```
-
-- run:
-```
-cd desktop
-cargo run
-```
-
-### Build for ESP32-S3-USB-OTG with ST7789
-
-![Spooky on ESP32-S3-USB-OTG](assets/screenshot/esp32-spooky-s3-usb-otg.jpg)
-
-Control: buttons
-- press button to move the character
-- press up & down to teleport
-- press ok & menu to place dynamite
-
-```
-cd esp32-s3
-cargo run --release --features esp32-s3-usb-otg
-```
-
-### Build for M5Stack-FIRE with ESP32 and ILI9341
-
-HW: https://docs.makerfactory.io/m5stack/core/fire/
-
-Control: MPU-9250, buttons
-- tilt the board to move the character
-- move quickly up or press button C to teleport
-- move quickly down or press button B to place dynamite and destroy walls around
-
-```
-cd esp32
-cargo run --release --features m5stack-fire
-```
-
-- Wokwi project: https://wokwi.com/projects/350825213595746900
-
-
-### Build for M5Stack-Core2 with ESP32 and ILI9342C
-
-HW: https://shop.m5stack.com/products/m5stack-core2-esp32-iot-development-kit?variant=35960244109476
-
-Control: MPU6886
-- tilt the board to move the character
-- move quickly up or press button C to teleport
-- move quickly down or press button B to place dynamite and destroy walls around
-
-```
-cd esp32
-cargo run --release --features m5stack-core2
-```
-
-### Build for ESP32-S2-Kaluga v1.3
-
-HW: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/hw-reference/esp32/get-started-wrover-kit.html
-
-Control: buttons (partialy implemented based on of https://github.com/espressif/esp-bsp/blob/master/esp32_s2_kaluga_kit/esp32_s2_kaluga_kit.c#L59)
-- more details https://github.com/espressif/esp-bsp/blob/master/esp32_s2_kaluga_kit/include/bsp/esp32_s2_kaluga_kit.h#L299
-- K3-K6 to move the character
-- (not supported) press K5 button to teleport
-- (not supported) press K6 button to place dynamite
-
-```
-cd esp32-s2
-cargo run --release --features esp32-s2-kaluga
-```
-
-Note for older version 1.2 - GPIO6 is used to control backlight.
-
-### Build for ESP32-C6-DevKitM-1
-
-HW: https://docs.espressif.com/projects/espressif-esp-dev-kits/en/latest/esp32c6/esp32-c6-devkitc-1/index.html
-
-Controls: not implemented
-
-```
-cd esp32-c6
-cargo run --release --features esp32-c6-devkitc-1
-```
-
-### Build for Waveshare C6 LCD 1.47inch
-
-HW: https://www.waveshare.com/esp32-c6-lcd-1.47.htm
-
-Controls: not implemented
-
-```
-cd esp32-c6
-cargo run --release --features waveshare-esp32-c6-lcd-1-47
-```
-
-### Build for ESP Wrover Kit
-
-HW: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/hw-reference/esp32/get-started-wrover-kit.html
-
-Control: 6 push buttons
-- it's not possible to move the character
-- press button Boot to teleport
-
-```
-cd esp32
-cargo run --release --features esp32-wrover-kit
-```
-
-## Board Support Package (BSP)
-
-The project is using [ESP-BSP-RS](https://crates.io/crates/esp-bsp) which provides macros with preconfigured
-GPIOs for a specific board.
+This project is licensed under the MIT License. See LICENSE for details.
