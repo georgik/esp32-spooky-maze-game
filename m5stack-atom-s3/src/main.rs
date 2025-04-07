@@ -59,6 +59,7 @@ use crate::heapbuffer::HeapBuffer;
 // --- NEW: Imports for the ICM-42670 accelerometer ---
 // use icm42670::Icm42670;
 // use icm42670::prelude::*;
+use mpu6886::Mpu6886;
 
 /// A resource wrapping the accelerometer sensor.
 /// (We make this NonSend because hardware sensor drivers typically aren’t Sync.)
@@ -122,6 +123,7 @@ use spooky_core::events::npc::NpcCollisionEvent;
 use spooky_core::events::walker::WalkerCollisionEvent;
 use spooky_core::systems::collisions;
 use spooky_core::systems::setup::NoStdTransform;
+use crate::embedded_systems::player_input::AccelerometerResource;
 
 static ELAPSED: AtomicU64 = AtomicU64::new(0);
 fn elapsed_time() -> core::time::Duration {
@@ -136,10 +138,10 @@ fn main() -> ! {
     let peripherals = esp_hal::init(esp_hal::Config::default());
     init_logger_from_env();
     // esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram);
-    esp_alloc::heap_allocator!(size: 160 * 1024);
+    esp_alloc::heap_allocator!(size: 180 * 1024);
 
     // --- DMA Buffers for SPI ---
-    let (rx_buffer, rx_descriptors, tx_buffer, tx_descriptors) = dma_buffers!(8912);
+    let (rx_buffer, rx_descriptors, tx_buffer, tx_descriptors) = dma_buffers!(1024);
     let dma_rx_buf = DmaRxBuf::new(rx_descriptors, rx_buffer).unwrap();
     let dma_tx_buf = DmaTxBuf::new(tx_descriptors, tx_buffer).unwrap();
 
@@ -187,13 +189,13 @@ fn main() -> ! {
     unsafe { Instant::set_elapsed(elapsed_time) };
 
     // --- Initialize the accelerometer sensor.
-    // TODO: MPU6886
-    // const DEVICE_ADDR: u8 = 0x77;
-    // let mut i2c = I2c::new(peripherals.I2C0, esp_hal::i2c::master::Config::default())
-    //     .unwrap()
-    //     .with_sda(peripherals.GPIO8)
-    //     .with_scl(peripherals.GPIO18);
+    const DEVICE_ADDR: u8 = 0x68;
+    let mut i2c = I2c::new(peripherals.I2C0, esp_hal::i2c::master::Config::default())
+        .unwrap()
+        .with_sda(peripherals.GPIO38)
+        .with_scl(peripherals.GPIO39);
     // let icm_sensor = Icm42670::new(i2c, icm42670::Address::Primary).unwrap();
+    let icm_sensor = Mpu6886::new(i2c);
 
     let mut hardware_rng = Rng::new(peripherals.RNG);
     let mut seed = [0u8; 32];
@@ -203,7 +205,7 @@ fn main() -> ! {
     let mut app = App::new();
     app.add_plugins((DefaultPlugins,))
         .insert_non_send_resource(DisplayResource { display })
-        // .insert_non_send_resource(AccelerometerResource { sensor: icm_sensor })
+        .insert_non_send_resource(AccelerometerResource { sensor: icm_sensor })
         .insert_resource(FrameBufferResource::new())
         .insert_resource(HudState::default())
         .insert_resource(MazeSeed(Some(seed)))
@@ -216,8 +218,8 @@ fn main() -> ! {
         .add_systems(
             Update,
             (
-                // player_input::dispatch_accelerometer_input::<MyI2c, MyI2cError>,
-                // systems::process_player_input::process_player_input,
+                player_input::dispatch_accelerometer_input::<MyI2c, MyI2cError>,
+                systems::process_player_input::process_player_input,
                 collisions::coin::detect_coin_collision,
                 collisions::coin::remove_coin_on_collision,
                 collisions::dynamite::handle_dynamite_collision,
@@ -236,6 +238,7 @@ fn main() -> ! {
     let mut loop_delay = Delay::new();
     loop {
         app.update();
+        info!("tick");
         loop_delay.delay_ms(50u32);
     }
 }

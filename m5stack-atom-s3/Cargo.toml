@@ -27,14 +27,15 @@ embedded-hal-bus = "0.3.0"
 spooky-core = { path = "../spooky-core", default-features = false }
 
 #icm42670 = { version = "0.2.0", optional = true }
-
+#mpu6886 = { version = "0.1.0", optional = true }
+mpu6886 = { git = "https://github.com/georgik/mpu6886.git", branch = "feature/update-hal-2024-11", optional = true }
 
 [features]
 default = [ "esp-hal/esp32s3", "esp-backtrace/esp32s3", "esp-println/esp32s3", "m5stack-atom-s3" ]
 accelerometer = []
 no-psram = []
 #esp32-s3-box-3 = [ "esp-hal/psram", "accelerometer", "dep:icm42670", "spooky-core/dynamic_maze" ]
-m5stack-atom-s3 = [ "spooky-core/static_maze" ]
+m5stack-atom-s3 = [ "spooky-core/static_maze", "accelerometer", "dep:mpu6886" ]
 
 [profile.dev]
 opt-level = "s"
