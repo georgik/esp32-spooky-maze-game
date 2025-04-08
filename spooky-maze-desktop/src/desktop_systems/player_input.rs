@@ -1,4 +1,3 @@
-use bevy::input::keyboard::KeyboardInput;
 use bevy::prelude::*;
 use spooky_core::events::player::PlayerInputEvent;
 
@@ -27,6 +26,6 @@ pub fn dispatch_keyboard_input(
     }
 
     if dx != 0.0 || dy != 0.0 {
-        event_writer.send(PlayerInputEvent { dx, dy });
+        event_writer.write(PlayerInputEvent { dx, dy });
     }
 }

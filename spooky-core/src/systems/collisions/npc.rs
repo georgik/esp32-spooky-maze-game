@@ -1,7 +1,5 @@
 use crate::components::Player;
 use crate::events::npc::NpcCollisionEvent;
-use crate::maze::Coin; // needed for coin operations
-use crate::maze::Npc;
 use crate::resources::{MazeResource, PlayerPosition};
 use crate::transform::UnifiedTransform;
 use bevy::prelude::*;
@@ -18,7 +16,7 @@ pub fn detect_npc_collision(
 
     for npc in maze_res.maze.npcs.iter() {
         if npc.x == player_tile_x && npc.y == player_tile_y {
-            event_writer.send(NpcCollisionEvent {
+            event_writer.write(NpcCollisionEvent {
                 npc_x: npc.x,
                 npc_y: npc.y,
             });

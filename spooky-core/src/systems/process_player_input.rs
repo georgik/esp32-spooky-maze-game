@@ -1,4 +1,6 @@
-use crate::components::{MainCamera, Player};
+#[cfg(not(feature = "std"))]
+use crate::components::MainCamera;
+use crate::components::Player;
 use crate::events::player::PlayerInputEvent;
 use crate::resources::{MazeResource, PlayerPosition};
 use bevy::prelude::*;

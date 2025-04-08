@@ -19,7 +19,7 @@ pub fn detect_dynamite_collision(
     // Dynamites are stored in an array (e.g., [Coin; 1])
     for dynamite in maze_res.maze.dynamites.iter() {
         if dynamite.x == player_tile_x && dynamite.y == player_tile_y {
-            event_writer.send(DynamiteCollisionEvent {
+            event_writer.write(DynamiteCollisionEvent {
                 x: dynamite.x,
                 y: dynamite.y,
             });

@@ -1,5 +1,3 @@
-#![no_std]
-
 use bevy::prelude::*;
 
 /// A resource storing the current HUD values.

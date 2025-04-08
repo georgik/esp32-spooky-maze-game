@@ -13,13 +13,6 @@ are dispatched to decouple hardware-specific logic from game rules.
 View the video [here](https://github.com/user-attachments/assets/28ef7c2b-42cc-4c79-bbdb-fcb0740bf533).
 </video>
 
-## Screenshots
-
-### Embedded Version - ESP32-S3-BOX-3
-![Spooky Maze Game ESP32-S3-BOX-3](assets/screenshot/spooky-maze-esp32-s3-box-3.webp)
-
-### Desktop Version - macOS
-![Spooky Maze Game Desktop](assets/screenshot/spooky-maze-desktop.webp)
 
 ## Targets
 
@@ -27,8 +20,19 @@ For now, the project supports two primary targets:
 
 - Desktop Rust Standard Version
   Use keyboard controls to move the ghost and trigger actions.
-- ESP32-S3-BOX-3 Embedded Version
+ 
+  ![Spooky Maze Game Desktop](assets/screenshot/spooky-maze-desktop.webp)
+
+- [ESP32-S3-BOX-3](https://github.com/espressif/esp-box) Embedded Version
   Uses an ICM42670 accelerometer for input (tilt the board to move the ghost).
+
+  ![Spooky Maze Game ESP32-S3-BOX-3](assets/screenshot/spooky-maze-esp32-s3-box-3.webp)
+
+- [M5Stack-Atom-S3](https://docs.m5stack.com/en/core/AtomS3) Embedded Version
+  Uses an MPU6886 accelerometer for input (tilt the board to move the ghost).
+
+  ![Spooky Maze Game M5Stack-Atom-S3](assets/screenshot/spooky-maze-m5stack-atom-s3.webp)
+
 
 Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the [v0.10.0 tag](https://github.com/georgik/esp32-spooky-maze-game/tree/v0.10.0).
 
@@ -71,7 +75,11 @@ Movement: Arrow keys
 
 ### Embedded Version
 
-#### ESP32-S3-BOX-3
+#### ESP32-S3
+
+These instructions are valid for boards based on ESP32-S3:
+- ESP32-S3-BOX-3
+- M5Stack-Atom-S3
 
 Prerequisites:
 
@@ -95,15 +103,22 @@ source esp-idf/export.sh
 
 Properly configured ESP32-S3-BOX-3 hardware
 
-Build:
+Build and run:
 
+- ESP32-S3-BOX-3
 ```shell
 cd spooky-maze-esp32-s3-box-3
 cargo run --release
 ```
+- M5Stack-Atom-S3
+```shell
+cd spooky-maze-m5stack-atom-s3
+cargo run --release
+```
+
 Controls:
 
-Movement: Tilt the board (using the ICM42670 accelerometer)
+Movement: Tilt the board accelerometer
 
 ## Differences of Embedded Bevy no_std from Classical Bevy std
 

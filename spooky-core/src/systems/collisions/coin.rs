@@ -18,7 +18,7 @@ pub fn detect_coin_collision(
 
     for coin in maze_res.maze.coins.iter() {
         if coin.x == player_tile_x && coin.y == player_tile_y {
-            event_writer.send(CoinCollisionEvent {
+            event_writer.write(CoinCollisionEvent {
                 coin_x: coin.x,
                 coin_y: coin.y,
             });
@@ -46,7 +46,7 @@ pub fn remove_coin_on_collision(
         // Despawn coin entity with matching coordinates.
         for (entity, coin_comp) in query.iter() {
             if coin_comp.x == event.coin_x && coin_comp.y == event.coin_y {
-                commands.entity(entity).despawn_recursive();
+                commands.entity(entity).despawn();
             }
         }
     }

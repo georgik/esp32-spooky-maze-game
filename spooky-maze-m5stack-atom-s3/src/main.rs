@@ -19,7 +19,7 @@ use esp_hal::dma::{DmaRxBuf, DmaTxBuf};
 use esp_hal::dma_buffers;
 use esp_hal::{
     Blocking,
-    gpio::{DriveMode, Level, Output, OutputConfig},
+    gpio::{Level, Output, OutputConfig},
     i2c::master::I2c,
     main,
     rng::Rng,
@@ -28,8 +28,11 @@ use esp_hal::{
 };
 use esp_println::{logger::init_logger_from_env, println};
 use log::info;
-use mipidsi::{Builder, models::ILI9486Rgb565};
-use mipidsi::{interface::SpiInterface, options::ColorOrder};
+use mipidsi::{Builder, models::GC9A01};
+use mipidsi::{
+    interface::SpiInterface,
+    options::{ColorInversion, ColorOrder},
+};
 use spooky_core::resources::MazeSeed;
 
 // Embedded Graphics imports for our framebuffer drawing.
@@ -50,7 +53,9 @@ mod heapbuffer;
 use crate::heapbuffer::HeapBuffer;
 
 // --- NEW: Imports for the ICM-42670 accelerometer ---
-use icm42670::Icm42670;
+// use icm42670::Icm42670;
+// use icm42670::prelude::*;
+use mpu6886::Mpu6886;
 
 /// A resource wrapping the accelerometer sensor.
 /// (We make this NonSend because hardware sensor drivers typically aren’t Sync.)
@@ -63,13 +68,13 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
 
 // For example, define a type alias for your concrete I2C:
 // Adjust the lifetime and driver mode if needed.
-type I2cMasterBus = esp_hal::i2c::master::I2c<'static, Blocking>;
+type I2cMasterBus = I2c<'static, Blocking>;
 type I2cMasterBusError = esp_hal::i2c::master::Error;
 
 // ------------------------------------------------------------------------------------
 // LCD resolution and framebuffer definitions.
-const LCD_H_RES: usize = 320;
-const LCD_V_RES: usize = 240;
+const LCD_H_RES: usize = 130;
+const LCD_V_RES: usize = 129;
 const LCD_BUFFER_SIZE: usize = LCD_H_RES * LCD_V_RES;
 
 type FbBuffer = HeapBuffer<Rgb565, LCD_BUFFER_SIZE>;
@@ -96,7 +101,7 @@ type MyDisplay = mipidsi::Display<
         ExclusiveDevice<SpiDmaBus<'static, Blocking>, Output<'static>, Delay>,
         Output<'static>,
     >,
-    ILI9486Rgb565,
+    GC9A01,
     Output<'static>,
 >;
 
@@ -105,6 +110,7 @@ struct DisplayResource {
 }
 
 use crate::embedded_systems::player_input;
+// use crate::embedded_systems::player_input::AccelerometerResource;
 use crate::embedded_systems::player_input::AccelerometerResource;
 use bevy::platform_support::sync::atomic::AtomicU64;
 use bevy::platform_support::time::Instant;
@@ -126,10 +132,11 @@ fn main() -> ! {
     // Initialize ESP‑hal peripherals.
     let peripherals = esp_hal::init(esp_hal::Config::default());
     init_logger_from_env();
-    esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram);
+    // esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram);
+    esp_alloc::heap_allocator!(size: 180 * 1024);
 
     // --- DMA Buffers for SPI ---
-    let (rx_buffer, rx_descriptors, tx_buffer, tx_descriptors) = dma_buffers!(8912);
+    let (rx_buffer, rx_descriptors, tx_buffer, tx_descriptors) = dma_buffers!(1024);
     let dma_rx_buf = DmaRxBuf::new(rx_descriptors, rx_buffer).unwrap();
     let dma_tx_buf = DmaTxBuf::new(tx_descriptors, tx_buffer).unwrap();
 
@@ -141,46 +148,57 @@ fn main() -> ! {
             .with_mode(esp_hal::spi::Mode::_0),
     )
     .unwrap()
-    .with_sck(peripherals.GPIO7)
-    .with_mosi(peripherals.GPIO6)
+    .with_sck(peripherals.GPIO17)
+    .with_mosi(peripherals.GPIO21)
     .with_dma(peripherals.DMA_CH0)
     .with_buffers(dma_rx_buf, dma_tx_buf);
-    let cs_output = Output::new(peripherals.GPIO5, Level::High, OutputConfig::default());
+    let cs_output = Output::new(peripherals.GPIO15, Level::High, OutputConfig::default());
     let spi_delay = Delay::new();
     let spi_device = ExclusiveDevice::new(spi, cs_output, spi_delay).unwrap();
 
     // LCD interface: use GPIO4 for DC.
-    let lcd_dc = Output::new(peripherals.GPIO4, Level::Low, OutputConfig::default());
+    let lcd_dc = Output::new(peripherals.GPIO33, Level::Low, OutputConfig::default());
     let buffer: &'static mut [u8; 512] = Box::leak(Box::new([0_u8; 512]));
     let di = SpiInterface::new(spi_device, lcd_dc, buffer);
 
     let mut display_delay = Delay::new();
     display_delay.delay_ns(500_000u32);
 
-    // Reset pin for display: GPIO48 (OpenDrain required).
-    let reset = Output::new(
-        peripherals.GPIO48,
-        Level::High,
-        OutputConfig::default().with_drive_mode(DriveMode::OpenDrain),
-    );
-    let mut display: MyDisplay = Builder::new(ILI9486Rgb565, di)
+    // Reset pin for display
+    let reset = Output::new(peripherals.GPIO34, Level::High, OutputConfig::default());
+
+    let mut display: MyDisplay = Builder::new(GC9A01, di)
         .reset_pin(reset)
-        .display_size(320, 240)
+        .display_size(130, 129)
+        // .orientation(Orientation::new().flip_horizontal())
         .color_order(ColorOrder::Bgr)
+        .invert_colors(ColorInversion::Inverted)
         .init(&mut display_delay)
         .unwrap();
     display.clear(Rgb565::BLUE).unwrap();
-    let mut backlight = Output::new(peripherals.GPIO47, Level::Low, OutputConfig::default());
+
+    let mut backlight = Output::new(peripherals.GPIO16, Level::Low, OutputConfig::default());
     backlight.set_high();
+
     info!("Display initialized");
     unsafe { Instant::set_elapsed(elapsed_time) };
 
     // --- Initialize the accelerometer sensor.
     let i2c = I2c::new(peripherals.I2C0, esp_hal::i2c::master::Config::default())
         .unwrap()
-        .with_sda(peripherals.GPIO8)
-        .with_scl(peripherals.GPIO18);
-    let icm_sensor = Icm42670::new(i2c, icm42670::Address::Primary).unwrap();
+        .with_sda(peripherals.GPIO38)
+        .with_scl(peripherals.GPIO39);
+    // let icm_sensor = Icm42670::new(i2c, icm42670::Address::Primary).unwrap();
+    let mut icm_sensor = Mpu6886::new(i2c);
+    let mut delay = Delay::new();
+    match icm_sensor.init(&mut delay) {
+        Ok(_) => {
+            info!("MPU6886 initialized");
+        }
+        Err(_) => {
+            info!("Failed to initialize MPU6886");
+        }
+    }
 
     let mut hardware_rng = Rng::new(peripherals.RNG);
     let mut seed = [0u8; 32];
@@ -223,6 +241,7 @@ fn main() -> ! {
     let mut loop_delay = Delay::new();
     loop {
         app.update();
-        loop_delay.delay_ms(50u32);
+        info!("tick");
+        loop_delay.delay_ms(300u32);
     }
 }
