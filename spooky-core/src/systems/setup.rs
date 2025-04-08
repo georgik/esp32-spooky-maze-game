@@ -1,12 +1,12 @@
 // Common Bevy imports.
+use crate::components::Player;
 #[cfg(feature = "std")]
 use crate::components::{CoinComponent, NpcComponent};
-use crate::components::Player;
 use crate::maze::Maze;
 use crate::resources::{MazeResource, MazeSeed, PlayerPosition};
 use bevy::prelude::*;
 use bevy_math::Vec3;
-use bevy_transform::prelude::{Transform};
+use bevy_transform::prelude::Transform;
 
 // When compiling for desktop (std enabled), use Bevy's AssetServer and its Image type.
 #[cfg(feature = "std")]
