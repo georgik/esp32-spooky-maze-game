@@ -1,0 +1,42 @@
+name: CI for ESP32-S3
+
+on:
+  push:
+    paths:
+      - "spooky-maze-m5stack-atom-s3/**"
+      - "spooky-core/**"
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  rust-checks:
+    name: Rust Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust (Xtensa)
+        uses: esp-rs/xtensa-toolchain@v1.5
+        with:
+          default: true
+          version: '1.85.0'
+          buildtargets: esp32s3
+          ldproxy: false
+
+      - name: Enable caching
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run checks
+        working-directory: spooky-maze-m5stack-atom-s3
+        run: |
+
+          # Perform common checks
+          echo "Running common checks"
+          cargo fmt --all -- --check --color always
+          #cargo clippy --release --workspace -- -D warnings
+          #cargo build --release

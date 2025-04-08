@@ -30,7 +30,7 @@ pub fn dispatch_accelerometer_input<I2C, E>(
             dx = if accel.x > 0.0 { step } else { -step };
         }
         if accel.y.abs() > threshold {
-            dy = if accel.y > 0.0 { step } else { -step };
+            dy = if accel.y > 0.0 { -step } else { step };
         }
         if dx.abs() > f32::EPSILON || dy.abs() > f32::EPSILON {
             event_writer.send(PlayerInputEvent { dx, dy });

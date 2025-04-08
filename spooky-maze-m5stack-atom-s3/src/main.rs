@@ -115,6 +115,7 @@ struct DisplayResource {
 
 use crate::embedded_systems::player_input;
 // use crate::embedded_systems::player_input::AccelerometerResource;
+use crate::embedded_systems::player_input::AccelerometerResource;
 use bevy::platform_support::sync::atomic::AtomicU64;
 use bevy::platform_support::time::Instant;
 use core::sync::atomic::Ordering;
@@ -123,7 +124,6 @@ use spooky_core::events::npc::NpcCollisionEvent;
 use spooky_core::events::walker::WalkerCollisionEvent;
 use spooky_core::systems::collisions;
 use spooky_core::systems::setup::NoStdTransform;
-use crate::embedded_systems::player_input::AccelerometerResource;
 
 static ELAPSED: AtomicU64 = AtomicU64::new(0);
 fn elapsed_time() -> core::time::Duration {
@@ -152,11 +152,11 @@ fn main() -> ! {
             .with_frequency(Rate::from_mhz(40))
             .with_mode(esp_hal::spi::Mode::_0),
     )
-        .unwrap()
-        .with_sck(peripherals.GPIO17)
-        .with_mosi(peripherals.GPIO21)
-        .with_dma(peripherals.DMA_CH0)
-        .with_buffers(dma_rx_buf, dma_tx_buf);
+    .unwrap()
+    .with_sck(peripherals.GPIO17)
+    .with_mosi(peripherals.GPIO21)
+    .with_dma(peripherals.DMA_CH0)
+    .with_buffers(dma_rx_buf, dma_tx_buf);
     let cs_output = Output::new(peripherals.GPIO15, Level::High, OutputConfig::default());
     let spi_delay = Delay::new();
     let spi_device = ExclusiveDevice::new(spi, cs_output, spi_delay).unwrap();
@@ -195,7 +195,16 @@ fn main() -> ! {
         .with_sda(peripherals.GPIO38)
         .with_scl(peripherals.GPIO39);
     // let icm_sensor = Icm42670::new(i2c, icm42670::Address::Primary).unwrap();
-    let icm_sensor = Mpu6886::new(i2c);
+    let mut icm_sensor = Mpu6886::new(i2c);
+    let mut delay = Delay::new();
+    match icm_sensor.init(&mut delay) {
+        Ok(_) => {
+            info!("MPU6886 initialized");
+        }
+        Err(_) => {
+            info!("Failed to initialize MPU6886");
+        }
+    }
 
     let mut hardware_rng = Rng::new(peripherals.RNG);
     let mut seed = [0u8; 32];
@@ -239,6 +248,6 @@ fn main() -> ! {
     loop {
         app.update();
         info!("tick");
-        loop_delay.delay_ms(50u32);
+        loop_delay.delay_ms(300u32);
     }
 }
