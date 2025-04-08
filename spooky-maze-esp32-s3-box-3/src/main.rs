@@ -12,7 +12,6 @@ use bevy::DefaultPlugins;
 use bevy::app::{App, Startup};
 use bevy::prelude::Update;
 use bevy_ecs::prelude::*;
-use core::fmt::Write;
 use embedded_hal::delay::DelayNs;
 use embedded_hal_bus::spi::ExclusiveDevice;
 use esp_hal::delay::Delay;
@@ -31,15 +30,12 @@ use esp_println::{logger::init_logger_from_env, println};
 use log::info;
 use mipidsi::{Builder, models::ILI9486Rgb565};
 use mipidsi::{interface::SpiInterface, options::ColorOrder};
-use spooky_core::components::Player;
-use spooky_core::maze::Maze;
-use spooky_core::resources::{MazeResource, MazeSeed, PlayerPosition};
+use spooky_core::resources::MazeSeed;
 
 // Embedded Graphics imports for our framebuffer drawing.
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics_framebuf::FrameBuf;
-use embedded_graphics_framebuf::backends::FrameBufferBackend;
 
 // Bring in our custom render system from our embedded module.
 mod embedded_systems {
@@ -55,7 +51,6 @@ use crate::heapbuffer::HeapBuffer;
 
 // --- NEW: Imports for the ICM-42670 accelerometer ---
 use icm42670::Icm42670;
-use icm42670::prelude::*;
 
 /// A resource wrapping the accelerometer sensor.
 /// (We make this NonSend because hardware sensor drivers typically aren’t Sync.)
@@ -68,8 +63,8 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
 
 // For example, define a type alias for your concrete I2C:
 // Adjust the lifetime and driver mode if needed.
-type MyI2c = esp_hal::i2c::master::I2c<'static, Blocking>;
-type MyI2cError = esp_hal::i2c::master::Error;
+type I2cMasterBus = esp_hal::i2c::master::I2c<'static, Blocking>;
+type I2cMasterBusError = esp_hal::i2c::master::Error;
 
 // ------------------------------------------------------------------------------------
 // LCD resolution and framebuffer definitions.
@@ -118,7 +113,6 @@ use spooky_core::events::dynamite::DynamiteCollisionEvent;
 use spooky_core::events::npc::NpcCollisionEvent;
 use spooky_core::events::walker::WalkerCollisionEvent;
 use spooky_core::systems::collisions;
-use spooky_core::systems::setup::NoStdTransform;
 
 static ELAPSED: AtomicU64 = AtomicU64::new(0);
 fn elapsed_time() -> core::time::Duration {
@@ -182,8 +176,7 @@ fn main() -> ! {
     unsafe { Instant::set_elapsed(elapsed_time) };
 
     // --- Initialize the accelerometer sensor.
-    const DEVICE_ADDR: u8 = 0x77;
-    let mut i2c = I2c::new(peripherals.I2C0, esp_hal::i2c::master::Config::default())
+    let i2c = I2c::new(peripherals.I2C0, esp_hal::i2c::master::Config::default())
         .unwrap()
         .with_sda(peripherals.GPIO8)
         .with_scl(peripherals.GPIO18);
@@ -210,8 +203,8 @@ fn main() -> ! {
         .add_systems(
             Update,
             (
-                player_input::dispatch_accelerometer_input::<MyI2c, MyI2cError>,
-                systems::process_player_input::process_player_input,
+                player_input::dispatch_accelerometer_input::<I2cMasterBus, I2cMasterBusError>,
+                process_player_input,
                 collisions::coin::detect_coin_collision,
                 collisions::coin::remove_coin_on_collision,
                 collisions::dynamite::handle_dynamite_collision,
@@ -222,7 +215,7 @@ fn main() -> ! {
                 systems::dynamite_logic::handle_dynamite_collision,
                 systems::npc_logic::update_npc_movement,
                 systems::game_logic::update_game,
-                embedded_systems::render::render_system,
+                render_system,
             ),
         )
         .run();

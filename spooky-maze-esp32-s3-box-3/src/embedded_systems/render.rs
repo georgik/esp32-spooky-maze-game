@@ -1,7 +1,5 @@
 use alloc::format;
-#[cfg(not(feature = "std"))]
 use embedded_graphics::pixelcolor::Rgb565;
-#[cfg(not(feature = "std"))]
 use embedded_graphics::{image::Image, prelude::*, primitives::Rectangle};
 
 use bevy_ecs::prelude::*;
@@ -10,7 +8,6 @@ use embedded_graphics::mono_font::ascii::FONT_6X10;
 use embedded_graphics::text::Text;
 use spooky_core::resources::{MazeResource, PlayerPosition};
 use spooky_core::systems::hud::HudState;
-#[cfg(not(feature = "std"))]
 use spooky_core::systems::setup::TextureAssets;
 
 /// A borrowed sprite buffer wrapper that implements a DrawTarget filtering out “magic pink”.
@@ -65,9 +62,9 @@ pub fn render_system(
     mut display_res: NonSendMut<crate::DisplayResource>,
     mut fb_res: ResMut<crate::FrameBufferResource>,
     maze_res: Res<MazeResource>,
-    #[cfg(not(feature = "std"))] texture_assets: Res<TextureAssets>,
-    #[cfg(not(feature = "std"))] player_pos: Res<PlayerPosition>,
-    #[cfg(not(feature = "std"))] hud_state: Res<HudState>,
+    texture_assets: Res<TextureAssets>,
+    player_pos: Res<PlayerPosition>,
+    hud_state: Res<HudState>,
 ) {
     // Clear the framebuffer.
     fb_res.frame_buf.clear(Rgb565::BLACK).unwrap();

@@ -1,6 +1,5 @@
 use crate::components::WalkerComponent;
 use crate::events::walker::WalkerCollisionEvent;
-use crate::maze::Coin;
 use crate::resources::{MazeResource, PlayerPosition};
 use bevy::prelude::*; // Assumes you have a WalkerComponent
 
@@ -18,7 +17,7 @@ pub fn detect_walker_collision(
     // Iterate over all walker positions stored in the maze.
     for walker in maze_res.maze.walkers.iter() {
         if walker.x == player_tile_x && walker.y == player_tile_y {
-            event_writer.send(WalkerCollisionEvent {
+            event_writer.write(WalkerCollisionEvent {
                 walker_x: walker.x,
                 walker_y: walker.y,
             });

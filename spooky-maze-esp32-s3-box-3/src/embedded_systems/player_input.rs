@@ -5,7 +5,6 @@ use icm42670::Icm42670;
 use icm42670::prelude::*;
 use spooky_core::events::player::PlayerInputEvent;
 use spooky_core::resources::MazeResource;
-use spooky_core::resources::PlayerPosition;
 
 /// A resource wrapping the accelerometer sensor.
 /// (This resource is non‑Send because the sensor’s driver isn’t Sync.)
@@ -36,7 +35,7 @@ pub fn dispatch_accelerometer_input<I2C, E>(
             dy = if accel.y > 0.0 { step } else { -step };
         }
         if dx.abs() > f32::EPSILON || dy.abs() > f32::EPSILON {
-            event_writer.send(PlayerInputEvent { dx, dy });
+            event_writer.write(PlayerInputEvent { dx, dy });
         }
     }
 }

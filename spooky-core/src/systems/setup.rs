@@ -1,16 +1,16 @@
 // Common Bevy imports.
-use crate::components::{CoinComponent, NpcComponent, Player};
+#[cfg(feature = "std")]
+use crate::components::{CoinComponent, NpcComponent};
+use crate::components::Player;
 use crate::maze::Maze;
 use crate::resources::{MazeResource, MazeSeed, PlayerPosition};
 use bevy::prelude::*;
 use bevy_math::Vec3;
-use bevy_transform::prelude::{GlobalTransform, Transform};
+use bevy_transform::prelude::{Transform};
 
 // When compiling for desktop (std enabled), use Bevy's AssetServer and its Image type.
 #[cfg(feature = "std")]
 use bevy::image::Image;
-#[cfg(feature = "std")]
-use bevy::prelude::*;
 
 // --- TextureAssets for asset loading ---
 #[cfg(feature = "std")]
@@ -187,7 +187,7 @@ pub fn setup(
                     Sprite::from_image(textures.coin.clone()),
                     Transform::from_translation(Vec3::new(coin.x as f32, coin.y as f32, 2.0)),
                     // (Assuming you have a CoinComponent for collision detection)
-                    crate::components::CoinComponent {
+                    CoinComponent {
                         x: coin.x,
                         y: coin.y,
                     },
@@ -247,9 +247,9 @@ pub fn setup(
     }
 
     // <-- NEW: Spawn NPCs.
+    #[cfg(feature = "std")]
     for (i, npc) in maze_for_entities.npcs.iter().enumerate() {
         if npc.x != -1 && npc.y != -1 {
-            #[cfg(feature = "std")]
             {
                 // Choose an appropriate z-coordinate (e.g., 5.0) so that NPCs are drawn in front of coins
                 // but behind the player if that’s your design.
@@ -263,22 +263,22 @@ pub fn setup(
                     },
                 ));
             }
-            #[cfg(not(feature = "std"))]
-            {
-                // (No action or custom handling for no_std)
-            }
         }
     }
 
     // Spawn the full tile map (background) covering the maze.
+    #[cfg(feature = "std")]
     let margin: i32 = Maze::MARGIN;
+    #[cfg(feature = "std")]
     let total_width = maze_for_entities.width as i32 + 2 * margin;
+    #[cfg(feature = "std")]
     let total_height = maze_for_entities.height as i32 + 2 * margin;
+    #[cfg(feature = "std")]
     for ty in 0..total_height {
         for tx in 0..total_width {
             let mx = tx - margin;
             let my = ty - margin;
-            #[cfg(feature = "std")]
+
             let texture = if mx >= 0
                 && my >= 0
                 && mx < maze_for_entities.width as i32

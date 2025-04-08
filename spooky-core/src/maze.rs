@@ -5,7 +5,6 @@
 #[cfg(feature = "dynamic_maze")]
 use maze_generator::{prelude::*, recursive_backtracking::RbGenerator};
 
-use bevy::prelude::Vec;
 use rand::prelude::*;
 use rand_chacha::ChaChaRng;
 

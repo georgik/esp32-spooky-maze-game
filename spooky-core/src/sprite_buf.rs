@@ -2,7 +2,7 @@ use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::RgbColor;
 use embedded_graphics::{
     geometry::{OriginDimensions, Size},
-    prelude::{DrawTarget, Pixel, Point},
+    prelude::{DrawTarget, Pixel},
 };
 use embedded_graphics_framebuf::FrameBuf;
 use embedded_graphics_framebuf::backends::FrameBufferBackend;
