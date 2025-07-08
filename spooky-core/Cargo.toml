@@ -4,10 +4,10 @@ version = "0.12.0"
 edition = "2024"
 
 [dependencies]
-bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false }
-bevy_transform = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false }
-bevy_math = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false, features = ["alloc", "libm"] }
-bevy_input = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false }
+bevy = { version = "0.16.1", default-features = false }
+bevy_transform = { version = "0.16.1", default-features = false }
+bevy_math = { version = "0.16.1", default-features = false, features = ["alloc", "libm"] }
+bevy_input = { version = "0.16.1", default-features = false }
 
 embedded-graphics = "0.8.0"
 embedded-graphics-framebuf = { version = "0.3.0", git = "https://github.com/georgik/embedded-graphics-framebuf.git", branch = "feature/embedded-graphics-0.8" }

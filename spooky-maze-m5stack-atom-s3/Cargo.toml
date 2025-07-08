@@ -1,23 +1,25 @@
 [package]
 name = "spooky-maze-m5stack-atom-s3"
-version = "0.12.0"
+version = "0.13.0"
 authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2024"
 license = "MIT"
 
 [dependencies]
 # Disable default features for Bevy and its sub-crates so that no_std is used.
-bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false }
-bevy_ecs = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false }
-bevy_transform = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false }
-bevy_math = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false, features = ["alloc", "libm"] }
-bevy_input = { git = "https://github.com/bevyengine/bevy.git", rev = "301f618", default-features = false }
+bevy_ecs = { version = "0.16.1", default-features = false }
+bevy = { version = "0.16.1", default-features = false }
+bevy_platform = { version = "0.16.1", default-features = false }
 
-esp-hal = { version = "1.0.0-beta.0", features = ["esp32s3", "unstable"] }
-esp-backtrace = { version = "0.15.1", features = ["panic-handler", "println"] }
-esp-println = { version = "0.13", features = ["log"] }
+esp-hal = { version = "1.0.0-beta.1", features = ["esp32s3", "unstable"] }
+esp-backtrace = { version = "0.16.0", features = [
+    "panic-handler",
+    "println"
+] }
+esp-println = { version = "0.14.0", features = [ "log-04" ] }
+
 log = "0.4.27"
-esp-alloc = "0.7.0"
+esp-alloc = "0.8.0"
 embedded-graphics = "0.8.1"
 embedded-hal = "1.0.0"
 mipidsi = "0.9.0"
@@ -35,7 +37,7 @@ default = [ "esp-hal/esp32s3", "esp-backtrace/esp32s3", "esp-println/esp32s3", "
 accelerometer = []
 no-psram = []
 #esp32-s3-box-3 = [ "esp-hal/psram", "accelerometer", "dep:icm42670", "spooky-core/dynamic_maze" ]
-m5stack-atom-s3 = [ "spooky-core/static_maze", "accelerometer", "dep:mpu6886" ]
+m5stack-atom-s3 = [ "spooky-core/static_maze", "accelerometer", "dep:mpu6886", "no-psram" ]
 
 [profile.dev]
 opt-level = "s"

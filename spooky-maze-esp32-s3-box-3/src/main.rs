@@ -106,17 +106,17 @@ struct DisplayResource {
 
 use crate::embedded_systems::player_input;
 use crate::embedded_systems::player_input::AccelerometerResource;
-use bevy::platform_support::sync::atomic::AtomicU64;
-use bevy::platform_support::time::Instant;
-use core::sync::atomic::Ordering;
+use core::sync::atomic::{AtomicU32, Ordering};
 use spooky_core::events::dynamite::DynamiteCollisionEvent;
 use spooky_core::events::npc::NpcCollisionEvent;
 use spooky_core::events::walker::WalkerCollisionEvent;
 use spooky_core::systems::collisions;
+// Using bevy's Instant which supports set_elapsed
+use bevy_platform::time::Instant;
 
-static ELAPSED: AtomicU64 = AtomicU64::new(0);
+static ELAPSED: AtomicU32 = AtomicU32::new(0);
 fn elapsed_time() -> core::time::Duration {
-    core::time::Duration::from_nanos(ELAPSED.load(Ordering::Relaxed))
+    core::time::Duration::from_millis(ELAPSED.load(Ordering::Relaxed) as u64)
 }
 
 // ------------------------------------------------------------------------------------

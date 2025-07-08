@@ -1,9 +1,9 @@
 # ESP32 Spooky Maze Game
 
 
-ESP32 Spooky Maze Game is a technical demo game built using [Bevy ECS](https://github.com/bevyengine/bevy/issues/15460) with no_std support via [esp-hal](https://developer.espressif.com/blog/2025/02/rust-esp-hal-beta/). The game
-demonstrates how to build cross-platform applications that run on both embedded hardware and desktop environments using
-a shared core.
+ESP32 Spooky Maze Game is a technical demo game built using [Bevy ECS 0.16.1](https://github.com/bevyengine/bevy) 
+with no_std support via [esp-hal 1.0.0-beta.1](https://github.com/esp-rs/esp-hal). The game demonstrates how to 
+build cross-platform applications that run on both embedded hardware and desktop environments using a shared core.
 
 In this game, a ghost navigates through a maze collecting coins while avoiding obstacles. Special artifacts such as
 dynamite and the "walker" power-up introduce additional gameplay mechanics. On collision with various objects, events
@@ -34,7 +34,29 @@ For now, the project supports two primary targets:
   ![Spooky Maze Game M5Stack-Atom-S3](assets/screenshot/spooky-maze-m5stack-atom-s3.webp)
 
 
-Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the [v0.10.0 tag](https://github.com/georgik/esp32-spooky-maze-game/tree/v0.10.0).
+Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the 
+[v0.10.0 tag](https://github.com/georgik/esp32-spooky-maze-game/tree/v0.10.0).
+
+## Technical Specifications
+
+### Hardware Requirements
+
+- **ESP32-S3-BOX-3**: 8MB PSRAM, ICM42670 accelerometer, 320x240 ILI9486 display
+- **M5Stack-Atom-S3**: 180KB internal RAM (no PSRAM), MPU6886 accelerometer, 130x129 GC9A01 display
+
+### Software Versions
+
+- **Bevy ECS**: 0.16.1 (with minimal plugin configuration for embedded)
+- **esp-hal**: 1.0.0-beta.1
+- **Rust Edition**: 2024
+- **Target**: xtensa-esp32s3-none-elf
+
+### Memory Management
+
+- **ESP32-S3-BOX-3**: Uses PSRAM allocator for large framebuffer (320x240x2 = 153,600 bytes)
+- **M5Stack-Atom-S3**: Uses internal RAM heap allocator (180KB) for small framebuffer (130x129x2 = 33,540 bytes)
+- **Event Processing**: Minimal Bevy plugins (TaskPoolPlugin, TimePlugin, ScheduleRunnerPlugin) 
+  to enable event processing without memory overhead of DefaultPlugins
 
 ## Key Technical Decisions
 
@@ -91,8 +113,8 @@ cargo install espflash
 
 Rust [Xtensa toolchain](https://github.com/esp-rs/rust-build) installed:
 ```shell
-cargo install rustup
-rustup install -v 1.85.0.0
+cargo install espup
+espup install
 ```
 
 Compiler toolchain from ESP-IDF v5.5 (required only for Xtensa targets):
