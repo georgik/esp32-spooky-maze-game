@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Spooky Maze Game - WASM</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        #gameCanvas {
+            border: 1px solid #fff;
+            background: #222;
+            image-rendering: pixelated;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .controls h3 {
+            margin-bottom: 10px;
+        }
+        
+        .controls button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            cursor: pointer;
+        }
+        
+        .controls button:hover {
+            background: #555;
+        }
+        
+        .controls button:active {
+            background: #777;
+        }
+        
+        .movement-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            width: 180px;
+            margin: 10px auto;
+        }
+        
+        .movement-buttons button {
+            width: 50px;
+            height: 50px;
+            padding: 0;
+        }
+        
+        .movement-buttons button:nth-child(2) {
+            /* Up button */
+        }
+        
+        .movement-buttons button:nth-child(4) {
+            /* Left button */
+        }
+        
+        .movement-buttons button:nth-child(6) {
+            /* Right button */
+        }
+        
+        .movement-buttons button:nth-child(8) {
+            /* Down button */
+        }
+        
+        .empty-cell {
+            background: none;
+            border: none;
+            cursor: default;
+        }
+        
+        .empty-cell:hover {
+            background: none;
+        }
+        
+        .info {
+            margin: 20px 0;
+            max-width: 600px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Spooky Maze Game</h1>
+    <p>Navigate through the maze using arrow keys or WASD. Collect coins and avoid enemies!</p>
+    
+    <canvas id="gameCanvas" width="320" height="240"></canvas>
+    
+    <div class="controls">
+        <h3>Keyboard Controls</h3>
+        <p>Use Arrow Keys or WASD to move</p>
+        <p>Space: Teleport | Enter: Place Dynamite</p>
+        
+        <h3>Mouse Controls</h3>
+        <div class="movement-buttons">
+            <div class="empty-cell"></div>
+            <button id="upBtn">↑</button>
+            <div class="empty-cell"></div>
+            <button id="leftBtn">←</button>
+            <div class="empty-cell"></div>
+            <button id="rightBtn">→</button>
+            <div class="empty-cell"></div>
+            <button id="downBtn">↓</button>
+            <div class="empty-cell"></div>
+        </div>
+        
+        <div>
+            <button id="teleportBtn">Teleport</button>
+            <button id="dynamiteBtn">Place Dynamite</button>
+        </div>
+    </div>
+    
+    <div class="info">
+        <p>This is a WebAssembly version of the Spooky Maze Game built with Bevy and Rust.</p>
+        <p>The game features procedurally generated mazes, collectible coins, and enemy NPCs.</p>
+    </div>
+    
+    <script type="module">
+        import init, { SpookyMazeWasm } from './pkg/spooky_maze_wasm.js';
+        
+        async function run() {
+            await init();
+            
+            const game = new SpookyMazeWasm();
+            
+            // Add button event listeners
+            document.getElementById('upBtn').addEventListener('click', () => game.move_up());
+            document.getElementById('downBtn').addEventListener('click', () => game.move_down());
+            document.getElementById('leftBtn').addEventListener('click', () => game.move_left());
+            document.getElementById('rightBtn').addEventListener('click', () => game.move_right());
+            document.getElementById('teleportBtn').addEventListener('click', () => game.teleport());
+            document.getElementById('dynamiteBtn').addEventListener('click', () => game.place_dynamite());
+            
+            // Start the game
+            game.run();
+        }
+        
+        run().catch(console.error);
+    </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+[package]
+name = "spooky-maze-wasm"
+version = "0.1.0"
+authors = ["Juraj Michalek <juraj.michalek@espressif.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+bevy = { version = "0.16.1", features = ["webgl2"] }
+spooky-core = { path = "../spooky-core", default-features = false, features = ["wasm", "static_maze"] }
+wasm-bindgen = "0.2.83"
+web-sys = { version = "0.3.60", features = [
+    "console",
+    "Window",
+    "Document",
+    "HtmlCanvasElement",
+    "WebGl2RenderingContext",
+    "CanvasRenderingContext2d",
+    "Element",
+    "EventTarget",
+    "KeyboardEvent",
+    "MouseEvent",
+    "TouchEvent",
+    "Performance",
+    "PerformanceTiming"
+] }
+rand = { version = "0.8.5", default-features = false }
+rand_chacha = { version = "0.3.1", default-features = false }
+getrandom = { version = "0.2.8", features = ["js"] }
+console_error_panic_hook = "0.1.7"
+
+[features]
+default = ["static_maze"]
+static_maze = []
+dynamic_maze = ["spooky-core/dynamic_maze"]

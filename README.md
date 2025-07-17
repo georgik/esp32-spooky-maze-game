@@ -16,19 +16,22 @@ View the video [here](https://github.com/user-attachments/assets/28ef7c2b-42cc-4
 
 ## Targets
 
-For now, the project supports two primary targets:
+For now, the project supports three primary targets:
 
-- Desktop Rust Standard Version
+- **Desktop Rust Standard Version**
   Use keyboard controls to move the ghost and trigger actions.
  
   ![Spooky Maze Game Desktop](assets/screenshot/spooky-maze-desktop.webp)
 
-- [ESP32-S3-BOX-3](https://github.com/espressif/esp-box) Embedded Version
+- **WebAssembly (WASM) Version**
+  Play the game directly in your browser using WebAssembly. Features the same gameplay as the desktop version with both keyboard and mouse controls.
+
+- **[ESP32-S3-BOX-3](https://github.com/espressif/esp-box) Embedded Version**
   Uses an ICM42670 accelerometer for input (tilt the board to move the ghost).
 
   ![Spooky Maze Game ESP32-S3-BOX-3](assets/screenshot/spooky-maze-esp32-s3-box-3.webp)
 
-- [M5Stack-Atom-S3](https://docs.m5stack.com/en/core/AtomS3) Embedded Version
+- **[M5Stack-Atom-S3](https://docs.m5stack.com/en/core/AtomS3) Embedded Version**
   Uses an MPU6886 accelerometer for input (tilt the board to move the ghost).
 
   ![Spooky Maze Game M5Stack-Atom-S3](assets/screenshot/spooky-maze-m5stack-atom-s3.webp)
@@ -94,6 +97,30 @@ cargo run
 Controls:
 
 Movement: Arrow keys
+
+### WebAssembly (WASM) Version
+
+Prerequisites:
+
+- Rust
+- wasm-pack (installed automatically by build script)
+
+Build and run:
+
+```shell
+cd spooky-maze-wasm
+./build.sh
+# Then serve with any HTTP server:
+python3 -m http.server 8000
+# Open http://localhost:8000 in your browser
+```
+
+Controls:
+
+- Movement: Arrow keys or WASD
+- Teleport: Space key
+- Place Dynamite: Enter key
+- Alternative: Use on-screen buttons for all actions
 
 ### Embedded Version
 
