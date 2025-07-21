@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 use std::collections::VecDeque;
 
 use spooky_core::events::npc::NpcCollisionEvent;
-use spooky_core::events::player::PlayerInputEvent;
+use spooky_core::events::player::{PlayerInputEvent, PlayerTeleportEvent};
 use spooky_core::events::walker::WalkerCollisionEvent;
 use spooky_core::events::{coin::CoinCollisionEvent, dynamite::DynamiteCollisionEvent};
 use spooky_core::resources::MazeSeed;
@@ -22,10 +22,17 @@ pub struct InputQueue {
     queue: Arc<Mutex<VecDeque<PlayerInputEvent>>>,
 }
 
+// Teleport queue for buffering teleport events
+#[derive(Resource, Clone, Default)]
+pub struct TeleportQueue {
+    queue: Arc<Mutex<VecDeque<PlayerTeleportEvent>>>,
+}
+
 #[wasm_bindgen]
 pub struct SpookyMazeWasm {
     app: App,
     input_queue: Arc<Mutex<VecDeque<PlayerInputEvent>>>,
+    teleport_queue: Arc<Mutex<VecDeque<PlayerTeleportEvent>>>,
 }
 
 #[wasm_bindgen]
@@ -38,6 +45,7 @@ impl SpookyMazeWasm {
         console::log_1(&"Initializing Spooky Maze WASM".into());
         
         let input_queue = Arc::new(Mutex::new(VecDeque::new()));
+        let teleport_queue = Arc::new(Mutex::new(VecDeque::new()));
         let mut app = App::new();
         
         // Add plugins needed for WASM
@@ -62,17 +70,22 @@ impl SpookyMazeWasm {
         .add_systems(Startup, systems::setup::setup)
         .insert_resource(Time::<Fixed>::from_hz(10.0))
         .add_event::<PlayerInputEvent>()
+        .add_event::<PlayerTeleportEvent>()
         .add_event::<CoinCollisionEvent>()
         .add_event::<DynamiteCollisionEvent>()
         .add_event::<WalkerCollisionEvent>()
         .add_event::<NpcCollisionEvent>()
         .insert_resource(HudState::default())
         .insert_resource(InputQueue { queue: input_queue.clone() })
+        .insert_resource(TeleportQueue { queue: teleport_queue.clone() })
         .add_systems(
             FixedUpdate,
             (
                 process_input_queue,
+                process_teleport_queue,
                 systems::process_player_input::process_player_input,
+                systems::teleport::handle_player_teleport,
+                systems::teleport::regenerate_teleport_charges,
                 collisions::coin::detect_coin_collision,
                 collisions::coin::remove_coin_on_collision,
                 collisions::dynamite::handle_dynamite_collision,
@@ -88,7 +101,7 @@ impl SpookyMazeWasm {
         
         console::log_1(&"Spooky Maze WASM initialized".into());
         
-        Self { app, input_queue }
+        Self { app, input_queue, teleport_queue }
     }
     
     #[wasm_bindgen]
@@ -119,9 +132,13 @@ impl SpookyMazeWasm {
     
     #[wasm_bindgen]
     pub fn teleport(&mut self) {
-        // Teleport functionality - this would need to be implemented
-        // as a separate event or action in the core game logic
-        console::log_1(&"Teleport requested".into());
+        // Enqueue teleport event
+        if let Ok(mut queue) = self.teleport_queue.lock() {
+            queue.push_back(PlayerTeleportEvent);
+            console::log_1(&"Teleport event enqueued".into());
+        } else {
+            console::log_1(&"Failed to lock teleport queue".into());
+        }
     }
     
     #[wasm_bindgen]
@@ -149,6 +166,18 @@ fn process_input_queue(
     if let Ok(mut queue) = input_queue.queue.lock() {
         while let Some(event) = queue.pop_front() {
             player_input_events.write(event);
+        }
+    }
+}
+
+// System to process teleport events from the queue
+fn process_teleport_queue(
+    teleport_queue: Res<TeleportQueue>,
+    mut teleport_events: EventWriter<PlayerTeleportEvent>,
+) {
+    if let Ok(mut queue) = teleport_queue.queue.lock() {
+        while let Some(event) = queue.pop_front() {
+            teleport_events.write(event);
         }
     }
 }

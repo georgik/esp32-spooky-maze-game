@@ -7,3 +7,7 @@ pub struct PlayerInputEvent {
     pub dx: f32,
     pub dy: f32,
 }
+
+/// An event triggered when the player requests teleportation.
+#[derive(Debug, Event)]
+pub struct PlayerTeleportEvent;

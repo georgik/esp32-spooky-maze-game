@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy::input::keyboard::KeyCode;
-use spooky_core::events::player::PlayerInputEvent;
+use spooky_core::events::player::{PlayerInputEvent, PlayerTeleportEvent};
 use web_sys::console;
 
 pub struct WasmInputPlugin;
@@ -14,6 +14,7 @@ impl Plugin for WasmInputPlugin {
 fn dispatch_keyboard_input(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player_input_events: EventWriter<PlayerInputEvent>,
+    mut teleport_events: EventWriter<PlayerTeleportEvent>,
 ) {
     let mut dx = 0.0;
     let mut dy = 0.0;
@@ -40,7 +41,7 @@ fn dispatch_keyboard_input(
     // Handle special actions
     if keyboard_input.just_pressed(KeyCode::Space) {
         console::log_1(&"Space pressed - teleport".into());
-        // TODO: Send teleport event
+        teleport_events.write(PlayerTeleportEvent);
     }
     
     if keyboard_input.just_pressed(KeyCode::Enter) {

@@ -5,3 +5,4 @@ pub mod hud;
 pub mod npc_logic;
 pub mod process_player_input;
 pub mod setup;
+pub mod teleport;
