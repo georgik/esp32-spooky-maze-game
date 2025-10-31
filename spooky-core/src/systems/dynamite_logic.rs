@@ -1,4 +1,4 @@
-use crate::events::dynamite::DynamiteCollisionEvent;
+use crate::events::dynamite::DynamiteCollisionMessage;
 use crate::maze::Coin;
 use crate::resources::MazeResource;
 use bevy::prelude::*;
@@ -6,7 +6,7 @@ use bevy::prelude::*;
 /// This system listens for `DynamiteCollisionEvent` and relocates the dynamite
 /// instead of despawning it.
 pub fn handle_dynamite_collision(
-    mut events: EventReader<DynamiteCollisionEvent>,
+    mut events: MessageReader<DynamiteCollisionMessage>,
     mut maze_res: ResMut<MazeResource>,
 ) {
     for event in events.read() {

@@ -1,5 +1,5 @@
 use crate::components::CoinComponent;
-use crate::events::coin::CoinCollisionEvent;
+use crate::events::coin::CoinCollisionMessage;
 use crate::maze::Coin;
 use crate::resources::{MazeResource, PlayerPosition};
 use crate::systems::hud::HudState;
@@ -10,7 +10,7 @@ use bevy::prelude::*;
 pub fn detect_coin_collision(
     player_pos: Res<PlayerPosition>,
     maze_res: Res<MazeResource>,
-    mut event_writer: EventWriter<CoinCollisionEvent>,
+    mut event_writer: MessageWriter<CoinCollisionMessage>,
 ) {
     // Assuming the player moves in tile increments, cast the logical position to i32.
     let player_tile_x = player_pos.x as i32;
@@ -18,7 +18,7 @@ pub fn detect_coin_collision(
 
     for coin in maze_res.maze.coins.iter() {
         if coin.x == player_tile_x && coin.y == player_tile_y {
-            event_writer.write(CoinCollisionEvent {
+            event_writer.write(CoinCollisionMessage {
                 coin_x: coin.x,
                 coin_y: coin.y,
             });
@@ -28,7 +28,7 @@ pub fn detect_coin_collision(
 
 /// This system listens for `CoinCollisionEvent` and removes the collided coin from the maze.
 pub fn remove_coin_on_collision(
-    mut events: EventReader<CoinCollisionEvent>,
+    mut events: MessageReader<CoinCollisionMessage>,
     mut maze_res: ResMut<MazeResource>,
     mut hud_state: ResMut<HudState>,
     mut commands: Commands,

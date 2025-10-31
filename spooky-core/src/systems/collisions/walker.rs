@@ -1,5 +1,5 @@
 use crate::components::WalkerComponent;
-use crate::events::walker::WalkerCollisionEvent;
+use crate::events::walker::WalkerCollisionMessage;
 use crate::resources::{MazeResource, PlayerPosition};
 use bevy::prelude::*; // Assumes you have a WalkerComponent
 
@@ -8,7 +8,7 @@ use bevy::prelude::*; // Assumes you have a WalkerComponent
 pub fn detect_walker_collision(
     player_pos: Res<PlayerPosition>,
     maze_res: Res<MazeResource>,
-    mut event_writer: EventWriter<WalkerCollisionEvent>,
+    mut event_writer: MessageWriter<WalkerCollisionMessage>,
 ) {
     // Assume the player moves in tile increments.
     let player_tile_x = player_pos.x as i32;
@@ -17,7 +17,7 @@ pub fn detect_walker_collision(
     // Iterate over all walker positions stored in the maze.
     for walker in maze_res.maze.walkers.iter() {
         if walker.x == player_tile_x && walker.y == player_tile_y {
-            event_writer.write(WalkerCollisionEvent {
+            event_writer.write(WalkerCollisionMessage {
                 walker_x: walker.x,
                 walker_y: walker.y,
             });
@@ -28,7 +28,7 @@ pub fn detect_walker_collision(
 /// This system handles `WalkerCollisionEvent`s by relocating the walker in the maze
 /// (so that the player can collect it again later) and updating the visual component.
 pub fn handle_walker_collision(
-    mut events: EventReader<WalkerCollisionEvent>,
+    mut events: MessageReader<WalkerCollisionMessage>,
     mut maze_res: ResMut<MazeResource>,
     mut query: Query<&mut WalkerComponent>,
 ) {

@@ -3,7 +3,7 @@
 
 extern crate alloc;
 use alloc::boxed::Box;
-use spooky_core::events::{coin::CoinCollisionEvent, player::PlayerInputEvent};
+use spooky_core::events::{coin::CoinCollisionMessage, player::PlayerInputMessage};
 use spooky_core::systems;
 use spooky_core::systems::hud::HudState;
 use spooky_core::systems::process_player_input::process_player_input;
@@ -108,9 +108,9 @@ struct DisplayResource {
 use crate::embedded_systems::player_input;
 use crate::embedded_systems::player_input::AccelerometerResource;
 use core::sync::atomic::{AtomicU32, Ordering};
-use spooky_core::events::dynamite::DynamiteCollisionEvent;
-use spooky_core::events::npc::NpcCollisionEvent;
-use spooky_core::events::walker::WalkerCollisionEvent;
+use spooky_core::events::dynamite::DynamiteCollisionMessage;
+use spooky_core::events::npc::NpcCollisionMessage;
+use spooky_core::events::walker::WalkerCollisionMessage;
 use spooky_core::systems::collisions;
 // Using bevy's Instant which supports set_elapsed
 use bevy_platform::time::Instant;
@@ -196,11 +196,11 @@ fn main() -> ! {
         .insert_resource(HudState::default())
         .insert_resource(MazeSeed(Some(seed)))
         .add_systems(Startup, systems::setup::setup)
-        .add_event::<PlayerInputEvent>()
-        .add_event::<CoinCollisionEvent>()
-        .add_event::<DynamiteCollisionEvent>()
-        .add_event::<WalkerCollisionEvent>()
-        .add_event::<NpcCollisionEvent>()
+        .add_message::<PlayerInputMessage>()
+        .add_message::<CoinCollisionMessage>()
+        .add_message::<DynamiteCollisionMessage>()
+        .add_message::<WalkerCollisionMessage>()
+        .add_message::<NpcCollisionMessage>()
         .add_systems(
             Update,
             (

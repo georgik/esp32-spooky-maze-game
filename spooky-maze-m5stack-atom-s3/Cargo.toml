@@ -7,9 +7,15 @@ license = "MIT"
 
 [dependencies]
 # Disable default features for Bevy and its sub-crates so that no_std is used.
-bevy_ecs = { version = "0.16.1", default-features = false }
-bevy = { version = "0.16.1", default-features = false }
-bevy_platform = { version = "0.16.1", default-features = false }
+# Note: Bevy 0.17 has an error in atomics detection which results in panic when spawning the first entity
+#       Development version Bevy-0.18-dev has solved the issue, so for the time being we will use this.
+#bevy = { version = "0.17.2", default-features = false }
+bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "906bc14", default-features = false }
+#bevy_ecs = { version = "0.17.2", default-features = false }
+bevy_ecs = { git = "https://github.com/bevyengine/bevy.git", rev = "906bc14", default-features = false }
+#bevy_platform = { version = "0.17.2", default-features = false }
+bevy_platform = { git = "https://github.com/bevyengine/bevy.git", rev = "906bc14", default-features = false }
+
 
 esp-hal = { version = "1.0.0", features = ["esp32s3", "unstable"] }
 esp-backtrace = { version = "0.18.1", features = [
