@@ -40,6 +40,11 @@ For now, the project supports three primary targets:
 Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the 
 [v0.10.0 tag](https://github.com/georgik/esp32-spooky-maze-game/tree/v0.10.0).
 
+## Recommended Tools
+
+- [CLion with Rust and Wokwi plugins](https://plugins.jetbrains.com/plugin/23826-wokwi-simulator)
+- [VS Code with Rust and Wokwi plugin](https://docs.wokwi.com/vscode/getting-started)
+
 ## Technical Specifications
 
 ### Hardware Requirements

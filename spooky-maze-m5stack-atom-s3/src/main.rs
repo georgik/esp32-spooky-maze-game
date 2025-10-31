@@ -42,6 +42,9 @@ use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics_framebuf::FrameBuf;
 
+// ESP-IDF App Descriptor required by newer espflash
+esp_bootloader_esp_idf::esp_app_desc!();
+
 // Bring in our custom render system from our embedded module.
 mod embedded_systems {
     pub mod player_input;
@@ -208,7 +211,7 @@ fn main() -> ! {
         }
     }
 
-    let mut hardware_rng = Rng::new(peripherals.RNG);
+    let hardware_rng = Rng::new();
     let mut seed = [0u8; 32];
     hardware_rng.read(&mut seed);
 
