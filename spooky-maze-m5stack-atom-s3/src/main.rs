@@ -8,12 +8,12 @@ use spooky_core::systems;
 use spooky_core::systems::hud::HudState;
 use spooky_core::systems::process_player_input::process_player_input;
 
-use bevy::app::{App, Startup, TaskPoolPlugin, ScheduleRunnerPlugin};
-use bevy::prelude::Update;
-use bevy_ecs::prelude::*;
 use bevy::app::AppExit;
+use bevy::app::{App, ScheduleRunnerPlugin, Startup, TaskPoolPlugin};
 use bevy::ecs::event::Events;
+use bevy::prelude::Update;
 use bevy::time::TimePlugin;
+use bevy_ecs::prelude::*;
 use embedded_hal::delay::DelayNs;
 use embedded_hal_bus::spi::ExclusiveDevice;
 use esp_hal::delay::Delay;
@@ -92,7 +92,10 @@ struct FrameBufferResource {
 
 impl FrameBufferResource {
     fn new() -> Self {
-        info!("Allocating framebuffer of size {} bytes", LCD_BUFFER_SIZE * 2);
+        info!(
+            "Allocating framebuffer of size {} bytes",
+            LCD_BUFFER_SIZE * 2
+        );
         let fb_data: Box<[Rgb565; LCD_BUFFER_SIZE]> = Box::new([Rgb565::BLACK; LCD_BUFFER_SIZE]);
         info!("Framebuffer allocated successfully");
         let heap_buffer = HeapBuffer::new(fb_data);
@@ -140,10 +143,10 @@ fn main() -> ! {
     // Initialize ESP‑hal peripherals.
     let peripherals = esp_hal::init(esp_hal::Config::default());
     init_logger_from_env();
-    
+
     // Initialize heap allocator for internal RAM
     esp_alloc::heap_allocator!(size: 180 * 1024);
-    
+
     info!("Heap allocator initialized");
 
     // --- DMA Buffers for SPI ---
@@ -217,17 +220,17 @@ fn main() -> ! {
 
     // --- Build the Bevy app with minimal essential plugins for embedded
     let mut app = App::new();
-    
+
     // Add essential plugins for event processing to work
     app.add_plugins((
-        TaskPoolPlugin::default(),      // Required for system scheduling
-        TimePlugin::default(),          // Required for frame timing and updates
-        ScheduleRunnerPlugin::default(),// Required since we don't have windowing
+        TaskPoolPlugin::default(),       // Required for system scheduling
+        TimePlugin::default(),           // Required for frame timing and updates
+        ScheduleRunnerPlugin::default(), // Required since we don't have windowing
     ));
-    
+
     // Initialize the app properly for our minimal setup
-    app.init_resource::<Events<AppExit>>();  // Required for basic app functionality
-    
+    app.init_resource::<Events<AppExit>>(); // Required for basic app functionality
+
     app.insert_non_send_resource(DisplayResource { display })
         .insert_non_send_resource(AccelerometerResource { sensor: icm_sensor })
         .insert_resource(FrameBufferResource::new())
