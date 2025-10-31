@@ -24,7 +24,7 @@ jobs:
         uses: esp-rs/xtensa-toolchain@v1.5
         with:
           default: true
-          version: '1.85.0'
+          version: '1.90.0'
           buildtargets: esp32s3
           ldproxy: false
 
