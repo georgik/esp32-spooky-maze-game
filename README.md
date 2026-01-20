@@ -1,8 +1,8 @@
 # ESP32 Spooky Maze Game
 
 
-ESP32 Spooky Maze Game is a technical demo game built using [Bevy ECS 0.16.1](https://github.com/bevyengine/bevy) 
-with no_std support via [esp-hal 1.0.0-beta.1](https://github.com/esp-rs/esp-hal). The game demonstrates how to 
+ESP32 Spooky Maze Game is a technical demo game built using [Bevy ECS 0.16.1](https://github.com/bevyengine/bevy)
+with no_std support via [esp-hal 1.0.0-beta.1](https://github.com/esp-rs/esp-hal). The game demonstrates how to
 build cross-platform applications that run on both embedded hardware and desktop environments using a shared core.
 
 In this game, a ghost navigates through a maze collecting coins while avoiding obstacles. Special artifacts such as
@@ -20,7 +20,7 @@ For now, the project supports three primary targets:
 
 - **Desktop Rust Standard Version**
   Use keyboard controls to move the ghost and trigger actions.
- 
+
   ![Spooky Maze Game Desktop](assets/screenshot/spooky-maze-desktop.webp)
 
 - **WebAssembly (WASM) Version**
@@ -36,8 +36,13 @@ For now, the project supports three primary targets:
 
   ![Spooky Maze Game M5Stack-Atom-S3](assets/screenshot/spooky-maze-m5stack-atom-s3.webp)
 
+- **[M5Stack-Atom-S3R](https://docs.m5stack.com/en/core/AtomS3R) Embedded Version**
+  Uses a BMI270 inertial measurement unit (IMU) for input (tilt the board to move the ghost).
 
-Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the 
+  ![Spooky Maze Game M5Stack-Atom-S3R](assets/screenshot/spooky-maze-m5stack-atom-s3r.webp)
+
+
+Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the
 [v0.10.0 tag](https://github.com/georgik/esp32-spooky-maze-game/tree/v0.10.0).
 
 ## Recommended Tools
@@ -51,6 +56,7 @@ Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the
 
 - **ESP32-S3-BOX-3**: 8MB PSRAM, ICM42670 accelerometer, 320x240 ILI9486 display
 - **M5Stack-Atom-S3**: 180KB internal RAM (no PSRAM), MPU6886 accelerometer, 130x129 GC9A01 display
+- **M5Stack-Atom-S3R**: 8MB PSRAM, BMI270 IMU, 128x128 pixels GC9107 display
 
 ### Software Versions
 
@@ -63,7 +69,8 @@ Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the
 
 - **ESP32-S3-BOX-3**: Uses PSRAM allocator for large framebuffer (320x240x2 = 153,600 bytes)
 - **M5Stack-Atom-S3**: Uses internal RAM heap allocator (180KB) for small framebuffer (130x129x2 = 33,540 bytes)
-- **Event Processing**: Minimal Bevy plugins (TaskPoolPlugin, TimePlugin, ScheduleRunnerPlugin) 
+- **M5Stack-Atom-S3R**: Uses internal RAM heap allocator (180KB) for small framebuffer (128x128x2 = 32,768 bytes)
+- **Event Processing**: Minimal Bevy plugins (TaskPoolPlugin, TimePlugin, ScheduleRunnerPlugin)
   to enable event processing without memory overhead of DefaultPlugins
 
 ## Key Technical Decisions
@@ -151,7 +158,7 @@ espup install
 
 Compiler toolchain from ESP-IDF v5.5 (required only for Xtensa targets):
 ```shell
-git clone git@github.com:espressif/esp-idf.git --depth 10 --recursive --shallow-submodules 
+git clone git@github.com:espressif/esp-idf.git --depth 10 --recursive --shallow-submodules
 source esp-idf/export.sh
 ```
 
@@ -167,6 +174,11 @@ cargo run --release
 - M5Stack-Atom-S3
 ```shell
 cd spooky-maze-m5stack-atom-s3
+cargo run --release
+```
+- M5Stack-Atom-S3R
+```shell
+cd spooky-maze-m5stack-atom-s3r
 cargo run --release
 ```
 
