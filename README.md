@@ -41,6 +41,11 @@ For now, the project supports three primary targets:
 
   ![Spooky Maze Game M5Stack-Atom-S3R](assets/screenshot/spooky-maze-m5stack-atom-s3r.webp)
 
+- **[M5Stack-CoreS3](https://docs.m5stack.com/en/core/CoreS3) Embedded Version**
+  Features a large 320x240 display and BMI270 IMU for tilt-based controls.
+
+  ![Spooky Maze Game M5Stack-CoreS3](assets/screenshot/spooky-maze-m5stack-cores3.webp)
+
 
 Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the
 [v0.10.0 tag](https://github.com/georgik/esp32-spooky-maze-game/tree/v0.10.0).
@@ -57,6 +62,7 @@ Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the
 - **ESP32-S3-BOX-3**: 8MB PSRAM, ICM42670 accelerometer, 320x240 ILI9486 display
 - **M5Stack-Atom-S3**: 180KB internal RAM (no PSRAM), MPU6886 accelerometer, 130x129 GC9A01 display
 - **M5Stack-Atom-S3R**: 8MB PSRAM, BMI270 IMU, 128x128 pixels GC9107 display
+- **M5Stack-CoreS3**: 8MB PSRAM, BMI270 IMU, 320x240 ILI9342C display
 
 ### Software Versions
 
@@ -70,6 +76,7 @@ Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the
 - **ESP32-S3-BOX-3**: Uses PSRAM allocator for large framebuffer (320x240x2 = 153,600 bytes)
 - **M5Stack-Atom-S3**: Uses internal RAM heap allocator (180KB) for small framebuffer (130x129x2 = 33,540 bytes)
 - **M5Stack-Atom-S3R**: Uses internal RAM heap allocator (180KB) for small framebuffer (128x128x2 = 32,768 bytes)
+- **M5Stack-CoreS3**: Uses PSRAM allocator for large framebuffer (320x240x2 = 153,600 bytes)
 - **Event Processing**: Minimal Bevy plugins (TaskPoolPlugin, TimePlugin, ScheduleRunnerPlugin)
   to enable event processing without memory overhead of DefaultPlugins
 
@@ -85,7 +92,7 @@ Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the
   Input events (whether from keyboard on desktop or accelerometer on embedded) are dispatched and processed by separate
   systems, allowing for a clean decoupling between hardware input and game logic.
 - Hardware Peripheral Integration:
-  Peripherals like the ICM42670 accelerometer are injected as Bevy resources (using NonSend where required), enabling
+  Peripherals like the ICM42670 or BMI270 accelerometers are injected as Bevy resources (using NonSend where required), enabling
   seamless access to hardware data within ECS systems.
 - Random Maze Generation:
   The maze is generated dynamically, with a seed provided as a resource to ensure variability across game sessions. For
@@ -141,6 +148,8 @@ Controls:
 These instructions are valid for boards based on ESP32-S3:
 - ESP32-S3-BOX-3
 - M5Stack-Atom-S3
+- M5Stack-Atom-S3R
+- M5Stack-CoreS3
 
 Prerequisites:
 
@@ -179,6 +188,11 @@ cargo run --release
 - M5Stack-Atom-S3R
 ```shell
 cd spooky-maze-m5stack-atom-s3r
+cargo run --release
+```
+- M5Stack-CoreS3
+```shell
+cd spooky-maze-m5stack-cores3
 cargo run --release
 ```
 
