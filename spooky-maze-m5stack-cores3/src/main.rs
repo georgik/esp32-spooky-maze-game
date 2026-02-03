@@ -46,7 +46,7 @@ use embedded_graphics_framebuf::FrameBuf;
 
 // M5Stack CoreS3 Power Management and GPIO Expander
 use aw9523::{Aw9523, I2CGpioExpanderInterface};
-use axp2101_rs::{Axp2101, I2CPowerManagementInterface};
+use axp2101_embedded::Axp2101;
 
 // ESP-IDF App Descriptor required by newer espflash
 esp_bootloader_esp_idf::esp_app_desc!();
@@ -167,11 +167,17 @@ fn main() -> ! {
     // --- Initialize AXP2101 Power Management IC ---
     info!("Initializing AXP2101 Power Management IC");
     let axp_i2c = embedded_hal_bus::i2c::RefCellDevice::new(i2c_bus);
-    let axp_interface = I2CPowerManagementInterface::new(axp_i2c);
-    let mut axp = Axp2101::new(axp_interface);
+    let mut axp = Axp2101::new(axp_i2c);
     match axp.init() {
         Ok(_) => info!("AXP2101 initialized successfully"),
         Err(e) => error!("AXP2101 initialization failed (continuing anyway): {:?}", e),
+    }
+
+    // Enable DCDC3 - CRITICAL for M5Stack CoreS3!
+    // DCDC3 powers the BMI270 IMU and other 3.3V peripherals
+    match axp.enable_dc3() {
+        Ok(_) => info!("DCDC3 enabled for BMI270 IMU"),
+        Err(e) => error!("Failed to enable DCDC3: {:?}", e),
     }
 
     // --- Initialize AW9523 GPIO Expander ---
@@ -343,7 +349,6 @@ fn main() -> ! {
     let mut loop_delay = Delay::new();
     loop {
         app.update();
-        info!("tick");
         loop_delay.delay_ms(300u32);
     }
 }
