@@ -3,6 +3,7 @@
 
 extern crate alloc;
 use alloc::boxed::Box;
+use core::cell::RefCell;
 use spooky_core::events::{coin::CoinCollisionMessage, player::PlayerInputMessage};
 use spooky_core::systems;
 use spooky_core::systems::hud::HudState;
@@ -28,8 +29,14 @@ use esp_hal::{
 };
 use esp_println::{logger::init_logger_from_env, println};
 use log::{error, info};
+
+// IMU - CoreS3 uses BMI270 (NOT MPU6886!)
+use bmi2::Bmi2;
 use mipidsi::{Builder, models::ILI9342CRgb565};
-use mipidsi::{interface::SpiInterface, options::{ColorInversion, ColorOrder}};
+use mipidsi::{
+    interface::SpiInterface,
+    options::{ColorInversion, ColorOrder},
+};
 use spooky_core::resources::MazeSeed;
 
 // Embedded Graphics imports for our framebuffer drawing.
@@ -38,8 +45,8 @@ use embedded_graphics::prelude::*;
 use embedded_graphics_framebuf::FrameBuf;
 
 // M5Stack CoreS3 Power Management and GPIO Expander
-use axp2101::{Axp2101, I2CPowerManagementInterface};
 use aw9523::{Aw9523, I2CGpioExpanderInterface};
+use axp2101_rs::{Axp2101, I2CPowerManagementInterface};
 
 // ESP-IDF App Descriptor required by newer espflash
 esp_bootloader_esp_idf::esp_app_desc!();
@@ -49,6 +56,8 @@ mod embedded_systems {
     pub mod player_input;
     pub mod render;
 }
+use embedded_systems::player_input;
+use embedded_systems::player_input::AccelerometerResource;
 use embedded_systems::render::render_system;
 
 // Bring in our heapbuffer helper.
@@ -147,17 +156,18 @@ fn main() -> ! {
     // --------------------------------------------------------------------------------
 
     // --- Initialize I2C bus for power management (GPIO12=SDA, GPIO11=SCL) ---
-    let i2c_bus = I2c::new(
-        peripherals.I2C0,
-        I2cConfig::default(),
-    )
-    .unwrap()
-    .with_sda(peripherals.GPIO12)
-    .with_scl(peripherals.GPIO11);
+    let i2c = I2c::new(peripherals.I2C0, I2cConfig::default())
+        .unwrap()
+        .with_sda(peripherals.GPIO12)
+        .with_scl(peripherals.GPIO11);
+
+    // Wrap I2C in RefCell for sharing between AXP2101, AW9523, and IMU
+    let i2c_bus: &'static RefCell<I2c<'static, Blocking>> = Box::leak(Box::new(RefCell::new(i2c)));
 
     // --- Initialize AXP2101 Power Management IC ---
     info!("Initializing AXP2101 Power Management IC");
-    let axp_interface = I2CPowerManagementInterface::new(i2c_bus);
+    let axp_i2c = embedded_hal_bus::i2c::RefCellDevice::new(i2c_bus);
+    let axp_interface = I2CPowerManagementInterface::new(axp_i2c);
     let mut axp = Axp2101::new(axp_interface);
     match axp.init() {
         Ok(_) => info!("AXP2101 initialized successfully"),
@@ -166,10 +176,8 @@ fn main() -> ! {
 
     // --- Initialize AW9523 GPIO Expander ---
     info!("Initializing AW9523 GPIO Expander");
-    // Get the I2C interface back by consuming the AXP2101
-    let i2c_bus = axp.release_i2c();
-
-    let aw_interface = I2CGpioExpanderInterface::new(i2c_bus);
+    let aw_i2c = embedded_hal_bus::i2c::RefCellDevice::new(i2c_bus);
+    let aw_interface = I2CGpioExpanderInterface::new(aw_i2c);
     let mut aw = Aw9523::new(aw_interface);
     match aw.init() {
         Ok(_) => info!("AW9523 initialized successfully"),
@@ -224,14 +232,65 @@ fn main() -> ! {
     unsafe { Instant::set_elapsed(elapsed_time) };
 
     // --------------------------------------------------------------------------------
-    // IMU INITIALIZATION - TEMPORARILY DISABLED
+    // IMU INITIALIZATION
     // --------------------------------------------------------------------------------
-    // TODO: Implement MPU6886 driver for esp-hal 1.0.0
-    // The CoreS3 uses MPU6886 IMU, not BMI270
-    // Reference: /Users/georgik/projects/esp32-spooky-maze-game-old/m5stack-cores3
-    //
-    // For now, the game will use demo/random movement until IMU is implemented
-    info!("IMU disabled - will use demo movement controller");
+    // CoreS3 uses BMI270 (6-axis IMU), NOT MPU6886!
+    // BMI270 has two possible I2C addresses based on SDO pin:
+    // - 0x68 (default, SDO=GND)
+    // - 0x69 (alternative, SDO=VDD)
+    // M5Stack CoreS3 might use 0x69, so we'll try both
+    info!("Initializing BMI270 IMU");
+
+    // Add delay after power-on to let BMI270 stabilize
+    let mut power_delay = Delay::new();
+    power_delay.delay_ms(100u32);
+
+    // Try default address first (0x68), then alternative (0x69) if that fails
+    let mut imu = {
+        info!("Trying BMI270 at I2C address 0x68 (default)");
+        let imu_i2c_1 = embedded_hal_bus::i2c::RefCellDevice::new(i2c_bus);
+        let mut imu_try = Bmi2::new_i2c(
+            imu_i2c_1,
+            bmi2::I2cAddr::Default,
+            bmi2::types::Burst::Other(255),
+        );
+        match imu_try.init(&bmi2::config::BMI270_CONFIG_FILE) {
+            Ok(()) => {
+                info!("BMI270 initialized at 0x68");
+                imu_try
+            }
+            Err(e) => {
+                error!("BMI270 at 0x68 failed: {:?}", e);
+                info!("Trying alternative I2C address 0x69");
+                let imu_i2c_2 = embedded_hal_bus::i2c::RefCellDevice::new(i2c_bus);
+                let mut imu_alt = Bmi2::new_i2c(
+                    imu_i2c_2,
+                    bmi2::I2cAddr::Alternative,
+                    bmi2::types::Burst::Other(255),
+                );
+                match imu_alt.init(&bmi2::config::BMI270_CONFIG_FILE) {
+                    Ok(()) => {
+                        info!("BMI270 initialized at 0x69");
+                        imu_alt
+                    }
+                    Err(e2) => {
+                        error!("BMI270 at 0x69 also failed: {:?}", e2);
+                        panic!("Failed to initialize BMI270 IMU at both I2C addresses");
+                    }
+                }
+            }
+        }
+    };
+
+    imu.set_pwr_ctrl(bmi2::types::PwrCtrl {
+        aux_en: false,
+        gyr_en: true,
+        acc_en: true,
+        temp_en: false,
+    })
+    .expect("failed to set IMU power control");
+
+    info!("BMI270 IMU ready");
 
     let hardware_rng = Rng::new();
     let mut seed = [0u8; 32];
@@ -248,6 +307,7 @@ fn main() -> ! {
     ));
 
     app.insert_non_send_resource(DisplayResource { display })
+        .insert_non_send_resource(AccelerometerResource { sensor: imu })
         .insert_resource(FrameBufferResource::new())
         .insert_resource(HudState::default())
         .insert_resource(MazeSeed(Some(seed)))
@@ -260,8 +320,11 @@ fn main() -> ! {
         .add_systems(
             Update,
             (
-                // IMU input system temporarily disabled
-                // player_input::dispatch_accelerometer_input::<...>,
+                // MPU6886 IMU input using mpu6050-dmp driver
+                // Note: Using a simple type since we're not sharing I2C with RefCell here
+                player_input::dispatch_accelerometer_input::<
+                    embedded_hal_bus::i2c::RefCellDevice<'static, I2c<'static, Blocking>>,
+                >,
                 process_player_input,
                 collisions::coin::detect_coin_collision,
                 collisions::coin::remove_coin_on_collision,
