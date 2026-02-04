@@ -17,17 +17,27 @@ pub fn dispatch_accelerometer_input<I2C>(
     if let Ok(accel) = accel_res.sensor.get_acc() {
         let step = maze_res.maze.tile_width as f32;
 
-        // Threshold for accelerometer control
-        let threshold = 600.0;
+        // Threshold for accelerometer control (lowered for easier control)
+        // MPU6886 values are normalized (in g units), not raw values
+        let threshold = 0.15;
         let mut dx = 0.0;
         let mut dy = 0.0;
 
-        // accel.x → dx (horizontal), accel.y → dy (vertical)
-        // Fixed direction: positive accel should move in positive direction
-        // X axis inverted for left/right
+        // MPU6886 has X and Y swapped compared to the device orientation
+        // Based on original Mpu6886Wrapper in spooky-embedded:
+        //   x: measurement.y, y: measurement.x
+        //
+        // Original mapping (with swapped axes):
+        //   accel_norm.y (measurement.x) > threshold → Left
+        //   accel_norm.y (measurement.x) < -threshold → Right
+        //   accel_norm.x (measurement.y) > threshold → Down
+        //   accel_norm.x (measurement.y) < -threshold → Up
+
+        // measurement.x controls left/right
         if accel.x.abs() > threshold {
             dx = if accel.x > 0.0 { -step } else { step };
         }
+        // measurement.y controls up/down
         if accel.y.abs() > threshold {
             dy = if accel.y > 0.0 { step } else { -step };
         }
