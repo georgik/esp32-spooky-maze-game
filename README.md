@@ -5,8 +5,8 @@ ESP32 Spooky Maze Game is a technical demo game built using [Bevy ECS 0.16.1](ht
 with no_std support via [esp-hal 1.0.0-beta.1](https://github.com/esp-rs/esp-hal). The game demonstrates how to
 build cross-platform applications that run on both embedded hardware and desktop environments using a shared core.
 
-In this game, a ghost navigates through a maze collecting coins while avoiding obstacles. Special artifacts such as
-dynamite and the "walker" power-up introduce additional gameplay mechanics. On collision with various objects, events
+In this game, a ghost navigates through a maze collecting coins while avoiding obstacles. Special artifacts such
+as dynamite and the "walker" power-up introduce additional gameplay mechanics. On collision with various objects, events
 are dispatched to decouple hardware-specific logic from game rules.
 
 <video src="https://github.com/user-attachments/assets/28ef7c2b-42cc-4c79-bbdb-fcb0740bf533" controls width="320">
@@ -44,7 +44,12 @@ For now, the project supports three primary targets:
 - **[M5Stack-CoreS3](https://docs.m5stack.com/en/core/CoreS3) Embedded Version**
   Features a large 320x240 display and BMI270 IMU for tilt-based controls.
 
-  ![Spooky Maze Game M5Stack-CoreS3](assets/screenshot/spooky-maze-m5stack-cores3.webp)
+  ![Spooky Maze Game M5Stack-CoreS3](assets/screenshot/spooky-maze-cores3.webp)
+
+- **[M5Stack-Core2](https://docs.m5stack.com/en/core/Core2) Embedded Version**
+  Based on the original ESP32 (Xtensa) with external PSRAM. Features a 320x240 display and MPU6886 accelerometer for tilt-based controls.
+
+  ![Spooky Maze Game M5Stack-Core2](assets/screenshot/spooky-maze-m5stack-core2.webp)
 
 
 Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the
@@ -63,13 +68,14 @@ Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the
 - **M5Stack-Atom-S3**: 180KB internal RAM (no PSRAM), MPU6886 accelerometer, 130x129 GC9A01 display
 - **M5Stack-Atom-S3R**: 8MB PSRAM, BMI270 IMU, 128x128 pixels GC9107 display
 - **M5Stack-CoreS3**: 8MB PSRAM, BMI270 IMU, 320x240 ILI9342C display
+- **M5Stack-Core2**: External PSRAM support, MPU6886 accelerometer, 320x240 ILI9342C display, ESP32 (original Xtensa chip)
 
 ### Software Versions
 
 - **Bevy ECS**: 0.16.1 (with minimal plugin configuration for embedded)
 - **esp-hal**: 1.0.0-beta.1
 - **Rust Edition**: 2024
-- **Target**: xtensa-esp32s3-none-elf
+- **Target**: xtensa-esp32s3-none-elf (or xtensa-esp32-none-elf for M5Stack-Core2)
 
 ### Memory Management
 
@@ -77,6 +83,7 @@ Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the
 - **M5Stack-Atom-S3**: Uses internal RAM heap allocator (180KB) for small framebuffer (130x129x2 = 33,540 bytes)
 - **M5Stack-Atom-S3R**: Uses internal RAM heap allocator (180KB) for small framebuffer (128x128x2 = 32,768 bytes)
 - **M5Stack-CoreS3**: Uses PSRAM allocator for large framebuffer (320x240x2 = 153,600 bytes)
+- **M5Stack-Core2**: Uses external PSRAM allocator for large framebuffer (320x240x2 = 153,600 bytes). The original ESP32 chip requires external PSRAM to be enabled and configured at runtime.
 - **Event Processing**: Minimal Bevy plugins (TaskPoolPlugin, TimePlugin, ScheduleRunnerPlugin)
   to enable event processing without memory overhead of DefaultPlugins
 
@@ -86,7 +93,7 @@ Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the
   The core game logic is implemented in spooky-core using Bevy ECS. For the embedded version, we use a no_std
   configuration along with esp-hal.
 - Renderer & HUD on Embedded:
-  Since Bevy’s built-in rendering and UI systems aren’t available in no_std mode, we’ve implemented our own renderer
+  Since Bevy's built-in rendering and UI systems aren't available in no_std mode, we've implemented our own renderer
   using the Embedded Graphics crate. This renderer also handles HUD text output using Embedded Graphics primitives.
 - Event-based Architecture:
   Input events (whether from keyboard on desktop or accelerometer on embedded) are dispatched and processed by separate
@@ -143,13 +150,14 @@ Controls:
 
 ### Embedded Version
 
-#### ESP32-S3
+#### ESP32-S3 and ESP32
 
-These instructions are valid for boards based on ESP32-S3:
-- ESP32-S3-BOX-3
-- M5Stack-Atom-S3
-- M5Stack-Atom-S3R
-- M5Stack-CoreS3
+These instructions are valid for boards based on ESP32-S3 and ESP32:
+- ESP32-S3-BOX-3 (ESP32-S3)
+- M5Stack-Atom-S3 (ESP32-S3)
+- M5Stack-Atom-S3R (ESP32-S3)
+- M5Stack-CoreS3 (ESP32-S3)
+- M5Stack-Core2 (ESP32)
 
 Prerequisites:
 
@@ -171,7 +179,7 @@ git clone git@github.com:espressif/esp-idf.git --depth 10 --recursive --shallow-
 source esp-idf/export.sh
 ```
 
-Properly configured ESP32-S3-BOX-3 hardware
+Properly configured hardware
 
 Build and run:
 
@@ -195,6 +203,11 @@ cargo run --release
 cd spooky-maze-m5stack-cores3
 cargo run --release
 ```
+- M5Stack-Core2
+```shell
+cd spooky-maze-m5stack-core2
+cargo run --release
+```
 
 Controls:
 
@@ -204,7 +217,7 @@ Movement: Tilt the board accelerometer
 
 - Embedded Renderer:
   The embedded version uses a custom renderer built with Embedded Graphics. This renderer handles both drawing the maze
-  and HUD, filtering out a specific “magic pink” color used to represent transparent pixels in sprites.
+  and HUD, filtering out a specific "magic pink" color used to represent transparent pixels in sprites.
 - Peripheral Resources:
   Hardware peripherals like the accelerometer are injected as Bevy resources (using NonSend), enabling the decoupling of
   hardware interactions from game logic.
