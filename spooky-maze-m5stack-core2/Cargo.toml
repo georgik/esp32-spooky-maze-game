@@ -1,0 +1,56 @@
+[package]
+name = "spooky-maze-m5stack-core2"
+version = "0.14.0"
+authors = [
+    "Juraj Michálek <juraj.michalek@gmail.com>",
+    "Kris van Rens <kris@vanrens.org>"
+]
+edition = "2024"
+license = "MIT"
+
+[dependencies]
+# Disable default features for Bevy and its sub-crates so that no_std is used.
+# Note: Bevy 0.17 has an error in atomics detection which results in panic when spawning the first entity
+#       Development version Bevy-0.18-dev has solved the issue, so for the time being we will use this.
+#bevy = { version = "0.17.2", default-features = false }
+bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "906bc14", default-features = false }
+#bevy_ecs = { version = "0.17.2", default-features = false }
+bevy_ecs = { git = "https://github.com/bevyengine/bevy.git", rev = "906bc14", default-features = false }
+#bevy_platform = { version = "0.17.2", default-features = false }
+bevy_platform = { git = "https://github.com/bevyengine/bevy.git", rev = "906bc14", default-features = false }
+
+
+esp-hal = { version = "1.0.0", features = ["esp32", "unstable", "psram"] }
+esp-backtrace = { version = "0.18.1", features = [
+    "panic-handler",
+    "println"
+] }
+esp-println = { version = "0.16.1", features = [ "log-04" ] }
+
+log = "0.4.27"
+esp-alloc = "0.9.0"
+embedded-graphics = "0.8.1"
+embedded-hal = "1.0.0"
+mipidsi = "0.9.0"
+embedded-graphics-framebuf = "0.5.0"
+embedded-hal-bus = "0.3.0"
+spooky-core = { path = "../spooky-core", default-features = false }
+
+esp-bootloader-esp-idf = { version = "0.4.0", features = ["esp32"] }
+mpu6886 = { git = "https://github.com/georgik/mpu6886.git", branch = "feature/update-hal-2024-11" }
+axp192 = "0.2.0"
+
+[features]
+default = [ "esp-hal/esp32", "esp-backtrace/esp32", "esp-println/esp32", "m5stack-core2" ]
+accelerometer = []
+m5stack-core2 = [ "spooky-core/static_maze" ]
+
+[profile.dev]
+opt-level = "s"
+
+[profile.release]
+codegen-units = 1
+debug = true
+debug-assertions = true
+lto = "thin"
+
