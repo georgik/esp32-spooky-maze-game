@@ -44,7 +44,7 @@ For now, the project supports three primary targets:
 - **[M5Stack-CoreS3](https://docs.m5stack.com/en/core/CoreS3) Embedded Version**
   Features a large 320x240 display and BMI270 IMU for tilt-based controls.
 
-  ![Spooky Maze Game M5Stack-CoreS3](assets/screenshot/spooky-maze-cores3.webp)
+  ![Spooky Maze Game M5Stack-CoreS3](assets/screenshot/spooky-maze-m5stack-cores3.webp)
 
 - **[M5Stack-Core2](https://docs.m5stack.com/en/core/Core2) Embedded Version**
   Based on the original ESP32 (Xtensa) with external PSRAM. Features a 320x240 display and MPU6886 accelerometer for tilt-based controls.
