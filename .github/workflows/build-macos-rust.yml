@@ -12,14 +12,6 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  workflow_dispatch:
-    inputs:
-      release_tag:
-        description: "Upload to specific release"
-        required: true
-        default: 'v0.3.0'
-
-jobs:
   get_release:
     # https://github.com/octokit/request-action
     name: Get release
