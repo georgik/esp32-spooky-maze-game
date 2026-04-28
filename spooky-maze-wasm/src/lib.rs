@@ -3,10 +3,10 @@ use bevy::window::{WindowPlugin, WindowResolution};
 use std::sync::{Arc, Mutex};
 use std::collections::VecDeque;
 
-use spooky_core::events::npc::NpcCollisionEvent;
-use spooky_core::events::player::PlayerInputEvent;
-use spooky_core::events::walker::WalkerCollisionEvent;
-use spooky_core::events::{coin::CoinCollisionEvent, dynamite::DynamiteCollisionEvent};
+use spooky_core::events::npc::NpcCollisionMessage;
+use spooky_core::events::player::PlayerInputMessage;
+use spooky_core::events::walker::WalkerCollisionMessage;
+use spooky_core::events::{coin::CoinCollisionMessage, dynamite::DynamiteCollisionMessage};
 use spooky_core::resources::MazeSeed;
 use spooky_core::systems::hud::HudState;
 use spooky_core::{systems, systems::collisions};
@@ -19,13 +19,13 @@ use wasm_input::WasmInputPlugin;
 // Input queue for buffering input events
 #[derive(Resource, Clone, Default)]
 pub struct InputQueue {
-    queue: Arc<Mutex<VecDeque<PlayerInputEvent>>>,
+    queue: Arc<Mutex<VecDeque<PlayerInputMessage>>>,
 }
 
 #[wasm_bindgen]
 pub struct SpookyMazeWasm {
     app: App,
-    input_queue: Arc<Mutex<VecDeque<PlayerInputEvent>>>,
+    input_queue: Arc<Mutex<VecDeque<PlayerInputMessage>>>,
 }
 
 #[wasm_bindgen]
@@ -61,11 +61,11 @@ impl SpookyMazeWasm {
         })))
         .add_systems(Startup, systems::setup::setup)
         .insert_resource(Time::<Fixed>::from_hz(10.0))
-        .add_event::<PlayerInputEvent>()
-        .add_event::<CoinCollisionEvent>()
-        .add_event::<DynamiteCollisionEvent>()
-        .add_event::<WalkerCollisionEvent>()
-        .add_event::<NpcCollisionEvent>()
+        .add_event::<PlayerInputMessage>()
+        .add_event::<CoinCollisionMessage>()
+        .add_event::<DynamiteCollisionMessage>()
+        .add_event::<WalkerCollisionMessage>()
+        .add_event::<NpcCollisionMessage>()
         .insert_resource(HudState::default())
         .insert_resource(InputQueue { queue: input_queue.clone() })
         .add_systems(
@@ -133,7 +133,7 @@ impl SpookyMazeWasm {
     
     fn send_input(&mut self, dx: f32, dy: f32) {
         if let Ok(mut queue) = self.input_queue.lock() {
-            queue.push_back(PlayerInputEvent { dx, dy });
+            queue.push_back(PlayerInputMessage { dx, dy });
             console::log_1(&format!("Input queued: dx={}, dy={}", dx, dy).into());
         } else {
             console::log_1(&"Failed to lock input queue".into());
@@ -144,7 +144,7 @@ impl SpookyMazeWasm {
 // System to process input events from the queue
 fn process_input_queue(
     input_queue: Res<InputQueue>,
-    mut player_input_events: EventWriter<PlayerInputEvent>,
+    mut player_input_events: EventWriter<PlayerInputMessage>,
 ) {
     if let Ok(mut queue) = input_queue.queue.lock() {
         while let Some(event) = queue.pop_front() {

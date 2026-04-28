@@ -32,7 +32,17 @@ rand_chacha = { version = "0.3.1", default-features = false }
 getrandom = { version = "0.2.8", features = ["js"] }
 console_error_panic_hook = "0.1.7"
 
+# Optional: simple HTTP server for serving WASM files
+actix-web = { version = "4", optional = true }
+actix-files = { version = "0.6", optional = true }
+
 [features]
 default = ["static_maze"]
 static_maze = []
 dynamic_maze = ["spooky-core/dynamic_maze"]
+server = ["actix-web", "actix-files"]
+
+[[bin]]
+name = "serve"
+path = "src/serve.rs"
+required-features = ["server"]

@@ -1,8 +1,7 @@
 # ESP32 Spooky Maze Game
 
-
 ESP32 Spooky Maze Game is a technical demo game built using [Bevy ECS 0.16.1](https://github.com/bevyengine/bevy)
-with no_std support via [esp-hal 1.0.0-beta.1](https://github.com/esp-rs/esp-hal). The game demonstrates how to
+with no_std support via [esp-hal 1.1.0](https://github.com/esp-rs/esp-hal). The game demonstrates how to
 build cross-platform applications that run on both embedded hardware and desktop environments using a shared core.
 
 In this game, a ghost navigates through a maze collecting coins while avoiding obstacles. Special artifacts such
@@ -72,8 +71,8 @@ Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the
 
 ### Software Versions
 
-- **Bevy ECS**: 0.16.1 (with minimal plugin configuration for embedded)
-- **esp-hal**: 1.0.0-beta.1
+- **Bevy ECS**: 0.16.1 (official release)
+- **esp-hal**: 1.1.0
 - **Rust Edition**: 2024
 - **Target**: xtensa-esp32s3-none-elf (or xtensa-esp32-none-elf for M5Stack-Core2)
 
@@ -83,12 +82,17 @@ Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the
 - **M5Stack-Atom-S3**: Uses internal RAM heap allocator (180KB) for small framebuffer (130x129x2 = 33,540 bytes)
 - **M5Stack-Atom-S3R**: Uses internal RAM heap allocator (180KB) for small framebuffer (128x128x2 = 32,768 bytes)
 - **M5Stack-CoreS3**: Uses PSRAM allocator for large framebuffer (320x240x2 = 153,600 bytes)
-- **M5Stack-Core2**: Uses external PSRAM allocator for large framebuffer (320x240x2 = 153,600 bytes). The original ESP32 chip requires external PSRAM to be enabled and configured at runtime.
+- **M5Stack-Core2**: Uses external PSRAM allocator for large framebuffer (320x240x2 = 153,600 bytes). PSRAM is configured at runtime via esp-hal 1.1.0 APIs.
 - **Event Processing**: Minimal Bevy plugins (TaskPoolPlugin, TimePlugin, ScheduleRunnerPlugin)
   to enable event processing without memory overhead of DefaultPlugins
 
 ## Key Technical Decisions
 
+- Workspace Automation:
+  The project uses xtask for unified build automation across all targets. All build, format, and dependency management
+  tasks are accessible via `cargo xtask` commands.
+- Pure Rust Toolchain:
+  WASM builds use pure Rust toolchain (wasm-pack, miniserve) with no Python or Node.js dependencies.
 - Bevy ECS & no_std:
   The core game logic is implemented in spooky-core using Bevy ECS. For the embedded version, we use a no_std
   configuration along with esp-hal.
@@ -101,11 +105,37 @@ Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the
 - Hardware Peripheral Integration:
   Peripherals like the ICM42670 or BMI270 accelerometers are injected as Bevy resources (using NonSend where required), enabling
   seamless access to hardware data within ECS systems.
+- Runtime PSRAM Configuration:
+  PSRAM is configured at runtime using esp-hal 1.1.0 APIs, eliminating compile-time feature flags and improving flexibility.
 - Random Maze Generation:
   The maze is generated dynamically, with a seed provided as a resource to ensure variability across game sessions. For
   the embedded version, the seed is generated using the hardware RNG and passed into the maze generation logic.
 
 ## Build and Run Instructions
+
+### Workspace Automation
+
+The project includes xtask for unified build automation across all targets.
+
+Build all ESP32 projects:
+```shell
+cargo xtask build
+```
+
+Format all projects:
+```shell
+cargo xtask format
+```
+
+Update dependencies:
+```shell
+cargo xtask update
+```
+
+List all discovered projects:
+```shell
+cargo xtask list
+```
 
 ### Desktop Version
 
@@ -117,8 +147,10 @@ Build:
 
 ```shell
 cd spooky-maze-desktop
-cargo run
+cargo run --release
 ```
+
+Note: The desktop application resolves asset paths using CARGO_MANIFEST_DIR, allowing it to run correctly from any working directory.
 
 Controls:
 
@@ -126,20 +158,25 @@ Movement: Arrow keys
 
 ### WebAssembly (WASM) Version
 
-Prerequisites:
+The WASM version uses a pure Rust toolchain with no external dependencies.
 
-- Rust
-- wasm-pack (installed automatically by build script)
-
-Build and run:
-
+Build only:
 ```shell
-cd spooky-maze-wasm
-./build.sh
-# Then serve with any HTTP server:
-python3 -m http.server 8000
-# Open http://localhost:8000 in your browser
+cargo xtask build-wasm
 ```
+
+Build and serve locally:
+```shell
+cargo xtask serve-wasm
+# Custom port:
+cargo xtask serve-wasm --port 3000
+```
+
+Open http://localhost:8000 in your browser.
+
+The build process automatically installs required tools:
+- wasm-pack (Rust WASM builder)
+- miniserve (pure Rust HTTP server)
 
 Controls:
 

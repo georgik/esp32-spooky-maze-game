@@ -13,11 +13,12 @@ use modules::{
     fix_cargo::{fix_corrupted_cargo_toml, scan_corrupted_files, scan_and_fix_corrupted_files},
     embassy::migrate_embassy_api,
     toml_fix::fix_cargo_toml_quotes,
+    wasm::{build_wasm, serve_wasm},
 };
 
 #[derive(Parser)]
 #[command(name = "xtask")]
-#[command(about = "ESP32 Embedded Projects Maintenance Tool")]
+#[command(about = "ESP32 and WASM Projects Maintenance Tool")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -112,22 +113,54 @@ enum Commands {
         #[arg(long, short)]
         verbose: bool,
     },
+    /// Build WASM version for web browser
+    BuildWasm {
+        #[arg(long, short)]
+        verbose: bool,
+    },
+    /// Build and serve WASM version
+    ServeWasm {
+        #[arg(long, short)]
+        verbose: bool,
+        #[arg(long)]
+        port: Option<u16>,
+    },
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    println!("ESP32 Embedded Projects Maintenance Tool");
+    println!("ESP32 and WASM Projects Maintenance Tool");
     println!("{}", "=".repeat(60));
 
-    let projects = discover_projects().await?;
-    if projects.is_empty() {
-        println!("No ESP32 projects found matching patterns");
-        return Ok(());
-    }
-
     match cli.command {
+        Commands::BuildWasm { verbose } => {
+            // WASM commands don't need ESP32 project discovery
+            build_wasm(verbose).await
+        }
+        Commands::ServeWasm { verbose, port } => {
+            // WASM commands don't need ESP32 project discovery
+            serve_wasm(verbose, port).await
+        }
+        _ => {
+            // Other commands need ESP32 project discovery
+            let projects = discover_projects().await?;
+            if projects.is_empty() {
+                println!("No ESP32 projects found matching patterns");
+                return Ok(());
+            }
+
+            run_commands(cli.command, projects).await
+        }
+    }
+}
+
+async fn run_commands(
+    command: Commands,
+    projects: Vec<crate::modules::project::ProjectInfo>,
+) -> Result<()> {
+    match command {
         Commands::List => list_projects(&projects).await,
         Commands::Build {
             keep_going,
@@ -172,6 +205,8 @@ async fn main() -> Result<()> {
         Commands::FixQuotes { dry_run, verbose } => {
             fix_cargo_toml_quotes(&projects, dry_run, verbose).await
         }
+        // BuildWasm and ServeWasm handled earlier
+        _ => Ok(()),
     }
 }
 
