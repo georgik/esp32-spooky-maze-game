@@ -1,4 +1,4 @@
-use bevy_ecs::prelude::*;
+use bevy::prelude::*;
 use mpu6886::Mpu6886;
 use spooky_core::events::player::PlayerInputMessage;
 use spooky_core::resources::MazeResource;

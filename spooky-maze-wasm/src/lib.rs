@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::window::{WindowPlugin, WindowResolution};
+use bevy::event::MessageWriter;
 use std::sync::{Arc, Mutex};
 use std::collections::VecDeque;
 
@@ -144,11 +145,11 @@ impl SpookyMazeWasm {
 // System to process input events from the queue
 fn process_input_queue(
     input_queue: Res<InputQueue>,
-    mut player_input_events: EventWriter<PlayerInputMessage>,
+    mut events: MessageWriter<PlayerInputMessage>,
 ) {
     if let Ok(mut queue) = input_queue.queue.lock() {
         while let Some(event) = queue.pop_front() {
-            player_input_events.write(event);
+            events.write(event);
         }
     }
 }

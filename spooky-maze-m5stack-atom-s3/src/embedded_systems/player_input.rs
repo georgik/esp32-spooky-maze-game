@@ -1,4 +1,4 @@
-use bevy_ecs::prelude::*;
+use bevy::prelude::*;
 use core::fmt::Debug;
 use embedded_hal::i2c::I2c;
 use mpu6886::Mpu6886;

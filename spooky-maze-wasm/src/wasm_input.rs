@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::input::keyboard::KeyCode;
+use bevy::event::MessageWriter;
 use spooky_core::events::player::PlayerInputMessage;
 use web_sys::console;
 
@@ -13,7 +14,7 @@ impl Plugin for WasmInputPlugin {
 
 fn dispatch_keyboard_input(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_input_events: EventWriter<PlayerInputMessage>,
+    mut events: EventWriter<PlayerInputMessage>,
 ) {
     let mut dx = 0.0;
     let mut dy = 0.0;
@@ -34,7 +35,7 @@ fn dispatch_keyboard_input(
 
     if dx != 0.0 || dy != 0.0 {
         console::log_1(&format!("Input: dx={}, dy={}", dx, dy).into());
-        player_input_events.write(PlayerInputMessage { dx, dy });
+        events.write(PlayerInputMessage { dx, dy });
     }
     
     // Handle special actions

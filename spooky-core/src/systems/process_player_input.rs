@@ -13,7 +13,7 @@ use log::info;
 /// both the player's and camera's transform so that the player remains centered.
 /// Movement is only applied if the new coordinates do not collide with a wall.
 pub fn process_player_input(
-    mut events: EventReader<PlayerInputMessage>,
+    mut input_events: MessageReader<PlayerInputMessage>,
     mut player_pos: ResMut<PlayerPosition>,
     maze_res: Res<MazeResource>,
     mut player_query: Query<&mut UnifiedTransform, With<Player>>,
@@ -26,7 +26,7 @@ pub fn process_player_input(
         (With<MainCamera>, Without<Player>),
     >,
 ) {
-    for event in events.read() {
+    for event in input_events.read() {
         // Calculate candidate new position.
         let candidate_x = player_pos.x + event.dx;
         let candidate_y = player_pos.y + event.dy;

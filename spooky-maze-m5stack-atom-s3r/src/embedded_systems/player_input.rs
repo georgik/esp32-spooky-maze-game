@@ -1,4 +1,4 @@
-use bevy_ecs::prelude::*;
+use bevy::prelude::*;
 use bmi2::interface::I2cInterface;
 use spooky_core::events::player::PlayerInputMessage;
 use spooky_core::resources::MazeResource;

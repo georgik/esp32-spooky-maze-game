@@ -1,8 +1,8 @@
-use bevy::prelude::Event;
+use bevy::prelude::Message;
 
-/// An event indicating that the player collided with an NPC.
+/// A message indicating that the player collided with an NPC.
 /// The collision is reported using tile coordinates.
-#[derive(Debug, Event)]
+#[derive(Debug, Message)]
 pub struct NpcCollisionMessage {
     pub npc_x: i32,
     pub npc_y: i32,

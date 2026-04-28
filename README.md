@@ -1,6 +1,6 @@
 # ESP32 Spooky Maze Game
 
-ESP32 Spooky Maze Game is a technical demo game built using [Bevy ECS 0.16.1](https://github.com/bevyengine/bevy)
+ESP32 Spooky Maze Game is a technical demo game built using [Bevy ECS 0.18.1](https://github.com/bevyengine/bevy)
 with no_std support via [esp-hal 1.1.0](https://github.com/esp-rs/esp-hal). The game demonstrates how to
 build cross-platform applications that run on both embedded hardware and desktop environments using a shared core.
 
@@ -71,7 +71,7 @@ Note: For older targets (e.g., ESP32-C3, ESP32-S2, etc.), please refer to the
 
 ### Software Versions
 
-- **Bevy ECS**: 0.16.1 (official release)
+- **Bevy ECS**: 0.18.1 (official release)
 - **esp-hal**: 1.1.0
 - **Rust Edition**: 2024
 - **Target**: xtensa-esp32s3-none-elf (or xtensa-esp32-none-elf for M5Stack-Core2)

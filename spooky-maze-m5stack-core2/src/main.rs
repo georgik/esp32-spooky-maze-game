@@ -11,8 +11,8 @@ use spooky_core::systems::process_player_input::process_player_input;
 
 use bevy::app::{App, ScheduleRunnerPlugin, Startup, TaskPoolPlugin};
 use bevy::prelude::Update;
+use bevy::prelude::*;
 use bevy::time::TimePlugin;
-use bevy_ecs::prelude::*;
 use embedded_hal::delay::DelayNs;
 use embedded_hal_bus::spi::ExclusiveDevice;
 use esp_hal::delay::Delay;
