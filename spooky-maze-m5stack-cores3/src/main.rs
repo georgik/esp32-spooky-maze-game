@@ -23,6 +23,7 @@ use esp_hal::{
     gpio::{Level, Output, OutputConfig},
     i2c::master::{Config as I2cConfig, I2c},
     main,
+    psram::Psram,
     rng::Rng,
     spi::master::{Spi, SpiDmaBus},
     time::Rate,
@@ -139,7 +140,9 @@ fn main() -> ! {
     init_logger_from_env();
 
     // PSRAM allocator for heap memory - needed for larger framebuffer on CoreS3
-    esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram);
+    let psram = Psram::new(peripherals.PSRAM, Default::default());
+    esp_alloc::psram_allocator!(&psram);
+    esp_alloc::heap_allocator!(size: 72 * 1024);
 
     info!("PSRAM allocator initialized");
 

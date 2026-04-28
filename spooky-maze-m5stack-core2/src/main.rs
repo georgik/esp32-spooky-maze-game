@@ -23,7 +23,9 @@ use esp_hal::{
     gpio::{Level, Output, OutputConfig},
     i2c::master::{Config as I2cConfig, I2c},
     main,
+    psram::Psram,
     rng::Rng,
+    rtc_cntl::Rtc,
     spi::master::{Spi, SpiDmaBus},
     time::Rate,
 };
@@ -114,7 +116,64 @@ struct DisplayResource {
     display: MyDisplay,
 }
 
-use core::sync::atomic::{AtomicU32, Ordering};
+use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+
+// Static reference to AXP192 for backlight control (used in power button handler)
+static mut AXP192_REF: Option<
+    axp192::Axp192<embedded_hal_bus::i2c::RefCellDevice<'static, I2c<'static, Blocking>>>,
+> = None;
+// Display on/off state
+static DISPLAY_ON: AtomicBool = AtomicBool::new(true);
+
+// Light sleep function - preserves game state and RAM
+fn enter_light_sleep() {
+    info!("=== ENTERING LIGHT SLEEP ===");
+    info!("Touch or press power button to wake up");
+
+    unsafe {
+        if let Some(ref mut axp) = AXP192_REF {
+            // Turn off display before sleeping
+            let _ = axp.set_dcdc3_on(false);
+            // Turn off power LED to save ~1mA
+            let _ = axp.set_gpio1_output(true); // LED off (inverted logic)
+        }
+    }
+
+    // Get RTC control
+    let mut rtc = Rtc::new(unsafe { esp_hal::peripherals::LPWR::steal() });
+
+    // For light sleep, we can use GPIO wakeup (any GPIO works!)
+    // Use GpioWakeupSource which allows any GPIO with wakeup_enable
+    use esp_hal::rtc_cntl::sleep::GpioWakeupSource;
+
+    // Configure GPIO wakeup (any GPIO can be used in light sleep)
+    // The touch controller or power button will wake us up
+    let gpio_wakeup = GpioWakeupSource::new();
+
+    // Timer wakeup as backup - wake every 60 seconds to check status
+    use esp_hal::rtc_cntl::sleep::TimerWakeupSource;
+    let timer_wakeup = TimerWakeupSource::new(core::time::Duration::from_secs(60));
+
+    info!("Entering light sleep - touch or power button will wake the device");
+    info!("Game state and RAM are preserved!");
+
+    // Light sleep - preserves RAM and execution state
+    rtc.sleep_light(&[&gpio_wakeup, &timer_wakeup]);
+
+    // Code resumes here after wakeup
+    info!("=== WOKE FROM LIGHT SLEEP ===");
+
+    unsafe {
+        if let Some(ref mut axp) = AXP192_REF {
+            // Turn power LED back on
+            let _ = axp.set_gpio1_output(false); // LED on (inverted logic)
+            // Turn display back on
+            let _ = axp.set_dcdc3_on(true);
+        }
+    }
+
+    info!("Resuming game...");
+}
 use spooky_core::events::dynamite::DynamiteCollisionMessage;
 use spooky_core::events::npc::NpcCollisionMessage;
 use spooky_core::events::walker::WalkerCollisionMessage;
@@ -139,9 +198,16 @@ fn main() -> ! {
 
     // Try to use PSRAM allocator (ESP32 with psram feature)
     // M5Stack Core2 may have external PSRAM via SPI
-    esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram);
+    let psram = Psram::new(peripherals.PSRAM, Default::default());
+    esp_alloc::psram_allocator!(&psram);
+    esp_alloc::heap_allocator!(size: 72 * 1024);
 
     info!("PSRAM allocator initialized");
+
+    // Backlight fade constants - defined at main function scope for accessibility
+    const BACKLIGHT_VOLTAGE_MAX: u16 = 2800; // Maximum brightness (mV)
+    const BACKLIGHT_VOLTAGE_MIN: u16 = 700; // Minimum brightness (mV)
+    const BACKLIGHT_FADE_STEPS: u16 = 20; // Number of fade steps
 
     // --- DMA Buffers for SPI ---
     // Core2 uses same buffer size for 320x240 display
@@ -183,7 +249,7 @@ fn main() -> ! {
     // Configure GPIO modes
     axp.set_gpio1_mode(axp192::GpioMode12::NmosOpenDrainOutput)
         .unwrap(); // LED
-    axp.set_gpio1_output(false).unwrap();
+    axp.set_gpio1_output(true).unwrap(); // LED off to save ~1mA (inverted logic)
     axp.set_gpio2_mode(axp192::GpioMode12::NmosOpenDrainOutput)
         .unwrap(); // Speaker
     axp.set_gpio2_output(true).unwrap();
@@ -197,6 +263,22 @@ fn main() -> ! {
     axp.set_gpio4_output(true).unwrap(); // Release reset
     axp.set_ldo3_on(false).unwrap(); // Stop vibration motor
     delay.delay_ms(100u32);
+
+    // Enable AXP192 PEK (power button) interrupts so we can detect button presses
+    info!("Enabling AXP192 power button interrupts");
+    axp.enable_power_key_interrupts().unwrap();
+
+    // Initialize: ensure display starts ON at full brightness
+    info!("Initializing display backlight to ON state at full brightness");
+    axp.set_dcdc3_voltage(BACKLIGHT_VOLTAGE_MAX).unwrap();
+    axp.set_dcdc3_on(true).unwrap();
+    DISPLAY_ON.store(true, Ordering::Relaxed);
+
+    // Store AXP192 reference for backlight control via power button
+    // Safety: This is safe because we're in main() and the reference will live for the program duration
+    unsafe {
+        AXP192_REF = Some(axp);
+    }
 
     info!("AXP192 initialized successfully");
 
@@ -272,6 +354,17 @@ fn main() -> ! {
 
     info!("MPU6886 IMU ready");
 
+    // --------------------------------------------------------------------------------
+    // POWER SAVE FEATURE
+    // --------------------------------------------------------------------------------
+    // M5Stack Core2's power button (PWR_KEY) is connected to the AXP192 PMIC.
+    // We poll the AXP192 via I2C to detect button presses.
+    // Short press the side power button to toggle display backlight with fade effect.
+    // Backlight fade constants (defined above during AXP192 init)
+    info!(
+        "Power save feature enabled - press side PWR button to toggle display (with fade effect)"
+    );
+
     let hardware_rng = Rng::new();
     let mut seed = [0u8; 32];
     hardware_rng.read(&mut seed);
@@ -320,8 +413,80 @@ fn main() -> ! {
         );
 
     let mut loop_delay = Delay::new();
+    let mut fade_delay = Delay::new();
+    let mut debug_counter: u32 = 0;
     loop {
-        app.update();
+        // Check for power button press event via AXP192 PMIC register 0x46
+        // Returns: 0=no press, 1=long press, 2=short press, 3=both
+        let button_press_type = unsafe {
+            if let Some(ref mut axp) = AXP192_REF {
+                axp.get_power_key_press_event().unwrap_or(0)
+            } else {
+                0
+            }
+        };
+
+        // Debug logging every 100 iterations (~30 seconds)
+        debug_counter += 1;
+        if debug_counter >= 100 {
+            debug_counter = 0;
+            info!("Reg 0x46 value: 0x{:02x}", button_press_type);
+        }
+
+        // Check for long press (value 1) or both (value 3) - enter light sleep
+        // Check for short press (value 2) - toggle display backlight
+        if button_press_type == 1 || button_press_type == 3 {
+            info!("Long press detected - entering light sleep!");
+            enter_light_sleep();
+        } else if button_press_type == 2 {
+            info!("Short press detected - toggling display");
+            // Short press toggles display backlight
+            let current_state = DISPLAY_ON.load(Ordering::Relaxed);
+            let new_state = !current_state;
+
+            // Toggle backlight via AXP192 DCDC3 with fade effect
+            unsafe {
+                if let Some(ref mut axp) = AXP192_REF {
+                    if new_state {
+                        // FADE IN: gradually increase brightness
+                        info!("Display backlight fading IN...");
+                        for step in 0..=BACKLIGHT_FADE_STEPS {
+                            let voltage = BACKLIGHT_VOLTAGE_MIN
+                                + (BACKLIGHT_VOLTAGE_MAX - BACKLIGHT_VOLTAGE_MIN) * step
+                                    / BACKLIGHT_FADE_STEPS;
+                            let _ = axp.set_dcdc3_voltage(voltage);
+                            // Small delay between steps for smooth fade
+                            fade_delay.delay_ms(50u32);
+                        }
+                        let _ = axp.set_dcdc3_on(true);
+                        info!("Display backlight ON (button press)");
+                    } else {
+                        // FADE OUT: gradually decrease brightness
+                        info!("Display backlight fading OUT...");
+                        for step in 0..=BACKLIGHT_FADE_STEPS {
+                            let voltage = BACKLIGHT_VOLTAGE_MAX
+                                - (BACKLIGHT_VOLTAGE_MAX - BACKLIGHT_VOLTAGE_MIN) * step
+                                    / BACKLIGHT_FADE_STEPS;
+                            let _ = axp.set_dcdc3_voltage(voltage);
+                            // Small delay between steps for smooth fade
+                            fade_delay.delay_ms(50u32);
+                        }
+                        let _ = axp.set_dcdc3_on(false);
+                        info!("Display backlight OFF (button press)");
+                    }
+                }
+            }
+            DISPLAY_ON.store(new_state, Ordering::Relaxed);
+
+            // Wait a bit to avoid multiple toggles from the same press
+            fade_delay.delay_ms(500u32);
+        }
+
+        // Only run game updates if display is on
+        if DISPLAY_ON.load(Ordering::Relaxed) {
+            app.update();
+        }
+
         loop_delay.delay_ms(300u32);
     }
 }

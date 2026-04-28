@@ -22,6 +22,7 @@ use esp_hal::{
     gpio::{DriveMode, Level, Output, OutputConfig},
     i2c::master::I2c,
     main,
+    psram::Psram,
     rng::Rng,
     spi::master::{Spi, SpiDmaBus},
     time::Rate,
@@ -127,7 +128,11 @@ fn main() -> ! {
     // Initialize ESP‑hal peripherals.
     let peripherals = esp_hal::init(esp_hal::Config::default());
     init_logger_from_env();
-    esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram);
+
+    // PSRAM allocator for heap memory
+    let psram = Psram::new(peripherals.PSRAM, Default::default());
+    esp_alloc::psram_allocator!(&psram);
+    esp_alloc::heap_allocator!(size: 72 * 1024);
 
     // --- DMA Buffers for SPI ---
     let (rx_buffer, rx_descriptors, tx_buffer, tx_descriptors) = dma_buffers!(8912);
