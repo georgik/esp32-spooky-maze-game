@@ -9,7 +9,7 @@ use bevy::prelude::*;
 pub fn detect_npc_collision(
     player_pos: Res<PlayerPosition>,
     maze_res: Res<MazeResource>,
-    mut event_writer: MessageWriter<NpcCollisionMessage>,
+    mut event_writer: EventWriter<NpcCollisionMessage>,
 ) {
     let player_tile_x = player_pos.x as i32;
     let player_tile_y = player_pos.y as i32;
@@ -27,7 +27,7 @@ pub fn detect_npc_collision(
 /// This system handles `NpcCollisionEvent`s by relocating the player to a random position.
 /// Additionally, it penalizes the player by relocating 5 coins.
 pub fn handle_npc_collision(
-    mut events: MessageReader<NpcCollisionMessage>,
+    mut events: EventReader<NpcCollisionMessage>,
     mut player_pos: ResMut<PlayerPosition>,
     mut maze_res: ResMut<MazeResource>,
     mut player_query: Query<&mut UnifiedTransform, With<Player>>,

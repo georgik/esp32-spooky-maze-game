@@ -1,12 +1,12 @@
 use bevy::prelude::*;
-use spooky_core::events::player::PlayerInputEvent;
+use spooky_core::events::player::PlayerInputMessage;
 
 /// Reads keyboard input (arrow keys) and sends a PlayerInputEvent continuously
 /// while keys are held down. A positive dx moves right; a positive dy moves up.
 /// The step is defined as one tile.
 pub fn dispatch_keyboard_input(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut event_writer: EventWriter<PlayerInputEvent>,
+    mut event_writer: EventWriter<PlayerInputMessage>,
 ) {
     let mut dx = 0.0;
     let mut dy = 0.0;
@@ -26,6 +26,6 @@ pub fn dispatch_keyboard_input(
     }
 
     if dx != 0.0 || dy != 0.0 {
-        event_writer.write(PlayerInputEvent { dx, dy });
+        event_writer.write(PlayerInputMessage { dx, dy });
     }
 }

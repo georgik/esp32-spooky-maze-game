@@ -4,17 +4,13 @@ version = "0.14.0"
 edition = "2024"
 
 [dependencies]
-#bevy = { version = "0.17.2", default-features = false }
-bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "906bc14", default-features = false}
-
-#bevy_transform = { version = "0.17.2", default-features = false }
-bevy_transform = { git = "https://github.com/bevyengine/bevy.git", rev = "906bc14", default-features = false}
-
-#bevy_math = { version = "0.17.2", default-features = false, features = ["alloc", "libm"] }
-bevy_math = { git = "https://github.com/bevyengine/bevy.git", rev = "906bc14", default-features = false, features = ["alloc", "libm"]}
-
-#bevy_input = { version = "0.17.2", default-features = false }
-bevy_input = { git = "https://github.com/bevyengine/bevy.git", rev = "906bc14", default-features = false}
+bevy = { version = "0.16", default-features = false }
+bevy_transform = { version = "0.16", default-features = false }
+bevy_math = { version = "0.16", default-features = false, features = ["alloc", "libm"] }
+bevy_input = { version = "0.16", default-features = false }
+bevy_image = { version = "0.16", optional = true }
+bevy_render = { version = "0.16", optional = true }
+bevy_asset = { version = "0.16", optional = true }
 
 
 embedded-graphics = "0.8.0"
@@ -28,7 +24,7 @@ heapless = { version = "0.9.2", default-features = false }
 log = "0.4.27"
 
 [features]
-std = []
+std = ["bevy/bevy_asset", "bevy/bevy_sprite", "bevy/bevy_text", "bevy/bevy_ui", "bevy/png", "bevy_image", "bevy_render", "bevy_asset"]
 wasm = [ "std" ]
 static_maze = []
 dynamic_maze = [ "dep:petgraph", "dep:maze_generator" ]

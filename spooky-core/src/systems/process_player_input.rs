@@ -13,7 +13,7 @@ use log::info;
 /// both the player's and camera's transform so that the player remains centered.
 /// Movement is only applied if the new coordinates do not collide with a wall.
 pub fn process_player_input(
-    mut events: MessageReader<PlayerInputMessage>,
+    mut events: EventReader<PlayerInputMessage>,
     mut player_pos: ResMut<PlayerPosition>,
     maze_res: Res<MazeResource>,
     mut player_query: Query<&mut UnifiedTransform, With<Player>>,

@@ -36,28 +36,28 @@ fn setup_xtensa_environment() {
             let line = line.trim();
 
             // Handle LIBCLANG_PATH
-            if line.starts_with("export LIBCLANG_PATH=") {
-                if let Some(path) = extract_path_from_export(line, "LIBCLANG_PATH") {
-                    println!("cargo:rustc-env=LIBCLANG_PATH={}", path);
-                    unsafe {
-                        env::set_var("LIBCLANG_PATH", &path);
-                    }
+            if line.starts_with("export LIBCLANG_PATH=")
+                && let Some(path) = extract_path_from_export(line, "LIBCLANG_PATH")
+            {
+                println!("cargo:rustc-env=LIBCLANG_PATH={}", path);
+                unsafe {
+                    env::set_var("LIBCLANG_PATH", &path);
                 }
             }
 
             // Handle PATH
-            if line.starts_with("export PATH=") {
-                if let Some(path_addition) = extract_path_addition(line) {
-                    let current_path = env::var("PATH").unwrap_or_default();
-                    let new_path = if current_path.is_empty() {
-                        path_addition
-                    } else {
-                        format!("{}:{}", path_addition, current_path)
-                    };
-                    println!("cargo:rustc-env=PATH={}", new_path);
-                    unsafe {
-                        env::set_var("PATH", &new_path);
-                    }
+            if line.starts_with("export PATH=")
+                && let Some(path_addition) = extract_path_addition(line)
+            {
+                let current_path = env::var("PATH").unwrap_or_default();
+                let new_path = if current_path.is_empty() {
+                    path_addition
+                } else {
+                    format!("{}:{}", path_addition, current_path)
+                };
+                println!("cargo:rustc-env=PATH={}", new_path);
+                unsafe {
+                    env::set_var("PATH", &new_path);
                 }
             }
         }

@@ -10,7 +10,7 @@ use bevy::prelude::*;
 pub fn detect_coin_collision(
     player_pos: Res<PlayerPosition>,
     maze_res: Res<MazeResource>,
-    mut event_writer: MessageWriter<CoinCollisionMessage>,
+    mut event_writer: EventWriter<CoinCollisionMessage>,
 ) {
     // Assuming the player moves in tile increments, cast the logical position to i32.
     let player_tile_x = player_pos.x as i32;
@@ -28,7 +28,7 @@ pub fn detect_coin_collision(
 
 /// This system listens for `CoinCollisionEvent` and removes the collided coin from the maze.
 pub fn remove_coin_on_collision(
-    mut events: MessageReader<CoinCollisionMessage>,
+    mut events: EventReader<CoinCollisionMessage>,
     mut maze_res: ResMut<MazeResource>,
     mut hud_state: ResMut<HudState>,
     mut commands: Commands,

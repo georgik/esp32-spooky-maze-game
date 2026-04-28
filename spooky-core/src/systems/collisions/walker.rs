@@ -8,7 +8,7 @@ use bevy::prelude::*; // Assumes you have a WalkerComponent
 pub fn detect_walker_collision(
     player_pos: Res<PlayerPosition>,
     maze_res: Res<MazeResource>,
-    mut event_writer: MessageWriter<WalkerCollisionMessage>,
+    mut event_writer: EventWriter<WalkerCollisionMessage>,
 ) {
     // Assume the player moves in tile increments.
     let player_tile_x = player_pos.x as i32;
@@ -28,7 +28,7 @@ pub fn detect_walker_collision(
 /// This system handles `WalkerCollisionEvent`s by relocating the walker in the maze
 /// (so that the player can collect it again later) and updating the visual component.
 pub fn handle_walker_collision(
-    mut events: MessageReader<WalkerCollisionMessage>,
+    mut events: EventReader<WalkerCollisionMessage>,
     mut maze_res: ResMut<MazeResource>,
     mut query: Query<&mut WalkerComponent>,
 ) {

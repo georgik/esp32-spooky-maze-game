@@ -6,7 +6,7 @@ use bevy::prelude::*;
 /// This system listens for `DynamiteCollisionEvent` and relocates the dynamite
 /// instead of despawning it.
 pub fn handle_dynamite_collision(
-    mut events: MessageReader<DynamiteCollisionMessage>,
+    mut events: EventReader<DynamiteCollisionMessage>,
     mut maze_res: ResMut<MazeResource>,
 ) {
     for event in events.read() {

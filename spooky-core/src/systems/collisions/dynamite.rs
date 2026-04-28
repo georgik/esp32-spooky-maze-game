@@ -10,7 +10,7 @@ use bevy::prelude::*;
 pub fn detect_dynamite_collision(
     player_pos: Res<PlayerPosition>,
     maze_res: Res<MazeResource>,
-    mut event_writer: MessageWriter<DynamiteCollisionMessage>,
+    mut event_writer: EventWriter<DynamiteCollisionMessage>,
 ) {
     // We assume the player moves in tile increments.
     let player_tile_x = player_pos.x as i32;
@@ -31,7 +31,7 @@ pub fn detect_dynamite_collision(
 /// relocating the dynamite in the maze (so that the player can pick up another one)
 /// and updating the associated entity's component so the visual position is corrected.
 pub fn handle_dynamite_collision(
-    mut events: MessageReader<DynamiteCollisionMessage>,
+    mut events: EventReader<DynamiteCollisionMessage>,
     mut maze_res: ResMut<MazeResource>,
     mut query: Query<&mut DynamiteComponent>,
 ) {

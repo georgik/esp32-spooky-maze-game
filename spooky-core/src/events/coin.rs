@@ -1,8 +1,8 @@
-use bevy::prelude::Message;
+use bevy::prelude::Event;
 
 /// This event is fired when the player collides with a coin.
 /// The event carries the coin's pixel coordinates.
-#[derive(Debug, Message)]
+#[derive(Debug, Event)]
 pub struct CoinCollisionMessage {
     pub coin_x: i32,
     pub coin_y: i32,
