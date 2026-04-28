@@ -62,7 +62,6 @@ use mpu6886::Mpu6886;
 
 /// A resource wrapping the accelerometer sensor.
 /// (We make this NonSend because hardware sensor drivers typically aren’t Sync.)
-
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     println!("Panic: {}", _info);

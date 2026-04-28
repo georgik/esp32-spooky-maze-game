@@ -128,13 +128,14 @@ pub fn render_system(
         };
         // Draw coins.
         for coin in &maze.coins {
-            if coin.x != -1 && coin.y != -1 {
-                if let Some(bmp) = texture_assets.coin.as_ref() {
-                    let screen_x = coin.x - offset_x;
-                    let screen_y = coin.y - offset_y;
-                    let pos = Point::new(screen_x, screen_y);
-                    Image::new(bmp, pos).draw(&mut sprite_buf).unwrap();
-                }
+            if coin.x != -1
+                && coin.y != -1
+                && let Some(bmp) = texture_assets.coin.as_ref()
+            {
+                let screen_x = coin.x - offset_x;
+                let screen_y = coin.y - offset_y;
+                let pos = Point::new(screen_x, screen_y);
+                Image::new(bmp, pos).draw(&mut sprite_buf).unwrap();
             }
         }
         // Draw the player ghost.
