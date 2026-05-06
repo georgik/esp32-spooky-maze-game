@@ -32,7 +32,7 @@ spooky-core = { path = "../spooky-core", default-features = false }
 
 esp-bootloader-esp-idf = { version = "0.5.0", features = ["esp32"] }
 mpu6886 = { git = "https://github.com/georgik/mpu6886.git", branch = "feature/update-hal-2024-11" }
-axp192 = { path = "/Volumes/ssdt5/Users/georgik/projects/axp192-rs" }
+axp192-dd = "0.3"
 
 [features]
 default = [ "esp-hal/esp32", "esp-backtrace/esp32", "esp-println/esp32", "m5stack-core2" ]
