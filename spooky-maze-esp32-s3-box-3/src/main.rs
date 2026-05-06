@@ -29,7 +29,7 @@ use esp_hal::{
 };
 use esp_println::{logger::init_logger_from_env, println};
 use log::info;
-use mipidsi::{Builder, models::ILI9486Rgb565};
+use mipidsi::{Builder, models::ILI9488Rgb565};
 use mipidsi::{interface::SpiInterface, options::ColorOrder};
 use spooky_core::resources::MazeSeed;
 
@@ -98,7 +98,7 @@ type MyDisplay = mipidsi::Display<
         ExclusiveDevice<SpiDmaBus<'static, Blocking>, Output<'static>, Delay>,
         Output<'static>,
     >,
-    ILI9486Rgb565,
+    ILI9488Rgb565,
     Output<'static>,
 >;
 
@@ -169,7 +169,7 @@ fn main() -> ! {
         Level::High,
         OutputConfig::default().with_drive_mode(DriveMode::OpenDrain),
     );
-    let mut display: MyDisplay = Builder::new(ILI9486Rgb565, di)
+    let mut display: MyDisplay = Builder::new(ILI9488Rgb565, di)
         .reset_pin(reset)
         .display_size(320, 240)
         .color_order(ColorOrder::Bgr)
