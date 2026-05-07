@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 crate-type = ["cdylib"]
 
 [dependencies]
-bevy = { version = "0.16.1", features = ["webgl2"] }
+bevy = { version = "0.18", default-features = false, features = ["webgl2"] }
 spooky-core = { path = "../spooky-core", default-features = false, features = ["wasm", "static_maze"] }
 wasm-bindgen = "0.2.83"
 web-sys = { version = "0.3.60", features = [
@@ -32,7 +32,17 @@ rand_chacha = { version = "0.3.1", default-features = false }
 getrandom = { version = "0.2.8", features = ["js"] }
 console_error_panic_hook = "0.1.7"
 
+# Optional: simple HTTP server for serving WASM files
+actix-web = { version = "4", optional = true }
+actix-files = { version = "0.6", optional = true }
+
 [features]
 default = ["static_maze"]
 static_maze = []
 dynamic_maze = ["spooky-core/dynamic_maze"]
+server = ["actix-web", "actix-files"]
+
+[[bin]]
+name = "serve"
+path = "src/serve.rs"
+required-features = ["server"]

@@ -6,11 +6,11 @@ use bevy::prelude::*;
 
 /// This system checks the player's current tile against the dynamite tile(s)
 /// in the maze. If the player's tile matches a dynamite tile, it dispatches a
-/// `DynamiteCollisionEvent`.
+/// `DynamiteCollisionMessage`.
 pub fn detect_dynamite_collision(
     player_pos: Res<PlayerPosition>,
     maze_res: Res<MazeResource>,
-    mut event_writer: MessageWriter<DynamiteCollisionMessage>,
+    mut dynamite_events: MessageWriter<DynamiteCollisionMessage>,
 ) {
     // We assume the player moves in tile increments.
     let player_tile_x = player_pos.x as i32;
@@ -19,7 +19,7 @@ pub fn detect_dynamite_collision(
     // Dynamites are stored in an array (e.g., [Coin; 1])
     for dynamite in maze_res.maze.dynamites.iter() {
         if dynamite.x == player_tile_x && dynamite.y == player_tile_y {
-            event_writer.write(DynamiteCollisionMessage {
+            dynamite_events.write(DynamiteCollisionMessage {
                 x: dynamite.x,
                 y: dynamite.y,
             });
@@ -27,15 +27,15 @@ pub fn detect_dynamite_collision(
     }
 }
 
-/// This system listens for `DynamiteCollisionEvent` events and handles them by
+/// This system listens for `DynamiteCollisionMessage` events and handles them by
 /// relocating the dynamite in the maze (so that the player can pick up another one)
 /// and updating the associated entity's component so the visual position is corrected.
 pub fn handle_dynamite_collision(
-    mut events: MessageReader<DynamiteCollisionMessage>,
+    mut dynamite_events: MessageReader<DynamiteCollisionMessage>,
     mut maze_res: ResMut<MazeResource>,
     mut query: Query<&mut DynamiteComponent>,
 ) {
-    for event in events.read() {
+    for event in dynamite_events.read() {
         // Relocate the dynamite in the maze.
         maze_res.maze.relocate_dynamite(Coin {
             x: event.x,

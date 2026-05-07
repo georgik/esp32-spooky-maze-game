@@ -2,7 +2,7 @@ use alloc::format;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::{image::Image, prelude::*, primitives::Rectangle};
 
-use bevy_ecs::prelude::*;
+use bevy::prelude::*;
 use embedded_graphics::mono_font::MonoTextStyle;
 use embedded_graphics::mono_font::ascii::FONT_6X10;
 use embedded_graphics::text::Text;
@@ -128,13 +128,14 @@ pub fn render_system(
         };
         // Draw coins.
         for coin in &maze.coins {
-            if coin.x != -1 && coin.y != -1 {
-                if let Some(bmp) = texture_assets.coin.as_ref() {
-                    let screen_x = coin.x - offset_x;
-                    let screen_y = coin.y - offset_y;
-                    let pos = Point::new(screen_x, screen_y);
-                    Image::new(bmp, pos).draw(&mut sprite_buf).unwrap();
-                }
+            if coin.x != -1
+                && coin.y != -1
+                && let Some(bmp) = texture_assets.coin.as_ref()
+            {
+                let screen_x = coin.x - offset_x;
+                let screen_y = coin.y - offset_y;
+                let pos = Point::new(screen_x, screen_y);
+                Image::new(bmp, pos).draw(&mut sprite_buf).unwrap();
             }
         }
         // Draw the player ghost.

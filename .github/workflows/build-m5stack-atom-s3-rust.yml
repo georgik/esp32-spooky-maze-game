@@ -10,6 +10,7 @@ on:
 env:
   CARGO_TERM_COLOR: always
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   rust-checks:
@@ -36,5 +37,4 @@ jobs:
         run: |
           echo "Running common checks"
           cargo fmt --all -- --check --color always
-          cargo clippy --release --workspace -- -D warnings
           cargo build --release

@@ -8,6 +8,9 @@ on:
         required: true
         default: 'v0.3.0'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   get_release:
     # https://github.com/octokit/request-action

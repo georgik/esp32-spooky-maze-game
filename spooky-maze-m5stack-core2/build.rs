@@ -1,56 +1,101 @@
+use std::env;
+use std::path::PathBuf;
+use std::process::Command;
+
 fn main() {
-    linker_be_nice();
-    // make sure linkall.x is the last linker script (otherwise might cause problems with flip-link)
     println!("cargo:rustc-link-arg=-Tlinkall.x");
+
+    // Check if xtensa-esp32s3-elf-gcc is already in PATH
+    if Command::new("xtensa-esp32s3-elf-gcc")
+        .arg("--version")
+        .output()
+        .is_err()
+    {
+        // Toolchain not found in PATH, try to load from export-esp.sh
+        setup_xtensa_environment();
+    }
 }
 
-fn linker_be_nice() {
-    let args: Vec<String> = std::env::args().collect();
-    if args.len() > 1 {
-        let kind = &args[1];
-        let what = &args[2];
+fn setup_xtensa_environment() {
+    let home_dir = env::var("HOME")
+        .unwrap_or_else(|_| env::var("USERPROFILE").unwrap_or_else(|_| ".".to_string()));
 
-        match kind.as_str() {
-            "undefined-symbol" => match what.as_str() {
-                "_defmt_timestamp" => {
-                    eprintln!();
-                    eprintln!(
-                        "💡 `defmt` not found - make sure `defmt.x` is added as a linker script and you have included `use defmt_rtt as _;`"
-                    );
-                    eprintln!();
-                }
-                "_stack_start" => {
-                    eprintln!();
-                    eprintln!("💡 Is the linker script `linkall.x` missing?");
-                    eprintln!();
-                }
-                "esp_rtos_initialized" | "esp_rtos_yield_task" | "esp_rtos_task_create" => {
-                    eprintln!();
-                    eprintln!(
-                        "💡 `esp-radio` has no scheduler enabled. Make sure you have initialized `esp-rtos` or provided an external scheduler."
-                    );
-                    eprintln!();
-                }
-                "embedded_test_linker_file_not_added_to_rustflags" => {
-                    eprintln!();
-                    eprintln!(
-                        "💡 `embedded-test` not found - make sure `embedded-test.x` is added as a linker script for tests"
-                    );
-                    eprintln!();
-                }
-                _ => (),
-            },
-            // we don't have anything helpful for "missing-lib" yet
-            _ => {
-                std::process::exit(1);
-            }
-        }
+    let export_script = PathBuf::from(&home_dir).join("export-esp.sh");
 
-        std::process::exit(0);
+    if !export_script.exists() {
+        eprintln!(
+            "Warning: {} not found. Please ensure Xtensa toolchain is in PATH.",
+            export_script.display()
+        );
+        return;
     }
 
-    println!(
-        "cargo:rustc-link-arg=-Wl,--error-handling-script={}",
-        std::env::current_exe().unwrap().display()
-    );
+    // Parse the export script to extract environment variables
+    if let Ok(content) = std::fs::read_to_string(&export_script) {
+        for line in content.lines() {
+            let line = line.trim();
+
+            // Handle LIBCLANG_PATH
+            if line.starts_with("export LIBCLANG_PATH=")
+                && let Some(path) = extract_path_from_export(line, "LIBCLANG_PATH")
+            {
+                println!("cargo:rustc-env=LIBCLANG_PATH={}", path);
+                unsafe {
+                    env::set_var("LIBCLANG_PATH", &path);
+                }
+            }
+
+            // Handle PATH
+            if line.starts_with("export PATH=")
+                && let Some(path_addition) = extract_path_addition(line)
+            {
+                let current_path = env::var("PATH").unwrap_or_default();
+                let new_path = if current_path.is_empty() {
+                    path_addition
+                } else {
+                    format!("{}:{}", path_addition, current_path)
+                };
+                println!("cargo:rustc-env=PATH={}", new_path);
+                unsafe {
+                    env::set_var("PATH", &new_path);
+                }
+            }
+        }
+    }
+}
+
+fn extract_path_from_export(line: &str, var_name: &str) -> Option<String> {
+    let prefix = format!("export {}=", var_name);
+    if let Some(value) = line.strip_prefix(&prefix) {
+        let value = value.trim_matches('"').trim_matches('\'');
+        let expanded = expand_home(value);
+        return Some(expanded);
+    }
+    None
+}
+
+fn extract_path_addition(line: &str) -> Option<String> {
+    // Parse: export PATH="new_path:$PATH" or export PATH="new_path"
+    if let Some(value) = line.strip_prefix("export PATH=") {
+        let value = value.trim_matches('"').trim_matches('\'');
+
+        // Extract just the new path additions (before $PATH)
+        let parts: Vec<&str> = value.split('$').collect();
+        if let Some(new_paths) = parts.first() {
+            let paths = new_paths.trim_end_matches(':');
+            let expanded = expand_home(paths);
+            return Some(expanded);
+        }
+    }
+    None
+}
+
+fn expand_home(path: &str) -> String {
+    if path.starts_with("~/") {
+        let home_dir = env::var("HOME")
+            .unwrap_or_else(|_| env::var("USERPROFILE").unwrap_or_else(|_| ".".to_string()));
+        path.replacen("~", &home_dir, 1)
+    } else {
+        path.to_string()
+    }
 }

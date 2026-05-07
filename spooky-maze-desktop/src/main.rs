@@ -4,17 +4,23 @@ use crate::desktop_systems::hud::{setup_hud, update_hud};
 use crate::desktop_systems::player_input;
 use bevy::prelude::*;
 use rand::RngCore;
-use spooky_core::events::npc::NpcCollisionEvent;
-use spooky_core::events::player::PlayerInputEvent;
-use spooky_core::events::walker::WalkerCollisionEvent;
-use spooky_core::events::{coin::CoinCollisionEvent, dynamite::DynamiteCollisionEvent};
+use spooky_core::events::npc::NpcCollisionMessage;
+use spooky_core::events::player::PlayerInputMessage;
+use spooky_core::events::walker::WalkerCollisionMessage;
+use spooky_core::events::{coin::CoinCollisionMessage, dynamite::DynamiteCollisionMessage};
 use spooky_core::resources::MazeSeed;
 use spooky_core::systems::hud::HudState;
 use spooky_core::{systems, systems::collisions};
 
 fn main() {
     let mut app = App::new();
-    app.add_plugins((DefaultPlugins,))
+    app.add_plugins((
+        DefaultPlugins.set(AssetPlugin {
+            // Use CARGO_MANIFEST_DIR to find assets relative to crate root
+            file_path: env!("CARGO_MANIFEST_DIR").to_string() + "/assets",
+            ..default()
+        }),
+    ))
         .insert_resource(MazeSeed(Some({
             let mut seed = [0u8; 32];
             rand::rng().fill_bytes(seed.as_mut());
@@ -22,11 +28,11 @@ fn main() {
         })))
         .add_systems(Startup, (systems::setup::setup, setup_hud))
         .insert_resource(Time::<Fixed>::from_hz(10.0))
-        .add_event::<PlayerInputEvent>()
-        .add_event::<CoinCollisionEvent>()
-        .add_event::<DynamiteCollisionEvent>()
-        .add_event::<WalkerCollisionEvent>()
-        .add_event::<NpcCollisionEvent>()
+        .add_event::<PlayerInputMessage>()
+        .add_event::<CoinCollisionMessage>()
+        .add_event::<DynamiteCollisionMessage>()
+        .add_event::<WalkerCollisionMessage>()
+        .add_event::<NpcCollisionMessage>()
         .insert_resource(HudState::default())
         .add_systems(
             FixedUpdate,

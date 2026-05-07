@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy::input::keyboard::KeyCode;
-use spooky_core::events::player::PlayerInputEvent;
+use bevy::event::MessageWriter;
+use spooky_core::events::player::PlayerInputMessage;
 use web_sys::console;
 
 pub struct WasmInputPlugin;
@@ -13,12 +14,12 @@ impl Plugin for WasmInputPlugin {
 
 fn dispatch_keyboard_input(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_input_events: EventWriter<PlayerInputEvent>,
+    mut events: EventWriter<PlayerInputMessage>,
 ) {
     let mut dx = 0.0;
     let mut dy = 0.0;
     let step = 16.0; // adjust to your tile size
-    
+
     if keyboard_input.pressed(KeyCode::ArrowUp) || keyboard_input.pressed(KeyCode::KeyW) {
         dy += step;
     }
@@ -31,10 +32,10 @@ fn dispatch_keyboard_input(
     if keyboard_input.pressed(KeyCode::ArrowRight) || keyboard_input.pressed(KeyCode::KeyD) {
         dx += step;
     }
-    
+
     if dx != 0.0 || dy != 0.0 {
         console::log_1(&format!("Input: dx={}, dy={}", dx, dy).into());
-        player_input_events.write(PlayerInputEvent { dx, dy });
+        events.write(PlayerInputMessage { dx, dy });
     }
     
     // Handle special actions

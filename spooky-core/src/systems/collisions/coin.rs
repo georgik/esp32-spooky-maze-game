@@ -6,11 +6,11 @@ use crate::systems::hud::HudState;
 use bevy::prelude::*;
 
 /// This system checks the player's current position against all coin positions in the maze.
-/// If the player is on the same tile as a coin, it dispatches a `CoinCollisionEvent`.
+/// If the player is on the same tile as a coin, it dispatches a `CoinCollisionMessage`.
 pub fn detect_coin_collision(
     player_pos: Res<PlayerPosition>,
     maze_res: Res<MazeResource>,
-    mut event_writer: MessageWriter<CoinCollisionMessage>,
+    mut coin_events: MessageWriter<CoinCollisionMessage>,
 ) {
     // Assuming the player moves in tile increments, cast the logical position to i32.
     let player_tile_x = player_pos.x as i32;
@@ -18,7 +18,7 @@ pub fn detect_coin_collision(
 
     for coin in maze_res.maze.coins.iter() {
         if coin.x == player_tile_x && coin.y == player_tile_y {
-            event_writer.write(CoinCollisionMessage {
+            coin_events.write(CoinCollisionMessage {
                 coin_x: coin.x,
                 coin_y: coin.y,
             });
@@ -26,15 +26,15 @@ pub fn detect_coin_collision(
     }
 }
 
-/// This system listens for `CoinCollisionEvent` and removes the collided coin from the maze.
+/// This system listens for `CoinCollisionMessage` and removes the collided coin from the maze.
 pub fn remove_coin_on_collision(
-    mut events: MessageReader<CoinCollisionMessage>,
+    mut coin_events: MessageReader<CoinCollisionMessage>,
     mut maze_res: ResMut<MazeResource>,
     mut hud_state: ResMut<HudState>,
     mut commands: Commands,
     query: Query<(Entity, &CoinComponent)>,
 ) {
-    for event in events.read() {
+    for event in coin_events.read() {
         // Remove the coin at the collision coordinates.
         maze_res.maze.remove_coin(Coin {
             x: event.coin_x,

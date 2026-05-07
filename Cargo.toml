@@ -1,0 +1,15 @@
+[workspace]
+members = [
+    "xtask",
+]
+exclude = [
+    "spooky-maze-esp32-s3-box-3",
+    "spooky-maze-m5stack-atom-s3",
+    "spooky-maze-m5stack-atom-s3r",
+    "spooky-maze-m5stack-cores3",
+    "spooky-maze-m5stack-core2",
+    "spooky-maze-desktop",
+    "spooky-maze-wasm",
+    "spooky-core",
+]
+resolver = "2"

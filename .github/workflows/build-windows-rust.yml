@@ -37,6 +37,7 @@ jobs:
     needs: get_release
     env:
       LIB: "C:/vcpkg/packages/sdl2_x64-windows/lib"
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v3
       - name: Install SDL2 dependency using vcpkg

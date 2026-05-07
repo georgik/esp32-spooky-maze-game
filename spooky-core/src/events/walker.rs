@@ -1,6 +1,6 @@
 use bevy::prelude::Message;
 
-/// An event indicating that the player collided with a walker.
+/// A message indicating that the player collided with a walker.
 /// The collision is reported in tile‐coordinates.
 #[derive(Debug, Message)]
 pub struct WalkerCollisionMessage {

@@ -11,7 +11,7 @@ use spooky_core::systems::process_player_input::process_player_input;
 use bevy::DefaultPlugins;
 use bevy::app::{App, Startup};
 use bevy::prelude::Update;
-use bevy_ecs::prelude::*;
+use bevy::prelude::*;
 use embedded_hal::delay::DelayNs;
 use embedded_hal_bus::spi::ExclusiveDevice;
 use esp_hal::delay::Delay;
@@ -22,13 +22,14 @@ use esp_hal::{
     gpio::{DriveMode, Level, Output, OutputConfig},
     i2c::master::I2c,
     main,
+    psram::Psram,
     rng::Rng,
     spi::master::{Spi, SpiDmaBus},
     time::Rate,
 };
 use esp_println::{logger::init_logger_from_env, println};
 use log::info;
-use mipidsi::{Builder, models::ILI9486Rgb565};
+use mipidsi::{Builder, models::ILI9488Rgb565};
 use mipidsi::{interface::SpiInterface, options::ColorOrder};
 use spooky_core::resources::MazeSeed;
 
@@ -97,7 +98,7 @@ type MyDisplay = mipidsi::Display<
         ExclusiveDevice<SpiDmaBus<'static, Blocking>, Output<'static>, Delay>,
         Output<'static>,
     >,
-    ILI9486Rgb565,
+    ILI9488Rgb565,
     Output<'static>,
 >;
 
@@ -127,7 +128,11 @@ fn main() -> ! {
     // Initialize ESP‑hal peripherals.
     let peripherals = esp_hal::init(esp_hal::Config::default());
     init_logger_from_env();
-    esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram);
+
+    // PSRAM allocator for heap memory
+    let psram = Psram::new(peripherals.PSRAM, Default::default());
+    esp_alloc::psram_allocator!(&psram);
+    esp_alloc::heap_allocator!(size: 72 * 1024);
 
     // --- DMA Buffers for SPI ---
     let (rx_buffer, rx_descriptors, tx_buffer, tx_descriptors) = dma_buffers!(8912);
@@ -164,7 +169,7 @@ fn main() -> ! {
         Level::High,
         OutputConfig::default().with_drive_mode(DriveMode::OpenDrain),
     );
-    let mut display: MyDisplay = Builder::new(ILI9486Rgb565, di)
+    let mut display: MyDisplay = Builder::new(ILI9488Rgb565, di)
         .reset_pin(reset)
         .display_size(320, 240)
         .color_order(ColorOrder::Bgr)

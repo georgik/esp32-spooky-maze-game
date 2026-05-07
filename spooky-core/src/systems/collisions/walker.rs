@@ -1,14 +1,15 @@
 use crate::components::WalkerComponent;
 use crate::events::walker::WalkerCollisionMessage;
 use crate::resources::{MazeResource, PlayerPosition};
-use bevy::prelude::*; // Assumes you have a WalkerComponent
+use bevy::prelude::*;
+// Assumes you have a WalkerComponent
 
 /// This system checks the player's current tile against all walker tiles in the maze.
-/// When a collision is detected, a `WalkerCollisionEvent` is sent.
+/// When a collision is detected, a `WalkerCollisionMessage` is sent.
 pub fn detect_walker_collision(
     player_pos: Res<PlayerPosition>,
     maze_res: Res<MazeResource>,
-    mut event_writer: MessageWriter<WalkerCollisionMessage>,
+    mut walker_events: MessageWriter<WalkerCollisionMessage>,
 ) {
     // Assume the player moves in tile increments.
     let player_tile_x = player_pos.x as i32;
@@ -17,7 +18,7 @@ pub fn detect_walker_collision(
     // Iterate over all walker positions stored in the maze.
     for walker in maze_res.maze.walkers.iter() {
         if walker.x == player_tile_x && walker.y == player_tile_y {
-            event_writer.write(WalkerCollisionMessage {
+            walker_events.write(WalkerCollisionMessage {
                 walker_x: walker.x,
                 walker_y: walker.y,
             });
@@ -25,14 +26,14 @@ pub fn detect_walker_collision(
     }
 }
 
-/// This system handles `WalkerCollisionEvent`s by relocating the walker in the maze
+/// This system handles `WalkerCollisionMessage`s by relocating the walker in the maze
 /// (so that the player can collect it again later) and updating the visual component.
 pub fn handle_walker_collision(
-    mut events: MessageReader<WalkerCollisionMessage>,
+    mut walker_events: MessageReader<WalkerCollisionMessage>,
     mut maze_res: ResMut<MazeResource>,
     mut query: Query<&mut WalkerComponent>,
 ) {
-    for event in events.read() {
+    for event in walker_events.read() {
         // Get a new random coordinate for the walker.
         let (new_x, new_y) = maze_res.maze.get_random_coordinates();
         // Update the maze's walker array.

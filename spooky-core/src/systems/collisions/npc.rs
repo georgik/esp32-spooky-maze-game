@@ -5,18 +5,18 @@ use crate::transform::UnifiedTransform;
 use bevy::prelude::*;
 
 /// This system checks the player's current tile against all NPC positions in the maze.
-/// If the player is on the same tile as an NPC, it dispatches an `NpcCollisionEvent`.
+/// If the player is on the same tile as an NPC, it dispatches an `NpcCollisionMessage`.
 pub fn detect_npc_collision(
     player_pos: Res<PlayerPosition>,
     maze_res: Res<MazeResource>,
-    mut event_writer: MessageWriter<NpcCollisionMessage>,
+    mut npc_events: MessageWriter<NpcCollisionMessage>,
 ) {
     let player_tile_x = player_pos.x as i32;
     let player_tile_y = player_pos.y as i32;
 
     for npc in maze_res.maze.npcs.iter() {
         if npc.x == player_tile_x && npc.y == player_tile_y {
-            event_writer.write(NpcCollisionMessage {
+            npc_events.write(NpcCollisionMessage {
                 npc_x: npc.x,
                 npc_y: npc.y,
             });
@@ -24,15 +24,15 @@ pub fn detect_npc_collision(
     }
 }
 
-/// This system handles `NpcCollisionEvent`s by relocating the player to a random position.
+/// This system handles `NpcCollisionMessage`s by relocating the player to a random position.
 /// Additionally, it penalizes the player by relocating 5 coins.
 pub fn handle_npc_collision(
-    mut events: MessageReader<NpcCollisionMessage>,
+    mut npc_events: MessageReader<NpcCollisionMessage>,
     mut player_pos: ResMut<PlayerPosition>,
     mut maze_res: ResMut<MazeResource>,
     mut player_query: Query<&mut UnifiedTransform, With<Player>>,
 ) {
-    for _event in events.read() {
+    for _event in npc_events.read() {
         // Relocate the player.
         let (new_x, new_y) = maze_res.maze.get_random_coordinates();
         player_pos.x = new_x as f32;
