@@ -15,11 +15,15 @@ pub fn dispatch_accelerometer_input<I2C>(
     I2C: embedded_hal::i2c::I2c + embedded_hal::i2c::ErrorType,
 {
     if let Ok(accel) = accel_res.sensor.get_acc() {
+        use log::debug;
+        debug!("IMU: x={:.3}, y={:.3}, z={:.3}", accel.x, accel.y, accel.z);
+
         let step = maze_res.maze.tile_width as f32;
 
         // Threshold for accelerometer control (lowered for easier control)
         // MPU6886 values are normalized (in g units), not raw values
-        let threshold = 0.15;
+        // 0.1g ≈ 5.7 degrees tilt - responsive but not too sensitive
+        let threshold = 0.1;
         let mut dx = 0.0;
         let mut dy = 0.0;
 

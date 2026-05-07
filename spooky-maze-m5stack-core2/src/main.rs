@@ -565,6 +565,6 @@ fn main() -> ! {
             app.update();
         }
 
-        loop_delay.delay_ms(300u32);
+        loop_delay.delay_ms(100u32);
     }
 }
