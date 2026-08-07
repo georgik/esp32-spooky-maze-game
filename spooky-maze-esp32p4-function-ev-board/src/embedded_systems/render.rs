@@ -59,7 +59,6 @@ impl<'a, B: embedded_graphics_framebuf::backends::FrameBufferBackend<Color = Rgb
 /// Then a temporary SpriteBuf wraps the framebuffer to draw sprites (coins and player ghost)
 /// with pink filtering. Finally, the complete framebuffer is flushed to the display.
 pub fn render_system(
-    mut display_res: NonSendMut<crate::DisplayResource>,
     mut fb_res: ResMut<crate::FrameBufferResource>,
     maze_res: Res<MazeResource>,
     texture_assets: Res<TextureAssets>,
@@ -190,10 +189,4 @@ pub fn render_system(
     .draw(&mut fb_res.frame_buf)
     .unwrap();
 
-    // Finally, flush the framebuffer to the display.
-    let area = Rectangle::new(Point::zero(), fb_res.frame_buf.size());
-    display_res
-        .display
-        .fill_contiguous(&area, fb_res.frame_buf.data.iter().copied())
-        .unwrap();
 }
