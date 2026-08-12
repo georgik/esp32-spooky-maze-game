@@ -1,11 +1,36 @@
 use alloc::format;
-use embedded_graphics::pixelcolor::Rgb565;
-use embedded_graphics::{image::Image, prelude::*, primitives::Rectangle};
+use embedded_graphics::{
+    image::Image,
+    mono_font::{
+        MonoTextStyle,
+        ascii::{
+            FONT_6X10,
+            FONT_10X20,
+        },
+    },
+    pixelcolor::Rgb565,
+    prelude::*,
+    primitives::{
+        PrimitiveStyleBuilder,
+        Rectangle,
+    },
+    text::Text,
+};
+
+use crate::touch::{
+    ButtonRect,
+    Direction,
+    DOWN_BUTTON,
+    LEFT_BUTTON,
+    RIGHT_BUTTON,
+    TouchInputState,
+    UP_BUTTON,
+};
 
 use bevy_ecs::prelude::*;
-use embedded_graphics::mono_font::MonoTextStyle;
-use embedded_graphics::mono_font::ascii::FONT_6X10;
-use embedded_graphics::text::Text;
+
+
+
 use spooky_core::resources::{MazeResource, PlayerPosition};
 use spooky_core::systems::hud::HudState;
 use spooky_core::systems::setup::TextureAssets;
@@ -64,6 +89,7 @@ pub fn render_system(
     texture_assets: Res<TextureAssets>,
     player_pos: Res<PlayerPosition>,
     hud_state: Res<HudState>,
+    touch_state: Res<TouchInputState>,
 ) {
     // Clear the framebuffer.
     fb_res.frame_buf.clear(Rgb565::BLACK).unwrap();
@@ -189,4 +215,103 @@ pub fn render_system(
     .draw(&mut fb_res.frame_buf)
     .unwrap();
 
+    draw_touch_controls(
+        &mut fb_res.frame_buf,
+        &touch_state,
+    );
+
+}
+
+fn draw_touch_button<B>(
+    frame_buf: &mut embedded_graphics_framebuf::FrameBuf<Rgb565, B>,
+    rect: ButtonRect,
+    label: &str,
+    pressed: bool,
+) where
+    B: embedded_graphics_framebuf::backends::FrameBufferBackend<
+        Color = Rgb565,
+    >,
+{
+    let fill_color = if pressed {
+        Rgb565::new(0, 40, 4)
+    } else {
+        Rgb565::new(5, 10, 5)
+    };
+
+    let border_color = if pressed {
+        Rgb565::GREEN
+    } else {
+        Rgb565::WHITE
+    };
+
+    let rectangle = Rectangle::new(
+        Point::new(rect.x, rect.y),
+        Size::new(rect.width, rect.height),
+    );
+
+    let style = PrimitiveStyleBuilder::new()
+        .fill_color(fill_color)
+        .stroke_color(border_color)
+        .stroke_width(3)
+        .build();
+
+    rectangle
+        .into_styled(style)
+        .draw(frame_buf)
+        .unwrap();
+
+    let text_style =
+        MonoTextStyle::new(&FONT_10X20, Rgb565::WHITE);
+
+    // A single character is ten pixels wide in FONT_10X20.
+    let label_x =
+        rect.x + (rect.width as i32 - 10) / 2;
+
+    let label_y =
+        rect.y + (rect.height as i32 + 20) / 2;
+
+    Text::new(
+        label,
+        Point::new(label_x, label_y),
+        text_style,
+    )
+    .draw(frame_buf)
+    .unwrap();
+}
+
+fn draw_touch_controls<B>(
+    frame_buf: &mut embedded_graphics_framebuf::FrameBuf<Rgb565, B>,
+    touch_state: &TouchInputState,
+) where
+    B: embedded_graphics_framebuf::backends::FrameBufferBackend<
+        Color = Rgb565,
+    >,
+{
+    draw_touch_button(
+        frame_buf,
+        UP_BUTTON,
+        "U",
+        touch_state.pressed == Some(Direction::Up),
+    );
+
+    draw_touch_button(
+        frame_buf,
+        DOWN_BUTTON,
+        "D",
+        touch_state.pressed == Some(Direction::Down),
+    );
+
+    draw_touch_button(
+        frame_buf,
+        LEFT_BUTTON,
+        "L",
+        touch_state.pressed == Some(Direction::Left),
+    );
+
+    draw_touch_button(
+        frame_buf,
+        RIGHT_BUTTON,
+        "R",
+        touch_state.pressed == Some(Direction::Right),
+    );
 }

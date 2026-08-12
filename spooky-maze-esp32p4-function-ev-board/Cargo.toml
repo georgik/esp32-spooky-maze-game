@@ -20,20 +20,21 @@ bevy_platform = { git = "https://github.com/bevyengine/bevy.git", rev = "906bc14
 ###esp-hal = { version = "1.0.0", features = ["esp32p4", "unstable"] }
 esp-hal = {
     git = "https://github.com/esp-rs/esp-hal.git",
-    rev = "4533e78e0b522ae425addae4f8d44d014309a54c",
+    rev = "10f8d8cc628abbccff34f9c032b26a4b2a484a3b",
     features = ["esp32p4", "unstable"]
 }
 
 ###esp-backtrace = { version = "0.18.1", features = ["panic-handler","println", "esp32p4"] }
 esp-backtrace = {
     git = "https://github.com/esp-rs/esp-hal.git",
-    rev = "4533e78e0b522ae425addae4f8d44d014309a54c",
+    rev = "10f8d8cc628abbccff34f9c032b26a4b2a484a3b",
     features = ["panic-handler", "println", "esp32p4"]
 }
+
 #esp-println = { version = "0.16.1", features = [ "log-04" ] }
 esp-println = {
     git = "https://github.com/esp-rs/esp-hal.git",
-    rev = "4533e78e0b522ae425addae4f8d44d014309a54c",
+    rev = "10f8d8cc628abbccff34f9c032b26a4b2a484a3b",
     #default-features = false,
     features = ["esp32p4", "log-04"]
 }
@@ -41,14 +42,14 @@ esp-println = {
 #esp-alloc = "0.9.0"
 esp-alloc = { 
     git = "https://github.com/esp-rs/esp-hal.git",
-    rev = "4533e78e0b522ae425addae4f8d44d014309a54c",
+    rev = "10f8d8cc628abbccff34f9c032b26a4b2a484a3b",
     default-features = false,
     features = ["esp32p4", "global-allocator",]}
 
 #esp-bootloader-esp-idf = { version = "0.4.0", features = ["esp32p4"] }
 esp-bootloader-esp-idf = {
     git = "https://github.com/esp-rs/esp-hal.git",
-    rev = "4533e78e0b522ae425addae4f8d44d014309a54c",
+    rev = "10f8d8cc628abbccff34f9c032b26a4b2a484a3b",
     features = ["esp32p4"]
 }
 

@@ -34,6 +34,10 @@ use esp_hal::{
     },
     delay::Delay,
     gpio::{Level, Output, OutputConfig},
+    i2c::master::{
+        Config as I2cConfig,
+        I2c,
+    },
     main,
     mipi_dsi::{
         Config as MipiConfig,
@@ -48,6 +52,7 @@ use esp_hal::{
     },
     psram,
     rng::Rng,
+    time::Rate,
 };
 use esp_println::{
     logger::init_logger_from_env,
@@ -77,10 +82,23 @@ mod embedded_systems {
 
 mod heapbuffer;
 
+mod touch;
+
 use crate::{
     embedded_systems::render::render_system,
     heapbuffer::HeapBuffer,
 };
+
+use crate::touch::{
+    Gt911,
+    TouchEvent,
+    TouchInputState,
+    direction_at,
+    dispatch_touch_input,
+    transform_touch_point,
+};
+
+
 
 // Required by espflash and the ESP-IDF bootloader.
 esp_bootloader_esp_idf::esp_app_desc!();
@@ -115,6 +133,7 @@ static EK79007_INIT: &[(u8, &[u8])] = &[
     (0x85, &[0xE3]),
     (0x86, &[0x88]),
 ];
+
 
 // -----------------------------------------------------------------------------
 // Software framebuffer used by embedded-graphics
@@ -240,6 +259,31 @@ fn main() -> ! {
     );
 
     // -------------------------------------------------------------------------
+    // GT911 touch-controller initialization
+    // -------------------------------------------------------------------------
+
+    let i2c_config = I2cConfig::default()
+        .with_frequency(Rate::from_khz(400));
+
+    let touch_i2c = I2c::new(
+        peripherals.I2C0,
+        i2c_config,
+    )
+    .expect("I2C initialization failed")
+    .with_sda(peripherals.GPIO7)
+    .with_scl(peripherals.GPIO8);
+
+    let (mut touch_controller, touch_product_id) =
+        Gt911::new(touch_i2c)
+            .expect("GT911 touch controller not detected");
+
+    println!(
+        "GT911 detected at 0x{:02X}, product ID: {:?}",
+        touch_controller.address(),
+        touch_product_id,
+    );
+
+    // -------------------------------------------------------------------------
     // MIPI-DSI initialization
     // -------------------------------------------------------------------------
 
@@ -357,6 +401,7 @@ fn main() -> ! {
 
     app.add_plugins((DefaultPlugins,))
         .insert_resource(FrameBufferResource::new())
+        .insert_resource(TouchInputState::default())
         .insert_resource(HudState::default())
         .insert_resource(MazeSeed(Some(seed)))
         .add_systems(
@@ -371,10 +416,13 @@ fn main() -> ! {
         .add_systems(
             Update,
             (
-                // There is currently no accelerometer input system. The
-                // PlayerInputMessage channel still exists for later use.
+                // Convert a queued touch direction into PlayerInputMessage.
+                dispatch_touch_input,
+
+                // Apply PlayerInputMessage to the player.
                 process_player_input,
 
+                // Check collisions after moving the player.
                 collisions::coin::detect_coin_collision,
                 collisions::coin::remove_coin_on_collision,
 
@@ -390,9 +438,10 @@ fn main() -> ! {
                 systems::npc_logic::update_npc_movement,
                 systems::game_logic::update_game,
 
-                // Draws only into FrameBufferResource.
+                // Render after movement and collision processing.
                 render_system,
-            ),
+            )
+                .chain(),
         );
 
     println!("Bevy application initialized");
@@ -408,9 +457,55 @@ fn main() -> ! {
             Ordering::Relaxed,
         );
 
+
+                // Poll the GT911 before running the Bevy frame.
+        match touch_controller.poll_event() {
+        Ok(TouchEvent::Point(point)) => {
+            let (screen_x, screen_y) =
+                transform_touch_point(point);
+
+            let direction =
+                direction_at(screen_x, screen_y);
+
+            println!(
+                "Touch raw=({}, {}), screen=({}, {}), button={:?}",
+                point.x,
+                point.y,
+                screen_x,
+                screen_y,
+                direction,
+            );
+
+            app.world_mut()
+                .resource_mut::<TouchInputState>()
+                .update_pressed(direction);
+        }
+
+        Ok(TouchEvent::Released) => {
+            println!("Touch released");
+
+            app.world_mut()
+                .resource_mut::<TouchInputState>()
+                .update_pressed(None);
+        }
+
+        Ok(TouchEvent::NoUpdate) => {
+            // Do not change the current state here.
+        }
+
+        Err(error) => {
+            println!(
+                "GT911 polling error: {:?}",
+                error,
+            );
+        }
+    }
+
+app.update();
+
+    app.update();
         // Run one Bevy frame. The render system draws the maze into
         // FrameBufferResource.
-        app.update();
 
         // Synchronize our buffer switch with the display.
         dpi.wait_for_vsync();
