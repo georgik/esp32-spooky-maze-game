@@ -30,10 +30,15 @@ use crate::touch::{
 use bevy_ecs::prelude::*;
 
 
+    use esp_hal::time::Instant as HalInstant;///////////////////////////////////
+    use esp_println::println;/////////////////////////////////////////////////
+
 
 use spooky_core::resources::{MazeResource, PlayerPosition};
 use spooky_core::systems::hud::HudState;
 use spooky_core::systems::setup::TextureAssets;
+
+
 
 /// A borrowed sprite buffer wrapper that implements a DrawTarget filtering out “magic pink”.
 /// In our case, we treat any pixel with R=31, G=0, B=31 as transparent.
@@ -83,6 +88,8 @@ impl<'a, B: embedded_graphics_framebuf::backends::FrameBufferBackend<Color = Rgb
 /// Render the scene. First, the maze background is drawn directly to the framebuffer.
 /// Then a temporary SpriteBuf wraps the framebuffer to draw sprites (coins and player ghost)
 /// with pink filtering. Finally, the complete framebuffer is flushed to the display.
+/// 
+
 pub fn render_system(
     mut fb_res: ResMut<crate::FrameBufferResource>,
     maze_res: Res<MazeResource>,
@@ -91,8 +98,30 @@ pub fn render_system(
     hud_state: Res<HudState>,
     touch_state: Res<TouchInputState>,
 ) {
+
+
+
+
+    
+    
+    
+    let test_start = HalInstant::now();/////////////////////////////////////////////
+    
+    
     // Clear the framebuffer.
-    fb_res.frame_buf.clear(Rgb565::BLACK).unwrap();
+    //fb_res.frame_buf.data.fill(Rgb565::BLACK);
+    
+    unsafe {
+    core::ptr::write_bytes(
+        fb_res.frame_buf.data.as_mut_ptr(),
+        0,
+        crate::LCD_BUFFER_SIZE,
+    );
+    }
+
+
+
+
 
     let maze = &maze_res.maze;
     let (maze_left, maze_bottom, _maze_right, _maze_top) = maze.playable_bounds();
@@ -144,6 +173,10 @@ pub fn render_system(
             }
         }
     }
+    let test_ms = test_start.elapsed().as_millis();///////////////////
+
+
+
 
     // --- Draw sprites (coins and player ghost) with sprite filtering ---
     {
@@ -219,6 +252,19 @@ pub fn render_system(
         &mut fb_res.frame_buf,
         &touch_state,
     );
+
+
+
+
+
+
+
+    println!("{test_ms} ms");  ///////////////////////////////////////////////////////////////
+
+
+
+
+
 
 }
 

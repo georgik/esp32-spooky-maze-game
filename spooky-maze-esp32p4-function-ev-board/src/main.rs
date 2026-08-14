@@ -117,7 +117,7 @@ const MIPI_FB_SIZE: usize =
     LCD_BUFFER_SIZE * BYTES_PER_PIXEL;
 
 // Approximate interval between game updates.
-const FRAME_TIME_MS: u32 = 50;
+const FRAME_TIME_MS: u32 = 16;
 
 // -----------------------------------------------------------------------------
 // EK79007 panel initialization
@@ -441,22 +441,27 @@ fn main() -> ! {
                 // Render after movement and collision processing.
                 render_system,
             )
-                .chain(),
+            .chain(),
         );
-
-    println!("Bevy application initialized");
-
-    // -------------------------------------------------------------------------
-    // Main game/display loop
-    // -------------------------------------------------------------------------
-
+        
+        println!("Bevy application initialized");
+        
+        // -------------------------------------------------------------------------
+        // Main game/display loop
+            // -------------------------------------------------------------------------
+            
+            
     loop {
+
+
+        
+        
         // Advance the clock used by Bevy.
         ELAPSED.fetch_add(
             FRAME_TIME_MS,
             Ordering::Relaxed,
         );
-
+                
 
                 // Poll the GT911 before running the Bevy frame.
         match touch_controller.poll_event() {
@@ -467,14 +472,6 @@ fn main() -> ! {
             let direction =
                 direction_at(screen_x, screen_y);
 
-            println!(
-                "Touch raw=({}, {}), screen=({}, {}), button={:?}",
-                point.x,
-                point.y,
-                screen_x,
-                screen_y,
-                direction,
-            );
 
             app.world_mut()
                 .resource_mut::<TouchInputState>()
@@ -500,47 +497,55 @@ fn main() -> ! {
             );
         }
     }
-
-app.update();
-
+    
+    
     app.update();
-        // Run one Bevy frame. The render system draws the maze into
-        // FrameBufferResource.
+    
+    
+    
 
-        // Synchronize our buffer switch with the display.
+    // Run one Bevy frame. The render system draws the maze into
+    // FrameBufferResource.
+    
+    // Synchronize our buffer switch with the display.
         dpi.wait_for_vsync();
-
+        
         // Get the MIPI framebuffer that is not currently being displayed.
         let mipi_back_buffer = dpi.framebuffer_mut();
-
+        
         // Borrow the embedded-graphics framebuffer from Bevy.
         {
             let software_framebuffer = app
-                .world()
-                .resource::<FrameBufferResource>();
-
-            // Convert each embedded-graphics Rgb565 pixel into the two-byte
-            // little-endian layout expected by the MIPI framebuffer.
-            for (destination, source) in mipi_back_buffer
-                .chunks_exact_mut(BYTES_PER_PIXEL)
-                .zip(
-                    software_framebuffer
-                        .frame_buf
-                        .data
+            .world()
+            .resource::<FrameBufferResource>();
+        
+        // Convert each embedded-graphics Rgb565 pixel into the two-byte
+        // little-endian layout expected by the MIPI framebuffer.
+        for (destination, source) in mipi_back_buffer
+        .chunks_exact_mut(BYTES_PER_PIXEL)
+        .zip(
+            software_framebuffer
+            .frame_buf
+            .data
                         .iter(),
-                )
-            {
-                let raw_color: u16 =
-                    (*source).into_storage();
-
-                destination.copy_from_slice(
-                    &raw_color.to_le_bytes(),
-                );
+                    )
+                    {
+                        let raw_color: u16 =
+                        (*source).into_storage();
+                        
+                        destination.copy_from_slice(
+                            &raw_color.to_le_bytes(),
+                        );
+                    }
             }
-        }
-
-        // Flush the PSRAM cache and switch VDMA to the completed buffer.
-        dpi.commit();
+            
+            
+            
+            
+            
+            // Flush the PSRAM cache and switch VDMA to the completed buffer.
+            dpi.commit();
+            //println!("in your eyes");
 
         delay.delay_millis(FRAME_TIME_MS);
     }
