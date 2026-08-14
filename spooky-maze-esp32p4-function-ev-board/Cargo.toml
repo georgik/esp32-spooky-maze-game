@@ -55,6 +55,8 @@ esp-bootloader-esp-idf = {
 
 
 log = "0.4.27"
+tinybmp = "0.6.0"
+
 
 
 embedded-graphics = "0.8.1"

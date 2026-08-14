@@ -1,6 +1,19 @@
 #![no_std]
 #![no_main]
 
+
+
+
+            use esp_hal::time::Instant as HalInstant;
+
+
+
+
+
+
+
+
+
 extern crate alloc;
 
 use alloc::boxed::Box;
@@ -448,105 +461,128 @@ fn main() -> ! {
         
         // -------------------------------------------------------------------------
         // Main game/display loop
-            // -------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
             
             
+            
+    
     loop {
 
 
-        
-        
+        let test_start = HalInstant::now();/////////////////////////////////////////////
+                
+                
+                
+                
         // Advance the clock used by Bevy.
         ELAPSED.fetch_add(
             FRAME_TIME_MS,
             Ordering::Relaxed,
         );
                 
-
-                // Poll the GT911 before running the Bevy frame.
+        
+        // Poll the GT911 before running the Bevy frame.
         match touch_controller.poll_event() {
-        Ok(TouchEvent::Point(point)) => {
-            let (screen_x, screen_y) =
+            Ok(TouchEvent::Point(point)) => {
+                let (screen_x, screen_y) =
                 transform_touch_point(point);
-
-            let direction =
+                
+                let direction =
                 direction_at(screen_x, screen_y);
-
-
-            app.world_mut()
+                
+                
+                app.world_mut()
                 .resource_mut::<TouchInputState>()
                 .update_pressed(direction);
-        }
-
-        Ok(TouchEvent::Released) => {
-            println!("Touch released");
-
-            app.world_mut()
+            }
+            
+            Ok(TouchEvent::Released) => {
+                println!("Touch released");
+                
+                app.world_mut()
                 .resource_mut::<TouchInputState>()
                 .update_pressed(None);
+            }
+        
+            Ok(TouchEvent::NoUpdate) => {
+                // Do not change the current state here.
+            }
+            
+            Err(error) => {
+                println!(
+                    "GT911 polling error: {:?}",
+                    error,
+                );
+            }
         }
-
-        Ok(TouchEvent::NoUpdate) => {
-            // Do not change the current state here.
-        }
-
-        Err(error) => {
-            println!(
-                "GT911 polling error: {:?}",
-                error,
-            );
-        }
-    }
-    
-    
-    app.update();
-    
-    
-    
-
-    // Run one Bevy frame. The render system draws the maze into
-    // FrameBufferResource.
-    
-    // Synchronize our buffer switch with the display.
+        
+        
+        app.update();
+        
+        
+        
+        
+        // Run one Bevy frame. The render system draws the maze into FrameBufferResource.
+        
+        // Synchronize our buffer switch with the display.
         dpi.wait_for_vsync();
+        
         
         // Get the MIPI framebuffer that is not currently being displayed.
         let mipi_back_buffer = dpi.framebuffer_mut();
         
+        
+        
         // Borrow the embedded-graphics framebuffer from Bevy.
         {
             let software_framebuffer = app
-            .world()
-            .resource::<FrameBufferResource>();
-        
-        // Convert each embedded-graphics Rgb565 pixel into the two-byte
-        // little-endian layout expected by the MIPI framebuffer.
-        for (destination, source) in mipi_back_buffer
-        .chunks_exact_mut(BYTES_PER_PIXEL)
-        .zip(
-            software_framebuffer
-            .frame_buf
-            .data
-                        .iter(),
-                    )
-                    {
-                        let raw_color: u16 =
-                        (*source).into_storage();
-                        
-                        destination.copy_from_slice(
-                            &raw_color.to_le_bytes(),
-                        );
-                    }
-            }
-            
-            
-            
-            
-            
-            // Flush the PSRAM cache and switch VDMA to the completed buffer.
-            dpi.commit();
-            //println!("in your eyes");
+                .world()
+                .resource::<FrameBufferResource>();
 
-        delay.delay_millis(FRAME_TIME_MS);
+            debug_assert_eq!(
+                mipi_back_buffer.len(),
+                LCD_BUFFER_SIZE * core::mem::size_of::<u16>(),
+            );
+
+            debug_assert_eq!(
+                mipi_back_buffer.as_ptr().align_offset(
+                    core::mem::align_of::<u16>(),
+                ),
+                0,
+            );
+
+            let destination_pixels: &mut [u16] = unsafe {
+                core::slice::from_raw_parts_mut(
+                    mipi_back_buffer
+                        .as_mut_ptr()
+                        .cast::<u16>(),
+                    LCD_BUFFER_SIZE,
+                )
+            };
+
+            for (destination, source) in destination_pixels
+                .iter_mut()
+                .zip(
+                    software_framebuffer
+                        .frame_buf
+                        .data
+                        .iter(),
+                )
+            {
+                *destination = source.into_storage();
+            }
+        }
+        
+        
+        let test_ms = test_start.elapsed().as_millis();///////////////////
+    
+    
+    // Flush the PSRAM cache and switch VDMA to the completed buffer.
+    dpi.commit();
+    
+    //delay.delay_millis(FRAME_TIME_MS);
+
+    println!("{test_ms} ms");  
+
     }
 }

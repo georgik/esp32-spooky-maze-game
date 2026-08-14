@@ -8,6 +8,11 @@ use spooky_core::{
 
 use esp_println::println;
 
+use esp_hal::time::{
+    Duration as HalDuration,
+    Instant as HalInstant,
+};
+
 // -----------------------------------------------------------------------------
 // GT911 registers
 // -----------------------------------------------------------------------------
@@ -107,39 +112,93 @@ pub enum Direction {
     Right,
 }
 
-#[derive(Resource, Default)]
 
+
+// Wait this long before movement begins repeating.
+const INITIAL_REPEAT_DELAY_MS: u64 = 70;
+
+// Time between repeated movements while held.
+const REPEAT_INTERVAL_MS: u64 = 60;
+
+#[derive(Resource, Default)]
 pub struct TouchInputState {
-    /// Button currently held by the finger.
+    /// Direction currently held by the finger.
     pub pressed: Option<Direction>,
 
-    /// A new direction waiting to be sent to the game.
+    /// An immediate movement waiting to be sent.
     pending: Option<Direction>,
-}
 
+    /// Time at which the next held movement should occur.
+    next_repeat: Option<HalInstant>,
+}
 
 impl TouchInputState {
     pub fn update_pressed(
         &mut self,
         new_direction: Option<Direction>,
     ) {
-        // Queue a movement only when the selected button changes.
-        //
-        // None -> Up       queues Up
-        // Up -> Up         does nothing
-        // Up -> None       releases
-        // Up -> Right      queues Right
-        if new_direction != self.pressed {
-            self.pressed = new_direction;
+        // Receiving another touch update for the same button must not
+        // restart the repeat timer.
+        if new_direction == self.pressed {
+            return;
+        }
 
-            if let Some(direction) = new_direction {
+        self.pressed = new_direction;
+
+        match new_direction {
+            Some(direction) => {
+                // Move immediately on the initial press.
                 self.pending = Some(direction);
+
+                // Begin repeating after a short initial delay.
+                self.next_repeat = Some(
+                    HalInstant::now()
+                        + HalDuration::from_millis(
+                            INITIAL_REPEAT_DELAY_MS,
+                        ),
+                );
+            }
+
+            None => {
+                // Stop immediately when the finger is released or moved
+                // outside all direction buttons.
+                self.pending = None;
+                self.next_repeat = None;
             }
         }
     }
 
-    fn take_pending(&mut self) -> Option<Direction> {
-        self.pending.take()
+    fn next_direction(
+        &mut self,
+    ) -> Option<Direction> {
+        // A new press or direction change moves immediately.
+        if let Some(direction) = self.pending.take() {
+            return Some(direction);
+        }
+
+        // Nothing is currently held.
+        let direction = self.pressed?;
+
+        // A held button should always have a repeat deadline.
+        let next_repeat = self.next_repeat?;
+
+        let now = HalInstant::now();
+
+        if now < next_repeat {
+            return None;
+        }
+
+        // Schedule the next repetition relative to the current time.
+        //
+        // Using the current time avoids producing many catch-up messages
+        // after an unusually slow frame.
+        self.next_repeat = Some(
+            now + HalDuration::from_millis(
+                REPEAT_INTERVAL_MS,
+            ),
+        );
+
+        Some(direction)
     }
 }
 
@@ -363,17 +422,26 @@ pub fn direction_at(
 /// Holding a button does not emit movement every frame. The player must
 /// release it and press it again. Dragging directly to another direction
 /// also produces one movement in the new direction.
+/// Converts touchscreen direction input into player movement.
+///
+/// A new press moves immediately. Holding the button produces repeated
+/// movement after the configured initial delay.
 pub fn dispatch_touch_input(
     mut touch_state: ResMut<TouchInputState>,
     maze_res: Res<MazeResource>,
     mut message_writer: MessageWriter<PlayerInputMessage>,
 ) {
-    let Some(direction) = touch_state.take_pending() else {
+    let Some(direction) =
+        touch_state.next_direction()
+    else {
         return;
     };
 
-    let step_x = maze_res.maze.tile_width as f32;
-    let step_y = maze_res.maze.tile_height as f32;
+    let step_x =
+        maze_res.maze.tile_width as f32;
+
+    let step_y =
+        maze_res.maze.tile_height as f32;
 
     let (dx, dy) = match direction {
         Direction::Up => {
@@ -393,15 +461,10 @@ pub fn dispatch_touch_input(
         }
     };
 
-    println!(
-        "Sending player input: {:?}, dx={}, dy={}",
-        direction,
-        dx,
-        dy,
+    message_writer.write(
+        PlayerInputMessage {
+            dx,
+            dy,
+        },
     );
-
-    message_writer.write(PlayerInputMessage {
-        dx,
-        dy,
-    });
 }
