@@ -62,7 +62,7 @@ tinybmp = "0.6.0"
 embedded-graphics = "0.8.1"
 embedded-hal = "1.0.0"
 embedded-graphics-framebuf = "0.5.0"
-spooky-core = { path = "../spooky-core", default-features = false, features = ["dynamic_maze"]}
+spooky-core = { path = "../spooky-core", default-features = false, features = ["static_maze"]}
 
 ##icm42670 = { version = "0.2.0", optional = true }
 icm42670 = { version = "0.2.0" }
@@ -70,11 +70,8 @@ icm42670 = { version = "0.2.0" }
 
 [features]
 ###default = [ "esp-hal/esp32p4", "esp-backtrace/esp32p4", "esp-println/esp32p4", "esp32-s3-box-3" ]
-###accelerometer = []
 default = [ "esp-hal/esp32p4", "esp-backtrace/esp32p4", "esp-println/esp32p4", ]
 no-psram = []
-###esp32-s3-box-3 = [ "esp-hal/psram", "accelerometer", "dep:icm42670", "spooky-core/dynamic_maze" ]
-###esp32-s3-box-3 = [ "spooky-core/dynamic_maze" ]
 
 [profile.dev]
 opt-level = "s"

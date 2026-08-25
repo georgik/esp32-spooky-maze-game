@@ -6,7 +6,7 @@ use spooky_core::{
     resources::MazeResource,
 };
 
-use esp_println::println;
+//use esp_println::println;
 
 use esp_hal::time::{
     Duration as HalDuration,
@@ -114,11 +114,9 @@ pub enum Direction {
 
 
 
-// Wait this long before movement begins repeating.
-const INITIAL_REPEAT_DELAY_MS: u64 = 70;
 
-// Time between repeated movements while held.
-const REPEAT_INTERVAL_MS: u64 = 60;
+const INITIAL_REPEAT_DELAY_MS: u64 = 120; // Wait this long before movement begins repeating.
+const REPEAT_INTERVAL_MS: u64 = 60; // Time between repeated movements while held.
 
 #[derive(Resource, Default)]
 pub struct TouchInputState {

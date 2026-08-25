@@ -26,6 +26,14 @@ use embedded_graphics::{
 
 use tinybmp::Bmp;
 
+
+
+            use esp_println::{///////////////////////////for testing
+                logger::init_logger_from_env,
+                println,
+            };
+
+
 use spooky_core::{
     resources::{
         MazeResource,
@@ -399,15 +407,19 @@ pub fn render_system(
     let display_center_y =
         display_height / 2;
 
-    // Center the camera on the player.
-    let offset_x =
-        player_pos.x as i32
-            - display_center_x;
+    let mut offset_x: i32 = player_pos.x as i32 - display_center_x;
+    let mut offset_y = player_pos.y as i32 - display_center_y;
 
-    let offset_y =
-        player_pos.y as i32
-            - display_center_y;
+    // capping movement of the camera on the horizontal axis
+    if offset_x < -287 { offset_x = -288; }
+    else if offset_x > -16 { offset_x = -16; }
 
+    // capping movement of the camera on the vertical axis
+    if offset_y < 4 { offset_y = 4; }
+    else if offset_y > 420 { offset_y = 436;}
+
+    //println!("{0}, {1}", offset_y, player_pos.y); 
+    
     let visible_left =
         offset_x;
 

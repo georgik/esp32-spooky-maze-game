@@ -2,18 +2,6 @@
 #![no_main]
 
 
-
-
-            use esp_hal::time::Instant as HalInstant;
-
-
-
-
-
-
-
-
-
 extern crate alloc;
 
 use alloc::boxed::Box;
@@ -28,7 +16,7 @@ use bevy::{
     prelude::Update,
 };
 use bevy_ecs::prelude::*;
-use bevy_platform::time::Instant;
+use bevy_platform::time::Instant as BevyInstant;
 
 use embedded_graphics::{
     pixelcolor::Rgb565,
@@ -37,6 +25,9 @@ use embedded_graphics::{
 use embedded_graphics_framebuf::FrameBuf;
 
 use esp_backtrace as _;
+
+
+use esp_hal::time::Instant as HalInstant;
 use esp_hal::{
     clock::{
         CpuClock,
@@ -129,9 +120,6 @@ const BYTES_PER_PIXEL: usize = 2;
 const MIPI_FB_SIZE: usize =
     LCD_BUFFER_SIZE * BYTES_PER_PIXEL;
 
-// Approximate interval between game updates.
-const FRAME_TIME_MS: u32 = 16;
-
 // -----------------------------------------------------------------------------
 // EK79007 panel initialization
 // -----------------------------------------------------------------------------
@@ -183,13 +171,13 @@ impl FrameBufferResource {
 // Bevy time source
 // -----------------------------------------------------------------------------
 
-static ELAPSED: AtomicU32 = AtomicU32::new(0);
-
 fn elapsed_time() -> core::time::Duration {
-    let milliseconds = ELAPSED.load(Ordering::Relaxed);
+    let microseconds = HalInstant::now()
+        .duration_since_epoch()
+        .as_micros();
 
-    core::time::Duration::from_millis(
-        milliseconds as u64,
+    core::time::Duration::from_micros(
+        microseconds,
     )
 }
 
@@ -316,7 +304,7 @@ fn main() -> ! {
     )
     .expect("MIPI-DSI initialization failed");
 
-    println!("MIPI-DSI bus initialized");
+    println!("MIPI-DSI bus initialized"); 
 
     // -------------------------------------------------------------------------
     // EK79007 command-mode initialization
@@ -394,7 +382,7 @@ fn main() -> ! {
     // -------------------------------------------------------------------------
 
     unsafe {
-        Instant::set_elapsed(elapsed_time);
+        BevyInstant::set_elapsed(elapsed_time);
     }
 
     // -------------------------------------------------------------------------
@@ -475,10 +463,12 @@ fn main() -> ! {
                 
                 
         // Advance the clock used by Bevy.
+        /*
         ELAPSED.fetch_add(
             FRAME_TIME_MS,
             Ordering::Relaxed,
         );
+        */
                 
         
         // Poll the GT911 before running the Bevy frame.
@@ -497,7 +487,6 @@ fn main() -> ! {
             }
             
             Ok(TouchEvent::Released) => {
-                println!("Touch released");
                 
                 app.world_mut()
                 .resource_mut::<TouchInputState>()
@@ -574,15 +563,15 @@ fn main() -> ! {
         }
         
         
-        let test_ms = test_start.elapsed().as_millis();///////////////////
-    
-    
-    // Flush the PSRAM cache and switch VDMA to the completed buffer.
-    dpi.commit();
-    
-    //delay.delay_millis(FRAME_TIME_MS);
+        
+        
+        // Flush the PSRAM cache and switch VDMA to the completed buffer.
+        dpi.commit();
+        
 
-    println!("{test_ms} ms");  
+        let test_ms = test_start.elapsed().as_millis();///////////////////
+        
+    //println!("{test_ms} ms");  
 
     }
 }
