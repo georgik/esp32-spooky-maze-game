@@ -1,8 +1,12 @@
 // spooky_core/src/maze.rs
 
 // If you want dynamic maze generation, enable the "dynamic_maze" feature
+
+// Another maze generation algorithm is added under feature "dynamicP4_maze".
+// This second algorithm is only tested on the p4, hence the reason the original "dynamic_maze" was left untact.
+
 // and ensure the dependency on `maze_generator` is added to Cargo.toml.
-#[cfg(feature = "dynamic_maze")]
+#[cfg(any(feature = "dynamic_maze", feature = "dynamicP4_maze"))]
 use maze_generator::{prelude::*, recursive_backtracking::RbGenerator};
 
 use rand::prelude::*;
@@ -57,7 +61,7 @@ impl Maze {
             height,
             visible_width: 21,
             visible_height: 16,
-            #[cfg(feature = "dynamic_maze")]
+            #[cfg(any(feature = "dynamic_maze", feature="dynamicP4_maze"))]
             data: [1; 64 * 64],
             #[cfg(feature = "static_maze")]
             data: crate::static_maze_data::STATIC_MAZE_DATA,
@@ -337,6 +341,94 @@ impl Maze {
             }
         }
     }
+
+    
+    #[cfg(feature = "dynamicP4_maze")]
+    pub fn generate_maze(
+        &mut self,
+        graph_width: usize,
+        graph_height: usize,
+    ) {
+        // A logical maze with N cells needs 2 * N + 1 tiles
+        // to retain a one-tile wall border on both sides.
+        let max_graph_width =
+            (self.width as usize - 1) / 2;
+
+        let max_graph_height =
+            (self.height as usize - 1) / 2;
+
+        let graph_width =
+            graph_width.min(max_graph_width);
+
+        let graph_height =
+            graph_height.min(max_graph_height);
+
+        // Begin with a completely solid field of walls.
+        self.data.fill(1);
+
+        let seed: [u8; 32] =
+            self.rng.r#gen();
+
+        let mut generator =
+            RbGenerator::new(Some(seed));
+
+        let maze_graph = generator
+            .generate(
+                graph_width as i32,
+                graph_height as i32,
+            )
+            .unwrap();
+
+        for y in 0..graph_height {
+            for x in 0..graph_width {
+                let field = maze_graph
+                    .get_field(
+                        &(x as i32, y as i32).into(),
+                    )
+                    .unwrap();
+
+                // Logical cells are placed at odd tile coordinates:
+                //
+                // logical (0, 0) -> tile (1, 1)
+                // logical (1, 0) -> tile (3, 1)
+                // logical (0, 1) -> tile (1, 3)
+                let tile_x =
+                    x * 2 + 1;
+
+                let tile_y =
+                    y * 2 + 1;
+
+                let tile_index =
+                    tile_y * self.width as usize
+                        + tile_x;
+
+                // Carve the logical cell itself.
+                self.data[tile_index] = 0;
+
+                // Adding one moves one tile to the right,
+                // so it corresponds to East.
+                if field.has_passage(
+                    &Direction::East,
+                ) {
+                    self.data[tile_index + 1] = 0;
+                }
+
+                // Adding the row width moves one tile down,
+                // so it corresponds to South.
+                if field.has_passage(
+                    &Direction::South,
+                ) {
+                    self.data[
+                        tile_index
+                            + self.width as usize
+                    ] = 0;
+                }
+            }
+        }
+    }
+
+
+
 
     pub fn playable_bounds(&self) -> (i32, i32, i32, i32) {
         let margin = Self::MARGIN;

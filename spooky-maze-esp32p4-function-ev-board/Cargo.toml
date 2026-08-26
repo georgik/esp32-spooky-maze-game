@@ -62,7 +62,7 @@ tinybmp = "0.6.0"
 embedded-graphics = "0.8.1"
 embedded-hal = "1.0.0"
 embedded-graphics-framebuf = "0.5.0"
-spooky-core = { path = "../spooky-core", default-features = false, features = ["static_maze"]}
+spooky-core = { path = "../spooky-core", default-features = false, features = ["dynamicP4_maze"]}
 
 ##icm42670 = { version = "0.2.0", optional = true }
 icm42670 = { version = "0.2.0" }

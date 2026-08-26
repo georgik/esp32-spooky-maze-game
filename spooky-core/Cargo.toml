@@ -32,6 +32,7 @@ std = []
 wasm = [ "std" ]
 static_maze = []
 dynamic_maze = [ "dep:petgraph", "dep:maze_generator" ]
+dynamicP4_maze = [ "dep:petgraph", "dep:maze_generator" ]
 system_timer = []
 
 default = [ "static_maze" ]
