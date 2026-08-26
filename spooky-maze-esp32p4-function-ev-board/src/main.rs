@@ -274,12 +274,6 @@ fn main() -> ! {
         Gt911::new(touch_i2c)
             .expect("GT911 touch controller not detected");
 
-    println!(
-        "GT911 detected at 0x{:02X}, product ID: {:?}",
-        touch_controller.address(),
-        touch_product_id,
-    );
-
     // -------------------------------------------------------------------------
     // MIPI-DSI initialization
     // -------------------------------------------------------------------------
