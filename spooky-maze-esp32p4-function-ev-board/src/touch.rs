@@ -113,8 +113,6 @@ pub enum Direction {
 }
 
 
-
-
 const INITIAL_REPEAT_DELAY_MS: u64 = 120; // Wait this long before movement begins repeating.
 const REPEAT_INTERVAL_MS: u64 = 60; // Time between repeated movements while held.
 

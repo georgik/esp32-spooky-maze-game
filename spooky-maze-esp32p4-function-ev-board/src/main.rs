@@ -1,13 +1,11 @@
 #![no_std]
 #![no_main]
 
-
 extern crate alloc;
 
 use alloc::boxed::Box;
 use core::{
-    alloc::Layout,
-    sync::atomic::{AtomicU32, Ordering},
+    alloc::Layout
 };
 
 use bevy::{
@@ -103,7 +101,6 @@ use crate::touch::{
 };
 
 
-
 // Required by espflash and the ESP-IDF bootloader.
 esp_bootloader_esp_idf::esp_app_desc!();
 
@@ -134,7 +131,6 @@ static EK79007_INIT: &[(u8, &[u8])] = &[
     (0x85, &[0xE3]),
     (0x86, &[0x88]),
 ];
-
 
 // -----------------------------------------------------------------------------
 // Software framebuffer used by embedded-graphics
@@ -451,25 +447,8 @@ fn main() -> ! {
         // Main game/display loop
         // -------------------------------------------------------------------------
             
-            
-            
-    
     loop {
-
-
-        let test_start = HalInstant::now();/////////////////////////////////////////////
-                
-                
-                
-                
-        // Advance the clock used by Bevy.
-        /*
-        ELAPSED.fetch_add(
-            FRAME_TIME_MS,
-            Ordering::Relaxed,
-        );
-        */
-                
+    
         
         // Poll the GT911 before running the Bevy frame.
         match touch_controller.poll_event() {
@@ -507,11 +486,6 @@ fn main() -> ! {
         
         
         app.update();
-        
-        
-        
-        
-        // Run one Bevy frame. The render system draws the maze into FrameBufferResource.
         
         // Synchronize our buffer switch with the display.
         dpi.wait_for_vsync();
@@ -562,16 +536,8 @@ fn main() -> ! {
             }
         }
         
-        
-        
-        
         // Flush the PSRAM cache and switch VDMA to the completed buffer.
         dpi.commit();
-        
-
-        let test_ms = test_start.elapsed().as_millis();///////////////////
-        
-    //println!("{test_ms} ms");  
 
     }
 }

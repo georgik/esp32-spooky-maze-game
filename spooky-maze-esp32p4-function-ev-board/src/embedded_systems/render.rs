@@ -27,13 +27,6 @@ use embedded_graphics::{
 use tinybmp::Bmp;
 
 
-
-            use esp_println::{///////////////////////////for testing
-                logger::init_logger_from_env,
-                println,
-            };
-
-
 use spooky_core::{
     resources::{
         MazeResource,
