@@ -1,12 +1,8 @@
 // spooky_core/src/maze.rs
 
 // If you want dynamic maze generation, enable the "dynamic_maze" feature
-
-// Another maze generation algorithm is added under feature "dynamicP4_maze".
-// This second algorithm is only tested on the p4, hence the reason the original "dynamic_maze" was left untact.
-
 // and ensure the dependency on `maze_generator` is added to Cargo.toml.
-#[cfg(any(feature = "dynamic_maze", feature = "dynamicP4_maze"))]
+#[cfg(feature = "dynamic_maze")]
 use maze_generator::{prelude::*, recursive_backtracking::RbGenerator};
 
 use rand::prelude::*;
@@ -61,7 +57,7 @@ impl Maze {
             height,
             visible_width: 21,
             visible_height: 16,
-            #[cfg(any(feature = "dynamic_maze", feature="dynamicP4_maze"))]
+            #[cfg(feature = "dynamic_maze")]
             data: [1; 64 * 64],
             #[cfg(feature = "static_maze")]
             data: crate::static_maze_data::STATIC_MAZE_DATA,
@@ -156,6 +152,12 @@ impl Maze {
             self.coins[index].y = new_y;
         }
         self.coin_counter = 100;
+    }
+
+    pub fn get_random_player_position(&mut self) -> (f32, f32) {
+
+            let (new_x, new_y) = self.get_random_coordinates();
+            return (new_x as f32, new_y as f32);
     }
 
     pub fn relocate_coins(&mut self, amount: u32) {
@@ -319,116 +321,85 @@ impl Maze {
         // No dynamic generation in static mode.
     }
 
-    #[cfg(feature = "dynamic_maze")]
-    pub fn generate_maze(&mut self, graph_width: usize, graph_height: usize) {
-        let seed: [u8; 32] = self.rng.r#gen();
-        let mut generator = RbGenerator::new(Some(seed));
-        let maze_graph = generator
-            .generate(graph_width as i32, graph_height as i32)
-            .unwrap();
-        for y in 1..graph_height {
-            for x in 1..graph_width {
-                let field = maze_graph.get_field(&(x as i32, y as i32).into()).unwrap();
-                let tile_index =
-                    (x - 1) * 2 + (y - 1) * 2 * (self.width as usize) + (self.offset as usize);
-                self.data[tile_index] = 0;
-                if field.has_passage(&Direction::West) {
-                    self.data[tile_index + 1] = 0;
-                }
-                if field.has_passage(&Direction::South) {
-                    self.data[tile_index + (self.width as usize)] = 0;
-                }
+#[cfg(feature = "dynamic_maze")]
+pub fn generate_maze(
+    &mut self,
+    graph_width: usize,
+    graph_height: usize,
+) {
+    let maze_width = self.width as usize;
+    let maze_height = self.height as usize;
+
+    // A logical maze containing N cells requires 2 * N + 1 tiles:
+    //
+    // wall, cell, wall, cell, wall...
+    //
+    // This also preserves a one-tile wall around the maze.
+    let max_graph_width =
+        maze_width.saturating_sub(1) / 2;
+
+    let max_graph_height =
+        maze_height.saturating_sub(1) / 2;
+
+    let graph_width =
+        graph_width.min(max_graph_width);
+
+    let graph_height =
+        graph_height.min(max_graph_height);
+
+    // Reset the previous maze to solid walls.
+    self.data.fill(1);
+
+    if graph_width == 0 || graph_height == 0 {
+        return;
+    }
+
+    let seed: [u8; 32] = self.rng.r#gen();
+    let mut generator = RbGenerator::new(Some(seed));
+
+    let maze_graph = generator
+        .generate(
+            graph_width as i32,
+            graph_height as i32,
+        )
+        .expect("Failed to generate maze");
+
+    for y in 0..graph_height {
+        for x in 0..graph_width {
+            let field = maze_graph
+                .get_field(
+                    &(x as i32, y as i32).into(),
+                )
+                .expect("Generated maze field is missing");
+
+            // Place maze cells at odd tile coordinates.
+            //
+            // Graph (0, 0) -> tile (1, 1)
+            // Graph (1, 0) -> tile (3, 1)
+            // Graph (0, 1) -> tile (1, 3)
+            let tile_x = x * 2 + 1;
+            let tile_y = y * 2 + 1;
+
+            let tile_index =
+                tile_y * maze_width + tile_x;
+
+            // Carve out the cell itself.
+            self.data[tile_index] = 0;
+
+            // Carve the passage between this cell and the cell
+            // immediately to its right.
+            if field.has_passage(&Direction::East) {
+                self.data[tile_index + 1] = 0;
+            }
+
+            // Carve the passage between this cell and the cell
+            // immediately below it.
+            if field.has_passage(&Direction::South) {
+                self.data[tile_index + maze_width] = 0;
             }
         }
     }
-
-    
-    #[cfg(feature = "dynamicP4_maze")]
-    pub fn generate_maze(
-        &mut self,
-        graph_width: usize,
-        graph_height: usize,
-    ) {
-        // A logical maze with N cells needs 2 * N + 1 tiles
-        // to retain a one-tile wall border on both sides.
-        let max_graph_width =
-            (self.width as usize - 1) / 2;
-
-        let max_graph_height =
-            (self.height as usize - 1) / 2;
-
-        let graph_width =
-            graph_width.min(max_graph_width);
-
-        let graph_height =
-            graph_height.min(max_graph_height);
-
-        // Begin with a completely solid field of walls.
-        self.data.fill(1);
-
-        let seed: [u8; 32] =
-            self.rng.r#gen();
-
-        let mut generator =
-            RbGenerator::new(Some(seed));
-
-        let maze_graph = generator
-            .generate(
-                graph_width as i32,
-                graph_height as i32,
-            )
-            .unwrap();
-
-        for y in 0..graph_height {
-            for x in 0..graph_width {
-                let field = maze_graph
-                    .get_field(
-                        &(x as i32, y as i32).into(),
-                    )
-                    .unwrap();
-
-                // Logical cells are placed at odd tile coordinates:
-                //
-                // logical (0, 0) -> tile (1, 1)
-                // logical (1, 0) -> tile (3, 1)
-                // logical (0, 1) -> tile (1, 3)
-                let tile_x =
-                    x * 2 + 1;
-
-                let tile_y =
-                    y * 2 + 1;
-
-                let tile_index =
-                    tile_y * self.width as usize
-                        + tile_x;
-
-                // Carve the logical cell itself.
-                self.data[tile_index] = 0;
-
-                // Adding one moves one tile to the right,
-                // so it corresponds to East.
-                if field.has_passage(
-                    &Direction::East,
-                ) {
-                    self.data[tile_index + 1] = 0;
-                }
-
-                // Adding the row width moves one tile down,
-                // so it corresponds to South.
-                if field.has_passage(
-                    &Direction::South,
-                ) {
-                    self.data[
-                        tile_index
-                            + self.width as usize
-                    ] = 0;
-                }
-            }
-        }
-    }
-
-
-
+}
 
     pub fn playable_bounds(&self) -> (i32, i32, i32, i32) {
         let margin = Self::MARGIN;

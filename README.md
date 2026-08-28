@@ -35,7 +35,7 @@ For now, the project supports three primary targets:
 - **[ESP32P4-FUNCTION-EV-BOARD](https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32p4/esp32-p4-function-ev-board/user_guide.html) Embedded Version**
   Uses the GT911 touch controller for input. (Use the on-screen D-pad to move the ghost).
 
-  ![Spooky Maze Game ESP32P4-FUNCTION-EV-BOARD](assets/screenshot/spooky-maze-esp32p4-function-EV-board.jpg)
+  ![Spooky Maze Game ESP32P4-FUNCTION-EV-BOARD](assets/screenshot/spooky-maze-esp32p4-function-EV-board.webp)
 
   
 

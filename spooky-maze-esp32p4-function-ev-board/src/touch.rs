@@ -1,17 +1,11 @@
 use bevy_ecs::prelude::*;
 use embedded_hal::i2c::I2c;
 
-use spooky_core::{
-    events::player::PlayerInputMessage,
-    resources::MazeResource,
-};
+use spooky_core::{events::player::PlayerInputMessage, resources::MazeResource};
 
 //use esp_println::println;
 
-use esp_hal::time::{
-    Duration as HalDuration,
-    Instant as HalInstant,
-};
+use esp_hal::time::{Duration as HalDuration, Instant as HalInstant};
 
 // -----------------------------------------------------------------------------
 // GT911 registers
@@ -47,12 +41,7 @@ pub struct ButtonRect {
 }
 
 impl ButtonRect {
-    pub const fn new(
-        x: i32,
-        y: i32,
-        width: u32,
-        height: u32,
-    ) -> Self {
+    pub const fn new(x: i32, y: i32, width: u32, height: u32) -> Self {
         Self {
             x,
             y,
@@ -69,17 +58,13 @@ impl ButtonRect {
     }
 }
 
-pub const UP_BUTTON: ButtonRect =
-    ButtonRect::new(120, 310, 80, 80);
+pub const UP_BUTTON: ButtonRect = ButtonRect::new(120, 310, 80, 80);
 
-pub const LEFT_BUTTON: ButtonRect =
-    ButtonRect::new(30, 400, 80, 80);
+pub const LEFT_BUTTON: ButtonRect = ButtonRect::new(30, 400, 80, 80);
 
-pub const RIGHT_BUTTON: ButtonRect =
-    ButtonRect::new(210, 400, 80, 80);
+pub const RIGHT_BUTTON: ButtonRect = ButtonRect::new(210, 400, 80, 80);
 
-pub const DOWN_BUTTON: ButtonRect =
-    ButtonRect::new(120, 490, 80, 80);
+pub const DOWN_BUTTON: ButtonRect = ButtonRect::new(120, 490, 80, 80);
 
 // -----------------------------------------------------------------------------
 // Touch and direction types
@@ -112,7 +97,6 @@ pub enum Direction {
     Right,
 }
 
-
 const INITIAL_REPEAT_DELAY_MS: u64 = 120; // Wait this long before movement begins repeating.
 const REPEAT_INTERVAL_MS: u64 = 60; // Time between repeated movements while held.
 
@@ -129,10 +113,7 @@ pub struct TouchInputState {
 }
 
 impl TouchInputState {
-    pub fn update_pressed(
-        &mut self,
-        new_direction: Option<Direction>,
-    ) {
+    pub fn update_pressed(&mut self, new_direction: Option<Direction>) {
         // Receiving another touch update for the same button must not
         // restart the repeat timer.
         if new_direction == self.pressed {
@@ -147,12 +128,8 @@ impl TouchInputState {
                 self.pending = Some(direction);
 
                 // Begin repeating after a short initial delay.
-                self.next_repeat = Some(
-                    HalInstant::now()
-                        + HalDuration::from_millis(
-                            INITIAL_REPEAT_DELAY_MS,
-                        ),
-                );
+                self.next_repeat =
+                    Some(HalInstant::now() + HalDuration::from_millis(INITIAL_REPEAT_DELAY_MS));
             }
 
             None => {
@@ -164,9 +141,7 @@ impl TouchInputState {
         }
     }
 
-    fn next_direction(
-        &mut self,
-    ) -> Option<Direction> {
+    fn next_direction(&mut self) -> Option<Direction> {
         // A new press or direction change moves immediately.
         if let Some(direction) = self.pending.take() {
             return Some(direction);
@@ -188,11 +163,7 @@ impl TouchInputState {
         //
         // Using the current time avoids producing many catch-up messages
         // after an unusually slow frame.
-        self.next_repeat = Some(
-            now + HalDuration::from_millis(
-                REPEAT_INTERVAL_MS,
-            ),
-        );
+        self.next_repeat = Some(now + HalDuration::from_millis(REPEAT_INTERVAL_MS));
 
         Some(direction)
     }
@@ -211,9 +182,7 @@ impl<I2C> Gt911<I2C>
 where
     I2C: I2c,
 {
-    pub fn new(
-        mut i2c: I2C,
-    ) -> Result<(Self, [u8; 4]), I2C::Error> {
+    pub fn new(mut i2c: I2C) -> Result<(Self, [u8; 4]), I2C::Error> {
         let mut product_id = [0u8; 4];
 
         if Self::read_register_from(
@@ -253,23 +222,17 @@ where
         self.address
     }
 
-    pub fn poll_event(
-        &mut self,
-    ) -> Result<TouchEvent, I2C::Error> {
+    pub fn poll_event(&mut self) -> Result<TouchEvent, I2C::Error> {
         let mut status = [0u8; 1];
 
-        self.read_register(
-            GT911_STATUS_REGISTER,
-            &mut status,
-        )?;
+        self.read_register(GT911_STATUS_REGISTER, &mut status)?;
 
         // If bit 7 is clear, the GT911 has no new information.
         if status[0] & GT911_DATA_READY == 0 {
             return Ok(TouchEvent::NoUpdate);
         }
 
-        let touch_count =
-            status[0] & GT911_TOUCH_COUNT_MASK;
+        let touch_count = status[0] & GT911_TOUCH_COUNT_MASK;
 
         if touch_count == 0 {
             self.clear_status()?;
@@ -285,54 +248,27 @@ where
         // byte 7       reserved
         let mut point_data = [0u8; 8];
 
-        self.read_register(
-            GT911_FIRST_POINT_REGISTER,
-            &mut point_data,
-        )?;
+        self.read_register(GT911_FIRST_POINT_REGISTER, &mut point_data)?;
 
         // The controller expects the status register to be cleared
         // after the point data has been consumed.
         self.clear_status()?;
 
-        let x = u16::from_le_bytes([
-            point_data[1],
-            point_data[2],
-        ]);
+        let x = u16::from_le_bytes([point_data[1], point_data[2]]);
 
-        let y = u16::from_le_bytes([
-            point_data[3],
-            point_data[4],
-        ]);
+        let y = u16::from_le_bytes([point_data[3], point_data[4]]);
 
-        let size = u16::from_le_bytes([
-            point_data[5],
-            point_data[6],
-        ]);
+        let size = u16::from_le_bytes([point_data[5], point_data[6]]);
 
-        Ok(TouchEvent::Point(TouchPoint {
-            x,
-            y,
-            size,
-        }))
+        Ok(TouchEvent::Point(TouchPoint { x, y, size }))
     }
 
-    fn clear_status(
-        &mut self,
-    ) -> Result<(), I2C::Error> {
+    fn clear_status(&mut self) -> Result<(), I2C::Error> {
         self.write_u8(GT911_STATUS_REGISTER, 0)
     }
 
-    fn read_register(
-        &mut self,
-        register: u16,
-        output: &mut [u8],
-    ) -> Result<(), I2C::Error> {
-        Self::read_register_from(
-            &mut self.i2c,
-            self.address,
-            register,
-            output,
-        )
+    fn read_register(&mut self, register: u16, output: &mut [u8]) -> Result<(), I2C::Error> {
+        Self::read_register_from(&mut self.i2c, self.address, register, output)
     }
 
     fn read_register_from(
@@ -343,25 +279,13 @@ where
     ) -> Result<(), I2C::Error> {
         let register_bytes = register.to_be_bytes();
 
-        i2c.write_read(
-            address,
-            &register_bytes,
-            output,
-        )
+        i2c.write_read(address, &register_bytes, output)
     }
 
-    fn write_u8(
-        &mut self,
-        register: u16,
-        value: u8,
-    ) -> Result<(), I2C::Error> {
+    fn write_u8(&mut self, register: u16, value: u8) -> Result<(), I2C::Error> {
         let register_bytes = register.to_be_bytes();
 
-        let data = [
-            register_bytes[0],
-            register_bytes[1],
-            value,
-        ];
+        let data = [register_bytes[0], register_bytes[1], value];
 
         self.i2c.write(self.address, &data)
     }
@@ -371,9 +295,7 @@ where
 // Coordinate conversion and button hit testing
 // -----------------------------------------------------------------------------
 
-pub fn transform_touch_point(
-    point: TouchPoint,
-) -> (i32, i32) {
+pub fn transform_touch_point(point: TouchPoint) -> (i32, i32) {
     let raw_x = point.x.min(SCREEN_WIDTH - 1);
     let raw_y = point.y.min(SCREEN_HEIGHT - 1);
 
@@ -392,10 +314,7 @@ pub fn transform_touch_point(
     (x as i32, y as i32)
 }
 
-pub fn direction_at(
-    x: i32,
-    y: i32,
-) -> Option<Direction> {
+pub fn direction_at(x: i32, y: i32) -> Option<Direction> {
     if UP_BUTTON.contains(x, y) {
         Some(Direction::Up)
     } else if DOWN_BUTTON.contains(x, y) {
@@ -427,40 +346,23 @@ pub fn dispatch_touch_input(
     maze_res: Res<MazeResource>,
     mut message_writer: MessageWriter<PlayerInputMessage>,
 ) {
-    let Some(direction) =
-        touch_state.next_direction()
-    else {
+    let Some(direction) = touch_state.next_direction() else {
         return;
     };
 
-    let step_x =
-        maze_res.maze.tile_width as f32;
+    let step_x = maze_res.maze.tile_width as f32;
 
-    let step_y =
-        maze_res.maze.tile_height as f32;
+    let step_y = maze_res.maze.tile_height as f32;
 
     let (dx, dy) = match direction {
-        Direction::Up => {
-            (0.0, -step_y)
-        }
+        Direction::Up => (0.0, -step_y),
 
-        Direction::Down => {
-            (0.0, step_y)
-        }
+        Direction::Down => (0.0, step_y),
 
-        Direction::Left => {
-            (-step_x, 0.0)
-        }
+        Direction::Left => (-step_x, 0.0),
 
-        Direction::Right => {
-            (step_x, 0.0)
-        }
+        Direction::Right => (step_x, 0.0),
     };
 
-    message_writer.write(
-        PlayerInputMessage {
-            dx,
-            dy,
-        },
-    );
+    message_writer.write(PlayerInputMessage { dx, dy });
 }

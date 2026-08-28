@@ -1,52 +1,50 @@
 [package]
-name = "spooky-maze-esp32-s3-box-3"
+name = "spooky-maze-esp32p4-function-ev-board"
 version = "0.14.0"
-authors = ["Juraj Michálek <juraj.michalek@espressif.com>", "Matěj David Ondráček <mathejdo@seznam.cz>"]
+
+authors = [
+    "Juraj Michálek <juraj.michalek@espressif.com>",
+    "Matěj David Ondráček <mathejdo@seznam.cz>"
+]
+
 edition = "2024"
 license = "MIT"
 
 [dependencies]
 # Disable default features for Bevy and its sub-crates so that no_std is used.
-#bevy = { version = "0.17.2", default-features = false }
 # Note: Bevy 0.17 has an error in atomics detection which results in panic when spawning the first entity
 #       Development version Bevy-0.18-dev has solved the issue, so for the time being we will use this.
+
 bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "906bc14", default-features = false }
-#bevy_ecs = { version = "0.17.2", default-features = false }
 bevy_ecs = { git = "https://github.com/bevyengine/bevy.git", rev = "906bc14", default-features = false }
-#bevy_platform = { version = "0.17.2", default-features = false }
 bevy_platform = { git = "https://github.com/bevyengine/bevy.git", rev = "906bc14", default-features = false }
 
 
-###esp-hal = { version = "1.0.0", features = ["esp32p4", "unstable"] }
+
 esp-hal = {
     git = "https://github.com/esp-rs/esp-hal.git",
     rev = "10f8d8cc628abbccff34f9c032b26a4b2a484a3b",
     features = ["esp32p4", "unstable"]
 }
 
-###esp-backtrace = { version = "0.18.1", features = ["panic-handler","println", "esp32p4"] }
 esp-backtrace = {
     git = "https://github.com/esp-rs/esp-hal.git",
     rev = "10f8d8cc628abbccff34f9c032b26a4b2a484a3b",
     features = ["panic-handler", "println", "esp32p4"]
 }
 
-#esp-println = { version = "0.16.1", features = [ "log-04" ] }
 esp-println = {
     git = "https://github.com/esp-rs/esp-hal.git",
     rev = "10f8d8cc628abbccff34f9c032b26a4b2a484a3b",
-    #default-features = false,
     features = ["esp32p4", "log-04"]
 }
 
-#esp-alloc = "0.9.0"
 esp-alloc = { 
     git = "https://github.com/esp-rs/esp-hal.git",
     rev = "10f8d8cc628abbccff34f9c032b26a4b2a484a3b",
     default-features = false,
     features = ["esp32p4", "global-allocator",]}
 
-#esp-bootloader-esp-idf = { version = "0.4.0", features = ["esp32p4"] }
 esp-bootloader-esp-idf = {
     git = "https://github.com/esp-rs/esp-hal.git",
     rev = "10f8d8cc628abbccff34f9c032b26a4b2a484a3b",
@@ -57,20 +55,14 @@ esp-bootloader-esp-idf = {
 log = "0.4.27"
 tinybmp = "0.6.0"
 
-
-
 embedded-graphics = "0.8.1"
 embedded-hal = "1.0.0"
 embedded-graphics-framebuf = "0.5.0"
-spooky-core = { path = "../spooky-core", default-features = false, features = ["dynamicP4_maze"]}
-
-##icm42670 = { version = "0.2.0", optional = true }
-icm42670 = { version = "0.2.0" }
+spooky-core = { path = "../spooky-core", default-features = false, features = ["dynamic_maze"]}
 
 
 [features]
-###default = [ "esp-hal/esp32p4", "esp-backtrace/esp32p4", "esp-println/esp32p4", "esp32-s3-box-3" ]
-default = [ "esp-hal/esp32p4", "esp-backtrace/esp32p4", "esp-println/esp32p4", ]
+default = []
 no-psram = []
 
 [profile.dev]
@@ -84,7 +76,3 @@ incremental = false
 lto = "fat"
 opt-level = "s"
 overflow-checks = false
-
-##########graveyard
-###embedded-hal-bus = "0.3.0"
-##mipidsi = "0.9.0"
