@@ -3,8 +3,6 @@ use embedded_hal::i2c::I2c;
 
 use spooky_core::{events::player::PlayerInputMessage, resources::MazeResource};
 
-//use esp_println::println;
-
 use esp_hal::time::{Duration as HalDuration, Instant as HalInstant};
 
 // -----------------------------------------------------------------------------

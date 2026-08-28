@@ -81,14 +81,13 @@ const MIPI_FB_SIZE: usize = LCD_BUFFER_SIZE * BYTES_PER_PIXEL;
 // EK79007 panel initialization & register configuration
 // -----------------------------------------------------------------------------
 
-
 // https://dl.espressif.com/AE/esp-iot-solution/EK79007.pdf
 static EK79007_INIT: &[(u8, &[u8])] = &[
     //
     (0xB2, &[0x10]), // sets the EK79007 to use two MIPI lanes.
     (0x80, &[0x8B]), // 0x80 - 0x86 set the gamma-voltage curve
-    (0x81, &[0x78]), 
-    (0x82, &[0x84]), 
+    (0x81, &[0x78]),
+    (0x82, &[0x84]),
     (0x83, &[0x88]),
     (0x84, &[0xA8]),
     (0x85, &[0xE3]),
@@ -198,8 +197,7 @@ fn main() -> ! {
         .with_sda(peripherals.GPIO7)
         .with_scl(peripherals.GPIO8);
 
-    let (mut touch_controller, touch_product_id) =
-        Gt911::new(touch_i2c).expect("GT911 touch controller not detected");
+    let mut touch_controller = Gt911::new(touch_i2c).expect("GT911 touch controller not detected");
 
     // -------------------------------------------------------------------------
     // MIPI-DSI initialization
@@ -355,7 +353,7 @@ fn main() -> ! {
 
     loop {
         // Poll the GT911 before running the Bevy frame.
-        match touch_controller.poll_event() {
+        match touch_controller.0.poll_event() {
             Ok(TouchEvent::Point(point)) => {
                 let (screen_x, screen_y) = transform_touch_point(point);
 
