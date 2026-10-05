@@ -1,0 +1,4 @@
+[wokwi]
+version = 1
+elf =       "target/riscv32imafc-unknown-none-elf/release/spooky-maze-esp32p4-function-ev-board"
+firmware =  "target/riscv32imafc-unknown-none-elf/release/spooky-maze-esp32p4-function-ev-board"

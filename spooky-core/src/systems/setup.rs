@@ -142,10 +142,12 @@ pub fn setup(
     maze.generate_npcs();
 
     // Compute playable bounds.
-    let (left, bottom, _right, _top) = maze.playable_bounds();
-    let initial_x = left as f32 + 11.0 * 16.0;
-    let initial_y = bottom as f32 + 10.0 * 16.0;
+    let (_left, _bottom, _right, _top) = maze.playable_bounds();
+    
+    //generate random player starting position
+    let (initial_x, initial_y) = maze.get_random_player_position();
     let player_start = Vec3::new(initial_x, initial_y, 2.0);
+
 
     // Insert the initial player position resource.
     commands.insert_resource(PlayerPosition {
