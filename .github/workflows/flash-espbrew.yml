@@ -2,7 +2,7 @@ name: Flash & Snap via ESPBrew
 
 # Manual-only hardware workflow for the Spooky Maze Game boards.
 #
-#   * `build` -> ubuntu: compiles every selected board and packages a minimal
+#   * `build`  -> ubuntu: compiles every selected board and packages a minimal
 #                 espbrew-ready artifact per board:
 #                     pack-<board>/{Cargo.toml,.cargo/config.toml,
 #                     target/<triple>/release/<elf>}
@@ -10,11 +10,21 @@ name: Flash & Snap via ESPBrew
 #                 toolchain install covers every matrix entry. espbrew's
 #                 autodetector keys on `.cargo/config.toml` + the ELF, so the
 #                 `target/<triple>/release` layout must be preserved exactly.
-#   * `snap`  -> [espbrew] self-hosted runner. That runner is only a *client*
+#   * `wasm`   -> ubuntu: builds the browser (wasm) build IN PARALLEL with
+#                 `build` (it needs only stable + wasm32, no xtensa). The result
+#                 is published to GitHub Pages in `deploy` and is NEVER sent to
+#                 espbrew.
+#   * `snap`   -> [espbrew] self-hosted runner. That runner is only a *client*
 #                 to the ESPBrew cluster leader (the physical board lives on the
 #                 leader), so it flashes the firmware and captures a camera frame
 #                 via `espbrew snap`. espbrew auto-detects the project from the
 #                 downloaded pack-<board>, so no manual flash plan is required.
+#   * `deploy` -> ubuntu: assembles the GitHub Pages site — a per-board
+#                 screenshot gallery (only the boards that were actually
+#                 snapshotted appear with an image; the rest get a placeholder)
+#                 plus the WASM browser build. Only the snapshots that were
+#                 actually captured are staged, so a partial run still publishes
+#                 a correct gallery.
 #
 # Board selection (boards.yaml):
 #
@@ -32,6 +42,12 @@ name: Flash & Snap via ESPBrew
 #                                    recognise, so the ELF cannot be converted.
 #                                    Re-add it once espbrew supports that triple.
 #
+# Gallery:
+#
+#   `publish_gallery` controls whether the assembled gallery (hardware snapshots
+#   + WASM browser build) is deployed to GitHub Pages. Set it to false to flash
+#   and capture a run WITHOUT publishing a site (useful for a quick flash test).
+#
 # Security: this workflow only triggers on manual dispatch, so pull requests
 # (including from forks) can never execute steps on the self-hosted hardware
 # runner. The snap job also carries a guard step as defense in depth. See the
@@ -46,6 +62,10 @@ on:
         default: 'spooky-maze-esp32-s3-box-3, spooky-maze-m5stack-atom-s3, spooky-maze-m5stack-atom-s3r, spooky-maze-m5stack-core2'
       enable_snap:
         description: 'Flash + capture a hardware snapshot via espbrew snap'
+        type: boolean
+        default: true
+      publish_gallery:
+        description: 'Deploy screenshot gallery + WASM browser build to GitHub Pages'
         type: boolean
         default: true
       snap_duration:
@@ -202,10 +222,75 @@ jobs:
           retention-days: 7
 
   # ---------------------------------------------------------------------------
+  # Build the browser (wasm) build IN PARALLEL with the board builds above. It
+  # needs only the stable toolchain + wasm32 target (no xtensa), so it runs on a
+  # plain ubuntu runner alongside `build`. The WASM build is NEVER sent to
+  # espbrew — it is published to the gallery in the `deploy` job only.
+  #
+  # The spooky WASM crate uses `wasm-pack` (see spooky-maze-wasm/build.sh) and
+  # emits pkg/ (js + wasm). The crate-root index.html references ./pkg/..., so
+  # the served artifact carries index.html + assets/ + pkg/ together.
+  # ---------------------------------------------------------------------------
+  wasm:
+    name: Build WASM browser build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install stable toolchain + wasm32 target
+        run: |
+          set -euo pipefail
+          # WASM needs only stable + wasm32 (no xtensa), so it does not touch the
+          # board toolchain and can run in parallel with the firmware build.
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup target add wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        # wasm-pack builds the crate and emits pkg/. The official installer
+        # matches spooky-maze-wasm/build.sh.
+        run: |
+          set -euo pipefail
+          curl -sSf https://rustwasm.github.io/wasm-pack/installer/init.sh | sh
+
+      - name: Build WASM library (wasm32, release)
+        run: |
+          set -euo pipefail
+          cd spooky-maze-wasm
+          # build.rs is a no-op for the wasm32 target, so this only produces the
+          # .wasm. --release (not --dev) for the published build.
+          wasm-pack build --target web --out-dir pkg --release
+
+      - name: Verify served page present
+        run: |
+          set -euo pipefail
+          # The crate-root index.html references ./pkg/spooky_maze_wasm.js, so it
+          # must be shipped alongside pkg/. Fail loud if it is missing.
+          if [ ! -f index.html ] || [ ! -f pkg/spooky_maze_wasm.js ] || [ ! -f pkg/spooky_maze_wasm_bg.wasm ]; then
+            echo "::error::WASM build incomplete (index.html and pkg/*.js/.wasm required)" >&2
+            exit 1
+          fi
+
+      - name: Upload WASM build
+        # index.html + assets/ (crate root) + pkg/ (wasm-pack output) so the
+        # gallery can serve a self-contained browser build at /wasm/.
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-build
+          path: |
+            spooky-maze-wasm/index.html
+            spooky-maze-wasm/assets/
+            spooky-maze-wasm/pkg/
+          retention-days: 1
+
+  # ---------------------------------------------------------------------------
   # Flash + capture a hardware snapshot per selected board on the self-hosted
-  # ESPBrew runner. The runner is only a client to the cluster leader, so
-  # `espbrew snap` auto-detects the firmware from the downloaded pack-<board>
-  # and flashes it at the standard app offset. No manual flash plan is needed.
+  # ESPBrew runner.
+  #
+  # The runner is only a client to the cluster leader, so `espbrew snap`
+  # auto-detects the firmware from the downloaded pack-<board> and flashes it at
+  # the standard app offset. No manual flash plan is required.
   # ---------------------------------------------------------------------------
   snap:
     name: Flash & snap (espbrew)
@@ -249,8 +334,9 @@ jobs:
           ./espbrew --version
 
       - name: Download firmware pack
-        # A matrix expression cannot use the `steps` context, so the download
-        # must be a real `uses:` step (not a CLI invocation in a run block).
+        # Downloads the per-board artifact uploaded by the `build` job. A matrix
+        # expression cannot use the `steps` context, so the download must be a
+        # real `uses:` step (not a CLI invocation inside the flash run block).
         uses: actions/download-artifact@v4
         with:
           name: pack-${{ matrix.board }}
@@ -297,12 +383,78 @@ jobs:
                 --duration "$SNAP_DURATION" )
 
       - name: Upload snapshot zips
-        # Upload the raw espbrew snapshot zips (one per board) so a gallery
-        # deploy job can expand them. Extraction is done on the GitHub-hosted
-        # deploy runner, NOT on this self-hosted hardware runner.
+        # Upload the raw espbrew snapshot zips (one per board) so the gallery
+        # deploy job can expand them. File extraction is intentionally done on
+        # the GitHub-hosted deploy runner, NOT on this self-hosted hardware
+        # runner: the espbrew runner exists only to flash + capture, so it must
+        # not depend on apt/unzip or do any file manipulation.
         if: hashFiles('snapshots/*.zip') != ''
         uses: actions/upload-artifact@v4
         with:
           name: gallery-zips
           path: snapshots/
           retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # Assemble and publish the GitHub Pages site: a per-board screenshot gallery
+  # (only the boards that were actually snapshotted appear with an image; the
+  # rest get a placeholder) plus the WASM browser build (built in the parallel
+  # `wasm` job, never flashed).
+  #
+  # The gallery publishes whenever publish_gallery is requested and the snap
+  # job succeeded or was intentionally skipped (enable_snap=false). It does NOT
+  # depend on the WASM build result, so a partial run still publishes a correct
+  # gallery.
+  # ---------------------------------------------------------------------------
+  deploy:
+    name: Deploy gallery (Pages)
+    needs: [ build, wasm, snap ]
+    if: github.event.inputs.publish_gallery == 'true' && (needs.snap.result == 'success' || needs.snap.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download WASM build
+        # Best-effort: absent when the wasm job failed/skipped.
+        uses: actions/download-artifact@v4
+        with:
+          name: wasm-build
+          path: deploy/wasm
+
+      - name: Download snapshot zips
+        # Fails silently when nothing was snapshotted (enable_snap=false or the
+        # runner produced no frames).
+        uses: actions/download-artifact@v4
+        with:
+          name: gallery-zips
+          path: deploy/site/zips
+        continue-on-error: true
+
+      - name: Assemble gallery (xtask)
+        # Rust maintenance tool (see xtask/), mirroring the conways project.
+        # `cargo xtask` is aliased in .cargo/config.toml to
+        # `run --package xtask --`; the first build fetches the `zip` crate from
+        # crates.io, then it assembles deploy/site/index.html from the snapshot
+        # zips + the WASM build. Runs on the GitHub-hosted deploy runner (NOT
+        # the self-hosted hardware runner) — this is where file assembly lives.
+        run: cargo xtask gallery
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: deploy/site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

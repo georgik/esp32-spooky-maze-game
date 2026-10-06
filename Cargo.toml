@@ -1,0 +1,15 @@
+[workspace]
+members = [
+    "xtask",
+]
+# The board crates are independent no_std targets (git + path deps, their own
+# target dirs). They are excluded so `cargo xtask` resolves to this workspace
+# while each board keeps building standalone, exactly as before.
+exclude = [
+    "spooky-maze-esp32-*",
+    "spooky-maze-m5stack-*",
+    "spooky-maze-desktop",
+    "spooky-maze-wasm",
+    "spooky-core",
+]
+resolver = "2"
