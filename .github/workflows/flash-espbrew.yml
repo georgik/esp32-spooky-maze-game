@@ -288,14 +288,21 @@ jobs:
   # Flash + capture a hardware snapshot per selected board on the self-hosted
   # ESPBrew runner.
   #
-  # The runner is only a client to the cluster leader, so `espbrew snap`
-  # auto-detects the firmware from the downloaded pack-<board> and flashes it at
-  # the standard app offset. No manual flash plan is required.
+  # Keep-going (mirrors the conways flash loop): the snap job runs even when some
+  # builds failed. A board whose build failed has no artifact, so its instance
+  # downloads nothing (continue-on-error) and is SKIPPED here, while every board
+  # that DID build still flashes + snapshots. `espbrew snap` is only a client to
+  # the cluster leader, so it auto-detects the firmware from the downloaded
+  # pack-<board> and captures a frame at the standard app offset.
   # ---------------------------------------------------------------------------
   snap:
     name: Flash & snap (espbrew)
     needs: [ build, setup ]
-    if: github.event.inputs.enable_snap == 'true'
+    # Keep-going (like the conways workflow): run even when some builds failed so
+    # a board whose build failed is simply SKIPPED here (no artifact to flash)
+    # while every board that DID build still flashes + snapshots. `always()`
+    # lifts the implicit "all needed jobs must succeed" gating on `needs: build`.
+    if: github.event.inputs.enable_snap == 'true' && always()
     runs-on: [espbrew]
     env:
       SNAP_DURATION: "${{ github.event.inputs.snap_duration }}"
@@ -337,10 +344,16 @@ jobs:
         # Downloads the per-board artifact uploaded by the `build` job. A matrix
         # expression cannot use the `steps` context, so the download must be a
         # real `uses:` step (not a CLI invocation inside the flash run block).
+        #
+        # continue-on-error: with keep-going builds, a board whose build failed
+        # never uploaded an artifact, so this download fails for that board. We
+        # do NOT want one board's missing artifact to abort this instance — the
+        # Flash step below detects the gap and skips that board instead.
         uses: actions/download-artifact@v4
         with:
           name: pack-${{ matrix.board }}
           path: pack-${{ matrix.board }}/
+        continue-on-error: true
 
       - name: Resolve espbrew alias for ${{ matrix.board }}
         # boards.yaml maps project dir -> alias registered in the espbrew
@@ -365,10 +378,29 @@ jobs:
 
           mkdir -p snapshots
           echo ">>> Flashing + snapping $alias"
-          if [ ! -f "pack-$board/Cargo.toml" ]; then
-            echo "::warning::$board pack artifact missing Cargo.toml; skipping flash"
+
+          # Keep-going: a board whose build failed never produced an artifact, so
+          # there is nothing to flash. Skip that board (like the conways flash
+          # loop does) and let the boards that DID build continue to snap.
+          if [ ! -d "pack-$board" ] || [ ! -f "pack-$board/Cargo.toml" ]; then
+            echo "::warning::$board pack artifact missing (build skipped/failed); skipping flash"
             exit 0
           fi
+          # The artifact MUST carry the markers espbrew autodetects on: Cargo.toml
+          # + .cargo/config.toml + an ELF under target/<triple>/release/. A partial
+          # artifact means the build/pack step was incomplete — catch it here.
+          if [ ! -f "pack-$board/.cargo/config.toml" ]; then
+            echo "::warning::$board pack artifact missing .cargo/config.toml; skipping flash"
+            exit 0
+          fi
+          elf="$(find "pack-$board/target" -type f \
+                  ! -name '*.d' ! -name '*.o' ! -name '*.rlib' \
+                  ! -name '*.rmeta' ! -name '*.a' 2>/dev/null | head -1)"
+          if [ -z "$elf" ]; then
+            echo "::warning::$board pack artifact has no ELF; skipping flash"
+            exit 0
+          fi
+
 
           # Run from inside the pack dir so espbrew auto-detects the Rust project
           # (Cargo.toml + .cargo/config.toml), locates the ELF, and the cluster
@@ -409,7 +441,11 @@ jobs:
   deploy:
     name: Deploy gallery (Pages)
     needs: [ build, wasm, snap ]
-    if: github.event.inputs.publish_gallery == 'true' && (needs.snap.result == 'success' || needs.snap.result == 'skipped')
+    # Keep-going: `always()` lets the gallery publish even when some builds or
+    # the WASM build failed. It still only deploys when the snap job actually
+    # produced frames (success) or was intentionally turned off (skipped), so a
+    # partial run always publishes a correct gallery.
+    if: github.event.inputs.publish_gallery == 'true' && always() && (needs.snap.result == 'success' || needs.snap.result == 'skipped')
     runs-on: ubuntu-latest
     environment:
       name: github-pages
