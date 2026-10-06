@@ -5,6 +5,10 @@ authors = ["Juraj Michálek <juraj.michalek@gmail.com>"]
 edition = "2024"
 license = "MIT"
 
+
+# Empty workspace to avoid being part of parent workspace
+[workspace]
+
 [dependencies]
 # Disable default features for Bevy and its sub-crates so that no_std is used.
 #bevy = { version = "0.17.2", default-features = false }

@@ -8,6 +8,10 @@ authors = [
 edition = "2024"
 license = "MIT"
 
+
+# Empty workspace to avoid being part of parent workspace
+[workspace]
+
 [dependencies]
 # Disable default features for Bevy and its sub-crates so that no_std is used.
 # Note: Bevy 0.17 has an error in atomics detection which results in panic when spawning the first entity
