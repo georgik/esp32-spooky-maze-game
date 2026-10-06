@@ -1,0 +1,308 @@
+name: Flash & Snap via ESPBrew
+
+# Manual-only hardware workflow for the Spooky Maze Game boards.
+#
+#   * `build` -> ubuntu: compiles every selected board and packages a minimal
+#                 espbrew-ready artifact per board:
+#                     pack-<board>/{Cargo.toml,.cargo/config.toml,
+#                     target/<triple>/release/<elf>}
+#                 All boards use `channel = "esp"` (Xtensa), so a single espup
+#                 toolchain install covers every matrix entry. espbrew's
+#                 autodetector keys on `.cargo/config.toml` + the ELF, so the
+#                 `target/<triple>/release` layout must be preserved exactly.
+#   * `snap`  -> [espbrew] self-hosted runner. That runner is only a *client*
+#                 to the ESPBrew cluster leader (the physical board lives on the
+#                 leader), so it flashes the firmware and captures a camera frame
+#                 via `espbrew snap`. espbrew auto-detects the project from the
+#                 downloaded pack-<board>, so no manual flash plan is required.
+#
+# Board selection (boards.yaml):
+#
+#   boards.yaml is the single source of truth for the self-hosted flash job.
+#   Each entry maps a project directory (`project`) to an alias registered in
+#   the espbrew cluster (`alias`); aliases with no hardware are skipped. The
+#   `boards` input overrides the default set (default: every registered board).
+#
+# Why only these boards are flashed here:
+#
+#   * spooky-maze-m5stack-cores3  -> no board is registered in espbrew.toml, so
+#                                    there is no hardware to flash.
+#   * spooky-maze-esp32p4-...     -> targets `riscv32imafc-unknown-none-elf`, a
+#                                    triple espbrew's autodetector does not
+#                                    recognise, so the ELF cannot be converted.
+#                                    Re-add it once espbrew supports that triple.
+#
+# Security: this workflow only triggers on manual dispatch, so pull requests
+# (including from forks) can never execute steps on the self-hosted hardware
+# runner. The snap job also carries a guard step as defense in depth. See the
+# note at the bottom about the matching GitHub repository settings.
+
+on:
+  workflow_dispatch:
+    inputs:
+      boards:
+        description: 'Comma-separated project dirs to build/flash (default: all registered boards)'
+        type: string
+        default: 'spooky-maze-esp32-s3-box-3, spooky-maze-m5stack-atom-s3, spooky-maze-m5stack-atom-s3r, spooky-maze-m5stack-core2'
+      enable_snap:
+        description: 'Flash + capture a hardware snapshot via espbrew snap'
+        type: boolean
+        default: true
+      snap_duration:
+        description: 'Snap capture duration (seconds)'
+        type: string
+        default: '10'
+
+# Self-hosted runners still need read access to the repository contents.
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Parse the comma-separated `boards` input into a JSON array ONCE, then emit
+  # it as a job output. `build` and `snap` consume it via `needs.setup`.
+  #
+  # A matrix expression may only use the `github`, `inputs`, `needs`, `vars`
+  # contexts (never `steps`), so the parse cannot live inside a matrix step —
+  # it must run in a job that the matrix jobs `need`.
+  # ---------------------------------------------------------------------------
+  setup:
+    name: Parse board selection
+    runs-on: ubuntu-latest
+    outputs:
+      boards: ${{ steps.parse.outputs.json }}
+    steps:
+      - name: Parse selected boards
+        id: parse
+        env:
+          BOARDS_INPUT: "${{ inputs.boards }}"
+        run: |
+          set -euo pipefail
+          IFS=',' read -r -a parts <<< "${BOARDS_INPUT}"
+          json="["
+          first=1
+          for b in "${parts[@]}"; do
+            b="${b//[[:space:]]/}"
+            [ -z "$b" ] && continue
+            if [ "$first" -eq 1 ]; then json+="\"$b\""; first=0; else json+=", \"$b\""; fi
+          done
+          json+="]"
+          if [ "$first" -eq 1 ]; then
+            echo "::error::no boards selected (boards input was empty)" >&2
+            exit 1
+          fi
+          echo "json=$json" >> "$GITHUB_OUTPUT"
+          echo "selected boards: ${json}"
+
+  # ---------------------------------------------------------------------------
+  # Build + package the selected boards. One matrix entry per board; each entry
+  # builds and packs its own board. All boards share the Xtensa `esp` toolchain,
+  # so it is installed once, up-front.
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build + package ${{ matrix.board }}
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        board: ${{ fromJSON(needs.setup.outputs.boards) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install stable toolchain (for cargo/rustup itself)
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - name: Install Xtensa (esp) toolchain
+        # espup registers the "esp" toolchain with rustup; the boards'
+        # rust-toolchain.toml (channel = "esp") auto-resolve it.
+        run: |
+          curl -fsSL -o espup \
+            "https://github.com/esp-rs/espup/releases/download/v0.18.0/espup-x86_64-unknown-linux-gnu"
+          chmod +x espup
+          ./espup install --toolchain-version 1.90.0.0
+
+      - name: Put the Xtensa gcc on PATH
+        # Several boards' build.rs load ~/export-esp.sh themselves, but
+        # spooky-maze-m5stack-core2 and spooky-maze-esp32p4-... do not, so we
+        # source it here to guarantee the Xtensa gcc is reachable. We pin
+        # RUSTUP_HOME/CARGO_HOME back to the defaults afterwards so rustup still
+        # resolves the "esp" toolchain we just installed.
+        run: |
+          set -euo pipefail
+          DEFAULT_RUSTUP_HOME="${HOME}/.rustup"
+          DEFAULT_CARGO_HOME="${HOME}/.cargo"
+          # shellcheck disable=SC1091
+          [ -f "${HOME}/export-esp.sh" ] && source "${HOME}/export-esp.sh" || true
+          export RUSTUP_HOME="${DEFAULT_RUSTUP_HOME}"
+          export CARGO_HOME="${DEFAULT_CARGO_HOME}"
+          echo "PATH=$PATH"
+          (xtensa-esp32s3-elf-gcc --version || true)
+          (xtensa-esp32-elf-gcc --version || true)
+
+      - name: Build ${{ matrix.board }}
+        # rustup auto-selects the toolchain from $board/rust-toolchain.toml
+        # (channel = "esp"). build.rs (or the PATH above) supplies the linker.
+        working-directory: ${{ matrix.board }}
+        run: |
+          set -euo pipefail
+          echo ">>> Building ${{ matrix.board }}"
+          cargo build --release
+
+      - name: Package espbrew artifact for ${{ matrix.board }}
+        # Emit the minimal espbrew-ready project: Cargo.toml + .cargo/config.toml
+        # + target/<triple>/release/<elf>. The triple is read from .cargo/config.toml
+        # so the layout matches espbrew's autodetector.
+        id: pack
+        run: |
+          set -euo pipefail
+          board="${{ matrix.board }}"
+          # Triple from the `target = "..."` line under [build] in .cargo/config.toml.
+          # This is the same triple espbrew's autodetector keys on; cut avoids any
+          # regex/escaping so the value is extracted verbatim.
+          triple="$(grep -m1 '^target = ' "$board/.cargo/config.toml" | cut -d'"' -f2)"
+          if [ -z "$triple" ]; then
+            echo "::error::could not read target triple from $board/.cargo/config.toml" >&2
+            exit 1
+          fi
+          out="pack-$board"
+          rm -rf "$out"
+          mkdir -p "$out"
+          # Markers espbrew detects.
+          cp "$board/Cargo.toml" "$out/"
+          mkdir -p "$out/.cargo"
+          cp "$board/.cargo/config.toml" "$out/.cargo/"
+          # The ELF: largest non-archive file in target/<triple>/release.
+          elf="$(find "$board/target/$triple/release" -maxdepth 1 -type f \
+                    ! -name '*.d' ! -name '*.o' ! -name '*.a' \
+                    ! -name '*.rmeta' ! -name '*.rlib' \
+                    -printf '%s\t%p\n' 2>/dev/null | sort -rn | head -1 | cut -f2)"
+          if [ -z "${elf:-}" ]; then
+            echo "::error::no ELF found under $board/target/$triple/release" >&2
+            exit 1
+          fi
+          mkdir -p "$out/target/$triple/release"
+          cp "$elf" "$out/target/$triple/release/"
+          echo "triple=$triple" >> "$GITHUB_OUTPUT"
+          echo "elf=$(basename "$elf")" >> "$GITHUB_OUTPUT"
+          echo "packed $board -> $out (triple=$triple, elf=$(basename "$elf"))"
+          ls -la "$out" "$out/target/$triple/release"
+
+      - name: Upload pack-${{ matrix.board }}
+        # include-hidden-files MUST be true: espbrew's autodetect keys on the
+        # dot-directory .cargo/config.toml, which upload-artifact drops by default.
+        uses: actions/upload-artifact@v4
+        with:
+          name: pack-${{ matrix.board }}
+          path: pack-${{ matrix.board }}/
+          include-hidden-files: true
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # Flash + capture a hardware snapshot per selected board on the self-hosted
+  # ESPBrew runner. The runner is only a client to the cluster leader, so
+  # `espbrew snap` auto-detects the firmware from the downloaded pack-<board>
+  # and flashes it at the standard app offset. No manual flash plan is needed.
+  # ---------------------------------------------------------------------------
+  snap:
+    name: Flash & snap (espbrew)
+    needs: [ build, setup ]
+    if: github.event.inputs.enable_snap == 'true'
+    runs-on: [espbrew]
+    env:
+      SNAP_DURATION: "${{ github.event.inputs.snap_duration }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        board: ${{ fromJSON(needs.setup.outputs.boards) }}
+    steps:
+      # --- Security: never run on untrusted PR / fork code -------------------
+      - name: Refuse to run on PRs / forks
+        if: github.event.pull_request != null || github.event_name != 'workflow_dispatch'
+        run: |
+          echo "::error::This hardware workflow only runs on manual dispatch."
+          echo "::error::It must never execute on pull requests or fork contributions."
+          exit 1
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Download espbrew (arch-aware)
+        # The self-hosted runner may be x64 or arm; pick the matching espbrew
+        # release so we never land an amd64 binary on an arm64 host (that
+        # surfaces as an opaque "exec format error" mid-flash).
+        run: |
+          set -euo pipefail
+          case "$(uname -m)" in
+            x86_64)  ESPBREW_ARCH="linux-amd64" ;;
+            aarch64) ESPBREW_ARCH="linux-arm64" ;;
+            *)       ESPBREW_ARCH="linux-amd64" ;;
+          esac
+          echo "Downloading espbrew-${ESPBREW_ARCH}"
+          curl -fsSL \
+            "https://github.com/georgik/espbrew-go/releases/download/v0.8.1/espbrew-${ESPBREW_ARCH}" \
+            -o espbrew
+          chmod +x ./espbrew
+          ./espbrew --version
+
+      - name: Download firmware pack
+        # A matrix expression cannot use the `steps` context, so the download
+        # must be a real `uses:` step (not a CLI invocation in a run block).
+        uses: actions/download-artifact@v4
+        with:
+          name: pack-${{ matrix.board }}
+          path: pack-${{ matrix.board }}/
+
+      - name: Resolve espbrew alias for ${{ matrix.board }}
+        # boards.yaml maps project dir -> alias registered in the espbrew
+        # cluster; fall back to the project dir name when unregistered.
+        id: alias
+        run: |
+          set -euo pipefail
+          board="${{ matrix.board }}"
+          alias="$(awk -v p="$board" '
+            /^  - alias:/ { a=$3 }
+            /^    project:/ { if ($2 == p) print a }
+          ' boards.yaml)"
+          [ -z "$alias" ] && alias="$board"
+          echo "alias=$alias" >> "$GITHUB_OUTPUT"
+          echo "alias=$alias"
+
+      - name: Flash + snap ${{ steps.alias.outputs.alias }}
+        run: |
+          set -euo pipefail
+          board="${{ matrix.board }}"
+          alias="${{ steps.alias.outputs.alias }}"
+
+          mkdir -p snapshots
+          echo ">>> Flashing + snapping $alias"
+          if [ ! -f "pack-$board/Cargo.toml" ]; then
+            echo "::warning::$board pack artifact missing Cargo.toml; skipping flash"
+            exit 0
+          fi
+
+          # Run from inside the pack dir so espbrew auto-detects the Rust project
+          # (Cargo.toml + .cargo/config.toml), locates the ELF, and the cluster
+          # leader converts it to bootloader/partitions/app. espbrew writes the
+          # captured frame into a per-board zip at snapshots/$board.zip (repo
+          # root). The --zip path is relative to pack-$board/, hence the ../.
+          ( cd "pack-$board" \
+            && espbrew snap \
+                --filter-alias "$alias" \
+                --save-dir snap-out \
+                --zip "../snapshots/$board.zip" \
+                --duration "$SNAP_DURATION" )
+
+      - name: Upload snapshot zips
+        # Upload the raw espbrew snapshot zips (one per board) so a gallery
+        # deploy job can expand them. Extraction is done on the GitHub-hosted
+        # deploy runner, NOT on this self-hosted hardware runner.
+        if: hashFiles('snapshots/*.zip') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: gallery-zips
+          path: snapshots/
+          retention-days: 30

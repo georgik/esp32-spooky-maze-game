@@ -1,0 +1,22 @@
+# Boards that can be flashed in CI via the self-hosted ESPBrew runner.
+#
+# This is the single source of truth for the "flash" job. Each entry MUST use an
+# `alias` registered in the espbrew cluster (see the espbrew.toml ConfigMap on
+# the leader). Aliases that are not registered have no hardware and are skipped.
+#
+# `project` is the project directory produced by the `build` job
+# (pack-<project>/); it is normally identical to the board dir.
+#
+# NOTE: boards whose firmware targets a triple espbrew's autodetector does not
+# recognise (e.g. `riscv32imafc-unknown-none-elf` on the ESP32-P4) are omitted
+# here — see .github/workflows/flash-espbrew.yml. Boards with no registered
+# hardware (e.g. m5stack-cores3) are omitted as well.
+boards:
+  - alias: esp32-s3-box-3
+    project: spooky-maze-esp32-s3-box-3
+  - alias: m5stack-atom-s3
+    project: spooky-maze-m5stack-atom-s3
+  - alias: m5stack-atom-s3r
+    project: spooky-maze-m5stack-atom-s3r
+  - alias: m5stack-core2
+    project: spooky-maze-m5stack-core2
