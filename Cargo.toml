@@ -7,6 +7,7 @@ members = [
 # while each board keeps building standalone, exactly as before.
 exclude = [
     "spooky-maze-esp32-*",
+    "spooky-maze-esp32-p4-function-ev-board",
     "spooky-maze-m5stack-*",
     "spooky-maze-desktop",
     "spooky-maze-wasm",
