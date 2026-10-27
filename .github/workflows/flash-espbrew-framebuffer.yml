@@ -115,9 +115,9 @@ jobs:
         # rust-toolchain.toml (channel = "esp") auto-resolve it.
         run: |
           curl -fsSL -o espup \
-            "https://github.com/esp-rs/espup/releases/download/v0.18.0/espup-x86_64-unknown-linux-gnu"
+            "https://github.com/esp-rs/espup/releases/download/v0.17.1/espup-x86_64-unknown-linux-gnu"
           chmod +x espup
-          ./espup install --toolchain-version 1.90.0.0
+          ./espup install --toolchain-version 1.97.0.0
 
       - name: Put the Xtensa gcc on PATH
         # Several boards' build.rs load ~/export-esp.sh themselves, but
