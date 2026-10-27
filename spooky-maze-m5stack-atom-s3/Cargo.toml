@@ -22,11 +22,11 @@ bevy_platform = { git = "https://github.com/bevyengine/bevy.git", rev = "906bc14
 
 
 esp-hal = { version = "1.0.0", features = ["esp32s3", "unstable"] }
-esp-backtrace = { version = "0.18.1", features = [
+esp-backtrace = { version = "0.19.0", features = [
     "panic-handler",
     "println"
 ] }
-esp-println = { version = "0.16.1", features = [ "log-04" ] }
+esp-println = { version = "0.17.0", features = [ "log-04" ] }
 
 log = "0.4.27"
 esp-alloc = "0.9.0"
@@ -36,6 +36,10 @@ mipidsi = "0.9.0"
 embedded-graphics-framebuf = "0.5.0"
 embedded-hal-bus = "0.3.0"
 spooky-core = { path = "../spooky-core", default-features = false }
+
+# Dump the framebuffer over the esp-println console (esp_lcd_screenshot
+# compatible protocol) when the `screenshot` feature is enabled.
+embedded-screenshot = { version = "0.1.0", optional = true, default-features = false, features = ["embedded-graphics", "esp-println"] }
 
 #icm42670 = { version = "0.2.0", optional = true }
 #mpu6886 = { version = "0.1.0", optional = true }
@@ -48,6 +52,7 @@ accelerometer = []
 no-psram = []
 #esp32-s3-box-3 = [ "esp-hal/psram", "accelerometer", "dep:icm42670", "spooky-core/dynamic_maze" ]
 m5stack-atom-s3 = [ "spooky-core/static_maze", "accelerometer", "dep:mpu6886", "no-psram" ]
+screenshot = [ "dep:embedded-screenshot" ]
 
 [profile.dev]
 opt-level = "s"

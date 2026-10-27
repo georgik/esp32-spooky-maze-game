@@ -1,4 +1,6 @@
 use alloc::format;
+#[cfg(feature = "screenshot")]
+use core::sync::atomic::{AtomicUsize, Ordering};
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::{image::Image, prelude::*, primitives::Rectangle};
 
@@ -9,6 +11,11 @@ use embedded_graphics::text::Text;
 use spooky_core::resources::{MazeResource, PlayerPosition};
 use spooky_core::systems::hud::HudState;
 use spooky_core::systems::setup::TextureAssets;
+
+/// Counts rendered frames so the screenshot dump fires a few frames after boot,
+/// giving the CI serial monitor time to attach before the (large) dump.
+#[cfg(feature = "screenshot")]
+static SCREENSHOT_FRAME: AtomicUsize = AtomicUsize::new(0);
 
 /// A borrowed sprite buffer wrapper that implements a DrawTarget filtering out “magic pink”.
 /// In our case, we treat any pixel with R=31, G=0, B=31 as transparent.
@@ -196,4 +203,22 @@ pub fn render_system(
         .display
         .fill_contiguous(&area, fb_res.frame_buf.data.iter().copied())
         .unwrap();
+
+    // Dump the framebuffer over the esp-println console exactly once, at the
+    // 10th frame. A few frames in gives the CI serial monitor time to attach
+    // before the (large) dump. The 130x129 RGB565 frame is small, but we still
+    // dump only once per boot to keep the serial log tidy.
+    #[cfg(feature = "screenshot")]
+    if SCREENSHOT_FRAME.fetch_add(1, Ordering::Relaxed) == 9 {
+        let pixel_bytes: alloc::vec::Vec<u8> =
+            embedded_screenshot::rgb565_le_bytes(fb_res.frame_buf.data.as_ref()).collect();
+        embedded_screenshot::write_framebuffer(
+            &mut embedded_screenshot::ConsolePrinter,
+            crate::LCD_H_RES,
+            crate::LCD_V_RES,
+            embedded_screenshot::RGBL,
+            &pixel_bytes,
+        )
+        .ok();
+    }
 }

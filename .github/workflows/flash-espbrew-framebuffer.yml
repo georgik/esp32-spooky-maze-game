@@ -113,6 +113,11 @@ jobs:
       - name: Install Xtensa (esp) toolchain
         # espup registers the "esp" toolchain with rustup; the boards'
         # rust-toolchain.toml (channel = "esp") auto-resolve it.
+        env:
+          # espup queries the GitHub API for esp toolchain assets; without a
+          # token the shared runner IP hits the 60 req/h unauthenticated
+          # quota and fails with 403 Forbidden.
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           curl -fsSL -o espup \
             "https://github.com/esp-rs/espup/releases/download/v0.17.1/espup-x86_64-unknown-linux-gnu"
