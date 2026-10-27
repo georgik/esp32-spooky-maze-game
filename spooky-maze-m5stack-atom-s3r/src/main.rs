@@ -269,7 +269,12 @@ fn main() -> ! {
 
     // Initialize IMU with the shared I2C bus
     let i2c_device = embedded_hal_bus::i2c::RefCellDevice::new(i2c_bus);
-    let mut imu = Bmi2::new_i2c(i2c_device, I2cAddr::Default, bmi2::types::Burst::Other(255));
+    let mut imu = Bmi2::new_i2c(
+        i2c_device,
+        Delay::new(),
+        I2cAddr::Default,
+        bmi2::types::Burst::custom(255, 255),
+    );
     imu.init(&bmi2::config::BMI270_CONFIG_FILE)
         .expect("failed to initialize IMU");
     imu.set_pwr_ctrl(bmi2::types::PwrCtrl {
@@ -297,7 +302,7 @@ fn main() -> ! {
     ));
 
     app.insert_non_send_resource(DisplayResource { display })
-        .insert_non_send_resource(AccelerometerResource { sensor: imu })
+        .insert_non_send_resource(AccelerometerResource::<_, Delay, 512> { sensor: imu })
         .insert_resource(FrameBufferResource::new())
         .insert_resource(HudState::default())
         .insert_resource(MazeSeed(Some(seed)))
@@ -312,6 +317,8 @@ fn main() -> ! {
             (
                 player_input::dispatch_accelerometer_input::<
                     embedded_hal_bus::i2c::RefCellDevice<'static, I2cMasterBus>,
+                    Delay,
+                    512,
                 >,
                 process_player_input,
                 collisions::coin::detect_coin_collision,

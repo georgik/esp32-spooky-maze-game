@@ -47,7 +47,7 @@ mpu6886 = { git = "https://github.com/georgik/mpu6886.git", branch = "feature/up
 esp-bootloader-esp-idf = { version = "0.4.0", features = ["esp32s3"] }
 
 [features]
-default = [ "esp-hal/esp32s3", "esp-backtrace/esp32s3", "esp-println/esp32s3", "m5stack-atom-s3" ]
+default = [ "esp-hal/esp32s3", "esp-alloc/esp32s3", "esp-backtrace/esp32s3", "esp-println/esp32s3", "m5stack-atom-s3" ]
 accelerometer = []
 no-psram = []
 #esp32-s3-box-3 = [ "esp-hal/psram", "accelerometer", "dep:icm42670", "spooky-core/dynamic_maze" ]

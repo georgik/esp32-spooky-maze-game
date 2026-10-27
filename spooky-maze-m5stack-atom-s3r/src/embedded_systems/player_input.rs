@@ -3,16 +3,17 @@ use bmi2::interface::I2cInterface;
 use spooky_core::events::player::PlayerInputMessage;
 use spooky_core::resources::MazeResource;
 
-pub struct AccelerometerResource<I2C> {
-    pub sensor: bmi2::Bmi2<I2cInterface<I2C>>,
+pub struct AccelerometerResource<I2C, D, const N: usize> {
+    pub sensor: bmi2::Bmi2<I2cInterface<I2C>, D, N>,
 }
 
-pub fn dispatch_accelerometer_input<I2C>(
-    mut accel_res: NonSendMut<AccelerometerResource<I2C>>,
+pub fn dispatch_accelerometer_input<I2C, D, const N: usize>(
+    mut accel_res: NonSendMut<AccelerometerResource<I2C, D, N>>,
     maze_res: Res<MazeResource>,
     mut event_writer: MessageWriter<PlayerInputMessage>,
 ) where
     I2C: embedded_hal::i2c::I2c + embedded_hal::i2c::ErrorType,
+    D: embedded_hal::delay::DelayNs,
 {
     if let Ok(accel) = accel_res.sensor.get_acc_data() {
         let step = maze_res.maze.tile_width as f32;
