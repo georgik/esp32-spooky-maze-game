@@ -29,7 +29,7 @@ on:
       boards:
         description: 'Comma-separated project dirs to build/flash (must support the screenshot feature)'
         type: string
-        default: 'spooky-maze-esp32-s3-box-3'
+        default: 'spooky-maze-esp32-p4-function-ev-board, spooky-maze-esp32-s3-box-3, spooky-maze-m5stack-atom-s3, spooky-maze-m5stack-atom-s3r'
       enable_snap:
         description: 'Flash + capture a framebuffer snapshot via espbrew snap'
         type: boolean

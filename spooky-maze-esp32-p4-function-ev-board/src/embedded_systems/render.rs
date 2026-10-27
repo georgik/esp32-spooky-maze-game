@@ -1,4 +1,6 @@
 use alloc::{boxed::Box, format, vec};
+#[cfg(feature = "screenshot")]
+use core::sync::atomic::{AtomicUsize, Ordering};
 
 use bevy_ecs::prelude::*;
 
@@ -13,6 +15,11 @@ use embedded_graphics::{
     primitives::{PrimitiveStyleBuilder, Rectangle},
     text::Text,
 };
+
+/// Counts rendered frames so the screenshot dump fires a few frames after boot,
+/// giving the serial monitor time to attach before the (large) dump.
+#[cfg(feature = "screenshot")]
+static SCREENSHOT_FRAME: AtomicUsize = AtomicUsize::new(0);
 
 use tinybmp::Bmp;
 
@@ -464,6 +471,24 @@ pub fn render_system(
     .unwrap();
 
     draw_touch_controls(&mut fb_res.frame_buf, &touch_state);
+
+    // Dump the framebuffer over the esp-println console exactly once, at the
+    // 10th frame. A few frames in gives the CI serial monitor time to attach
+    // before the (large) dump. The raw 1024x600 RGB565 frame is ~1.2 MiB and
+    // becomes ~1.6 MiB of base64, so we dump only once per boot.
+    #[cfg(feature = "screenshot")]
+    if SCREENSHOT_FRAME.fetch_add(1, Ordering::Relaxed) == 9 {
+        let pixel_bytes: alloc::vec::Vec<u8> =
+            embedded_screenshot::rgb565_le_bytes(fb_res.frame_buf.data.as_ref()).collect();
+        embedded_screenshot::write_framebuffer(
+            &mut embedded_screenshot::ConsolePrinter,
+            crate::LCD_H_RES,
+            crate::LCD_V_RES,
+            embedded_screenshot::RGBL,
+            &pixel_bytes,
+        )
+        .ok();
+    }
 }
 
 // -----------------------------------------------------------------------------

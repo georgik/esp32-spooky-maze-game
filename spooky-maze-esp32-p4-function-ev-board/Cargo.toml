@@ -61,10 +61,21 @@ embedded-graphics-framebuf = "0.5.0"
 
 spooky-core = { path = "../spooky-core", default-features = false, features = ["dynamic_maze"]}
 
+# Dump the framebuffer over the serial console as base64
+# (esp_lcd_screenshot compatible protocol).
+embedded-screenshot = { version = "0.1.0", optional = true, default-features = false, features = ["embedded-graphics", "esp-println"] }
+
+# This board tracks the esp-hal git repository, whose esp-println carries a
+# `links = "esp-println"` key. Redirect the crates.io esp-println required by
+# embedded-screenshot to the same git source, so exactly one copy is linked.
+[patch.crates-io]
+esp-println = { git = "https://github.com/esp-rs/esp-hal.git", rev = "10f8d8cc628abbccff34f9c032b26a4b2a484a3b" }
+
 
 [features]
 default = []
 no-psram = []
+screenshot = ["dep:embedded-screenshot"]
 
 [profile.dev]
 opt-level = "s"

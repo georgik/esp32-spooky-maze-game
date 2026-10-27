@@ -7,13 +7,14 @@
 # `project` is the project directory produced by the `build` job
 # (pack-<project>/); it is normally identical to the board dir.
 #
-# NOTE: boards whose firmware targets a triple espbrew's autodetector does not
-# recognise (e.g. `riscv32imafc-unknown-none-elf` on the ESP32-P4) are omitted
-# here — see .github/workflows/flash-espbrew.yml. Boards with no registered
-# hardware (e.g. m5stack-cores3) are omitted as well.
+# The ESP32-P4 (`spooky-maze-esp32-p4-function-ev-board`, triple
+# `riscv32imafc-unknown-none-elf`) is supported: espbrew's autodetector converts
+# its ELF just like the Xtensa boards below.
 boards:
   - alias: esp32-s3-box-3
     project: spooky-maze-esp32-s3-box-3
+  - alias: esp32-p4-function-ev-board
+    project: spooky-maze-esp32-p4-function-ev-board
   - alias: m5stack-atom-s3
     project: spooky-maze-m5stack-atom-s3
   - alias: m5stack-atom-s3r
