@@ -335,7 +335,7 @@ jobs:
           esac
           echo "Downloading espbrew-${ESPBREW_ARCH}"
           curl -fsSL \
-            "https://github.com/georgik/espbrew-go/releases/download/v0.8.1/espbrew-${ESPBREW_ARCH}" \
+            "https://github.com/georgik/espbrew-go/releases/download/v0.12.0/espbrew-${ESPBREW_ARCH}" \
             -o espbrew
           chmod +x ./espbrew
           ./espbrew --version
